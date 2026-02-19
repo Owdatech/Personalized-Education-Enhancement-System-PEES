@@ -1,0 +1,469 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:pees/Common_Screen/Pages/themeWidget.dart';
+import 'package:pees/Common_Screen/Services/font_size_provider.dart';
+import 'package:pees/HeadMaster_Dashboard/Model/studentModel.dart';
+import 'package:pees/HeadMaster_Dashboard/Services/headMaster_services.dart';
+import 'package:pees/Teacher_Dashbord/Pages/Students/student_details.dart';
+import 'package:pees/Widgets/AppColor.dart';
+import 'package:pees/Widgets/Loader_view.dart';
+import 'package:pees/Widgets/custom_style.dart';
+import 'package:pees/custom_class/my_appBar.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../Widgets/AppButton.dart';
+
+class StudentList extends StatefulWidget {
+  const StudentList({super.key});
+
+  @override
+  State<StudentList> createState() => _StudentListState();
+}
+
+class _StudentListState extends State<StudentList> {
+  HeadMasterServices viewModel = HeadMasterServices();
+  TextEditingController searchController = TextEditingController();
+  StudentModel? model;
+  List<StudentModel> searchResults = [];
+  String searchText = '';
+  bool isSearching = false;
+  int currentPage = 1;
+  final int itemsPerPage = 5;
+  String selectedLanguage = Get.locale?.languageCode ?? 'en';
+
+  viewDetailsAction(StudentModel model) async {
+    // Route route = MaterialPageRoute(
+    //     builder: (context) => StudentDataScreen(model: model));
+    // Navigator.push(context, route).then(onGoBack);
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => StudentDataScreen(model: model)));
+  }
+
+  FutureOr onGoBack(dynamic isRefesh) {
+    if (isRefesh) {
+      refreshStudentList();
+    }
+  }
+
+  refreshStudentList() {
+    fetchDetails();
+  }
+
+  fetchDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? teacherId = prefs.getString('userId');
+    List<StudentModel>? models =
+        await viewModel.fetchStudentList(teacherId ?? "");
+    if (models != null) {
+      model = models.first;
+    }
+  }
+
+  void _filterSearchResults(List<StudentModel> list) {
+    setState(() {
+      isSearching = true;
+      searchResults = list
+          .where((element) =>
+              element.studentName!
+                  .toLowerCase()
+                  .contains(searchText.toLowerCase()) ||
+              element.grade!.toLowerCase().contains(searchText.toLowerCase()) ||
+              element.classSection!
+                  .toLowerCase()
+                  .contains(searchText.toLowerCase()))
+          .toList();
+      currentPage = 1;
+    });
+  }
+
+  @override
+  void initState() {
+    fetchDetails().then((_) {
+      _filterSearchResults(viewModel.studentList!);
+    });
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeManager = Provider.of<ThemeManager>(context, listen: false);
+    if (searchResults.isEmpty) {
+      setState(() {
+        _filterSearchResults(viewModel.studentList!);
+      });
+    }
+
+    final startIndex = (currentPage - 1) * itemsPerPage;
+    final endIndex = (currentPage * itemsPerPage) < searchResults.length
+        ? currentPage * itemsPerPage
+        : searchResults.length;
+    final currentList = searchResults.sublist(startIndex, endIndex);
+    return ChangeNotifierProvider<HeadMasterServices>(
+        create: (BuildContext context) => viewModel,
+        child: Consumer<HeadMasterServices>(builder: (context, value, _) {
+          return LayoutBuilder(builder: (context, constraints) {
+            bool isMobile = constraints.maxWidth <= 800;
+            return Scaffold(
+              appBar: PreferredSize(
+                  preferredSize: const Size(double.infinity, 50),
+                  child: isMobile ? MyAppBar("") : const SizedBox()),
+              body: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: 20, right: 20, top: 20),
+                          child: Column(
+                            children: [
+                              searchBox(),
+                              const SizedBox(height: 20),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                itemCount: currentList.length,
+                                itemBuilder: (context, index) {
+                                  return studentItems(
+                                      currentList[index], isMobile);
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    if (currentPage > 1) {
+                                      setState(() {
+                                        currentPage--;
+                                      });
+                                    }
+                                  },
+                                  icon: const Icon(Icons.arrow_back),
+                                ),
+                                Text(
+                                    "$currentPage/${(searchResults.length / itemsPerPage).ceil()}"),
+                                IconButton(
+                                  onPressed: () {
+                                    if (currentPage <
+                                        (searchResults.length / itemsPerPage)
+                                            .ceil()) {
+                                      setState(() {
+                                        currentPage++;
+                                      });
+                                    }
+                                  },
+                                  icon: const Icon(Icons.arrow_forward),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  viewModel.loading ? const LoaderView() : Container()
+                ],
+              ),
+            );
+          });
+        }));
+  }
+
+  Widget studentItems(StudentModel model, bool isMobile) {
+    final fontSizeProvider = Provider.of<FontSizeProvider>(context);
+    final themeManager = Provider.of<ThemeManager>(context, listen: false);
+    return SizedBox(
+      width: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 13),
+        child: Container(
+          decoration: BoxDecoration(
+              color: themeManager.isHighContrast
+                  ? AppColor.labelText
+                  : AppColor.white,
+              boxShadow: const [
+                BoxShadow(
+                    blurRadius: 5,
+                    offset: Offset(0, 5),
+                    color: AppColor.greyShadow)
+              ],
+              borderRadius: BorderRadius.circular(5)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              isMobile
+                  ? Column(
+                      // mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(
+                              top: 15,
+                              left: selectedLanguage == 'en' ? 20 : 0,
+                              right: selectedLanguage == 'en' ? 0 : 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    height: 30,
+                                    width: 30,
+                                    decoration: const BoxDecoration(
+                                      color: AppColor.lightGrey,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    // child: Image.network(model.phonenumber.toString()),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: Text(
+                                      "${model.studentName}",
+                                      overflow: TextOverflow.ellipsis,
+                                      style: NotoSansArabicCustomTextStyle.bold
+                                          .copyWith(
+                                              fontSize:
+                                                  fontSizeProvider.fontSize + 2,
+                                              color: AppColor.black),
+                                    ),
+                                  )
+                                ],
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                "${"grade".tr} : ${model.grade}",
+                                overflow: TextOverflow.ellipsis,
+                                style: NotoSansArabicCustomTextStyle.bold
+                                    .copyWith(
+                                        fontSize: fontSizeProvider.fontSize,
+                                        color: AppColor.black),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                model.classSection.toString(),
+                                style: NotoSansArabicCustomTextStyle.bold
+                                    .copyWith(
+                                        fontSize: fontSizeProvider.fontSize,
+                                        color: AppColor.black),
+                              ),
+                              const SizedBox(height: 5),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: AppFillButton3(
+                                    onPressed: () {
+                                      viewDetailsAction(model);
+                                    },
+                                    text: "viewDetails",
+                                    color: AppColor.buttonGreen),
+                              ),
+                            ],
+                          ),
+                        )
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                                top: 15,
+                                left: selectedLanguage == 'en' ? 20 : 0,
+                                right: selectedLanguage == 'en' ? 0 : 20),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  height: 30,
+                                  width: 30,
+                                  decoration: const BoxDecoration(
+                                    color: AppColor.lightGrey,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  // child: Image.network(model.phonenumber.toString()),
+                                ),
+                                const SizedBox(width: 20),
+                                Expanded(
+                                  child: Text(
+                                    "${model.studentName}",
+                                    overflow: TextOverflow.ellipsis,
+                                    style: NotoSansArabicCustomTextStyle.bold
+                                        .copyWith(
+                                            fontSize:
+                                                fontSizeProvider.fontSize + 2,
+                                            color: AppColor.black),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                                right: selectedLanguage == 'en' ? 110 : 0,
+                                left: selectedLanguage == 'en' ? 0 : 110),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Align(
+                                    alignment: Alignment.topCenter,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 15),
+                                      child: Text(
+                                        "${"grade".tr} : ${model.grade}",
+                                        overflow: TextOverflow.ellipsis,
+                                        style: NotoSansArabicCustomTextStyle
+                                            .bold
+                                            .copyWith(
+                                                fontSize:
+                                                    fontSizeProvider.fontSize,
+                                                color: AppColor.black),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      model.classSection.toString(),
+                                      style: NotoSansArabicCustomTextStyle.bold
+                                          .copyWith(
+                                              fontSize:
+                                                  fontSizeProvider.fontSize,
+                                              color: AppColor.black),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    AppFillButton3(
+                                        onPressed: () {
+                                          viewDetailsAction(model);
+                                        },
+                                        text: "viewDetails",
+                                        color: AppColor.buttonGreen)
+                                  ],
+                                )
+                              ],
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget searchBox() {
+    final fontSizeProvider = Provider.of<FontSizeProvider>(context);
+    final themeManager = Provider.of<ThemeManager>(context, listen: false);
+    return Container(
+      height: 60,
+      width: double.infinity,
+      decoration: BoxDecoration(
+          color:
+              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColor.greyShadow,
+              blurRadius: 15,
+              offset: Offset(0, 10),
+            ),
+          ]),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: SizedBox(
+              child: TextField(
+                controller: searchController,
+                onChanged: (value) {
+                  setState(() {
+                    searchText = value;
+                    _filterSearchResults(viewModel.studentList!);
+                  });
+                },
+                style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                    color: themeManager.isHighContrast
+                        ? AppColor.black
+                        : AppColor.labelText,
+                    fontSize: fontSizeProvider.fontSize + 1),
+                decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintStyle: NotoSansArabicCustomTextStyle.bold.copyWith(
+                        color: themeManager.isHighContrast
+                            ? AppColor.black
+                            : AppColor.labelText,
+                        fontSize: fontSizeProvider.fontSize + 1),
+                    hintText: "searchHint".tr,
+                    contentPadding: EdgeInsets.only(
+                        left: selectedLanguage == 'en' ? 20 : 0,
+                        right: selectedLanguage == 'en' ? 0 : 20)),
+              ),
+            ),
+          ),
+          Container(
+            height: 60,
+            width: 60,
+            decoration: BoxDecoration(
+                color: AppColor.buttonGreen,
+                borderRadius: BorderRadius.only(
+                  bottomRight:
+                      Radius.circular(selectedLanguage == 'en' ? 10 : 0),
+                  topRight: Radius.circular(selectedLanguage == 'en' ? 10 : 0),
+                  bottomLeft:
+                      Radius.circular(selectedLanguage == 'en' ? 0 : 10),
+                  topLeft: Radius.circular(selectedLanguage == 'en' ? 0 : 10),
+                )),
+            child: const Padding(
+              padding: EdgeInsets.all(12.0),
+              child: Icon(Icons.search, size: 30, color: AppColor.white),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
