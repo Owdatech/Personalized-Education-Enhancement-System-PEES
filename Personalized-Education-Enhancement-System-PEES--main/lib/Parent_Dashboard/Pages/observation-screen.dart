@@ -223,8 +223,20 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
     }
 
     // Proceed with API call
+    String apiDate = date;
+    if (_obsSelectedDate != null) {
+      apiDate = DateFormat('yyyy-MM-dd').format(_obsSelectedDate!);
+    } else {
+      try {
+        apiDate = DateFormat('yyyy-MM-dd')
+            .format(DateFormat('dd-MM-yyyy').parseStrict(date));
+      } catch (_) {
+        // Keep the original input if parsing fails.
+      }
+    }
+
     int? code =
-        await viewModel.addObservation(studId, file, subject, observation);
+        await viewModel.addObservation(studId, file, subject, observation, apiDate);
     if (context.mounted) {
       if (code == 200) {
         setState(() {

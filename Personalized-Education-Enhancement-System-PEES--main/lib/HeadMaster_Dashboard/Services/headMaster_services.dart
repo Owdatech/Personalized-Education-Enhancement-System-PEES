@@ -55,7 +55,7 @@ class HeadMasterServices extends BaseVM {
   Future<int?> fetchProgressData(
       String studentID, String? fromDate, String? toDate) async {
     final url = Uri.parse(
-        'https://pees.ddnsking.com/api/student/progress/$studentID?startDate=$fromDate&endDate=$toDate');
+        '${Config.baseURL}api/student/progress/$studentID?startDate=$fromDate&endDate=$toDate');
     setLoading(true);
     print("Progress : $url");
     try {

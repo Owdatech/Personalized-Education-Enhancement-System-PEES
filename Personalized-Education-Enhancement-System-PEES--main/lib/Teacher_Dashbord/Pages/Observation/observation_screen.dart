@@ -54,6 +54,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
   List<String> subjects = [];
   String? selectedCurriculum;
   String? selectedSubject;
+  String attendanceStatus = 'Present';
   List<String> curriculumNames = [];
   String? imageUrl;
 
@@ -129,6 +130,11 @@ class _ObservationScreenState extends State<ObservationScreen> {
             filteredCurriculumList.map((e) => e.subject).toSet().toList();
         print("Filtered Subject List == $subjects");
 
+        if (subjects.isNotEmpty &&
+            (selectedSubject == null || !subjects.contains(selectedSubject))) {
+          selectedSubject = subjects.first;
+        }
+
         // If a subject is selected, filter curriculum names
         filterCurriculumBySubject();
 
@@ -202,14 +208,47 @@ class _ObservationScreenState extends State<ObservationScreen> {
       return;
     }
 
-    if (observation.isEmpty) {
+    if (observation.isEmpty && attendanceStatus != 'Absent') {
       Utils.snackBar("Please enter an observation", context);
       return;
     }
 
+    if (observation.isEmpty && attendanceStatus == 'Absent') {
+      observation = "absentAutoNote".tr;
+    }
+
+    if (!RegExp(r'^\s*(Selected Date|التاريخ المحدد):', caseSensitive: false)
+        .hasMatch(observation)) {
+      observation = "${"selectedDateLabel".tr}: $date\n$observation";
+    }
+    final localizedAttendanceValue =
+        attendanceStatus == 'Absent' ? "absent".tr : "present".tr;
+    if (!RegExp(r'^\s*(Attendance|حضور)\s*:', caseSensitive: false)
+        .hasMatch(observation)) {
+      observation =
+          "${"attendance".tr}: $localizedAttendanceValue\n$observation";
+    }
+
     // Proceed with API call
-    int? code =
-        await viewModel.addObservation(studId, file, subject, observation);
+    String apiDate = date;
+    if (_obsSelectedDate != null) {
+      apiDate = DateFormat('yyyy-MM-dd').format(_obsSelectedDate!);
+    } else {
+      try {
+        apiDate = DateFormat('yyyy-MM-dd')
+            .format(DateFormat('dd-MM-yyyy').parseStrict(date));
+      } catch (_) {
+        // Keep the original input if parsing fails.
+      }
+    }
+
+    int? code = await viewModel.addObservation(
+      studId,
+      file,
+      subject,
+      observation,
+      apiDate,
+    );
     if (context.mounted) {
       if (code == 200) {
         setState(() {
@@ -230,6 +269,166 @@ class _ObservationScreenState extends State<ObservationScreen> {
     obsdateController.clear();
     _trxnStatus = null;
     file = null;
+    attendanceStatus = 'Present';
+  }
+
+  String? _observationId(Map<String, dynamic> item) {
+    dynamic normalizedId(dynamic value) {
+      if (value == null) return null;
+      final idText = value.toString().trim();
+      if (idText.isEmpty) return null;
+      if (idText.toLowerCase() == 'null') return null;
+      return idText;
+    }
+
+    dynamic searchId(dynamic node) {
+      if (node is Map) {
+        for (final entry in node.entries) {
+          final key = entry.key.toString().toLowerCase().replaceAll('_', '');
+          if (key == 'id' ||
+              key == '_id' ||
+              key == 'observationid' ||
+              key.endsWith('id')) {
+            final value = normalizedId(entry.value);
+            if (value != null) return value;
+          }
+        }
+        for (final value in node.values) {
+          final nested = searchId(value);
+          if (nested != null) return nested;
+        }
+      } else if (node is List) {
+        for (final value in node) {
+          final nested = searchId(value);
+          if (nested != null) return nested;
+        }
+      }
+      return null;
+    }
+
+    return searchId(item)?.toString();
+  }
+
+  Future<void> _showDeleteObservationDialog(Map<String, dynamic> item) async {
+    final observationId = _observationId(item);
+    if (observationId == null) {
+      Utils.snackBar(
+          "This observation cannot be deleted because the server did not return an observation ID.",
+          context);
+      return;
+    }
+
+    final bool? shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Observation"),
+        content: const Text(
+            "Are you sure you want to delete this observation?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true) return;
+
+    final studId = widget.model?.studentId.toString() ?? "";
+    final code = await viewModel.deleteObservation(studId, observationId);
+    if (!mounted) return;
+
+    if (code == 200 || code == 204) {
+      Utils.snackBar("Observation deleted successfully", context);
+      fetchObservation();
+    } else if (code == 404) {
+      Utils.snackBar("Delete endpoint not found or ID missing on server", context);
+    } else {
+      Utils.snackBar("Failed to delete observation", context);
+    }
+  }
+
+  Future<void> _showEditObservationDialog(Map<String, dynamic> item) async {
+    final observationId = _observationId(item);
+    if (observationId == null) {
+      Utils.snackBar(
+          "This observation cannot be edited because the server did not return an observation ID.",
+          context);
+      return;
+    }
+
+    final subjectController =
+        TextEditingController(text: item['subject']?.toString() ?? "");
+    final observationTextController =
+        TextEditingController(text: item['observation']?.toString() ?? "");
+
+    final bool? shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Edit Observation"),
+        content: SizedBox(
+          width: 500,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: subjectController,
+                decoration: const InputDecoration(labelText: "Subject"),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: observationTextController,
+                minLines: 3,
+                maxLines: 5,
+                decoration: const InputDecoration(labelText: "Observation"),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSave != true) return;
+
+    final subject = subjectController.text.trim();
+    final observation = observationTextController.text.trim();
+    if (subject.isEmpty || observation.isEmpty) {
+      Utils.snackBar("Subject and observation are required", context);
+      return;
+    }
+
+    final studId = widget.model?.studentId.toString() ?? "";
+    final code = await viewModel.updateObservation(
+      studId,
+      observationId,
+      subject,
+      observation,
+    );
+
+    if (!mounted) return;
+    if (code == 200 || code == 204) {
+      Utils.snackBar("Observation updated successfully", context);
+      fetchObservation();
+    } else if (code == 404) {
+      Utils.snackBar("Update endpoint not found or ID missing on server", context);
+    } else {
+      Utils.snackBar("Failed to update observation", context);
+    }
   }
 
   @override
@@ -297,31 +496,75 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                             ? detailsViewUI()
                                             : Column(
                                                 children: [
-                                                  obsList(),
-                                                  const SizedBox(height: 10),
                                                   Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            left: 17),
+                                                    padding: const EdgeInsets
+                                                        .fromLTRB(17, 14, 17, 4),
                                                     child: Align(
-                                                      alignment:
-                                                          Alignment.centerLeft,
-                                                      child: AppFillButton3(
-                                                          onPressed: () {
-                                                            setState(() {
-                                                              isAddObservation =
-                                                                  true;
-                                                            });
-                                                          },
-                                                          text:
-                                                              "addNewObservation",
-                                                          color: AppColor
-                                                              .buttonGreen),
+                                                      alignment: Alignment
+                                                          .centerLeft,
+                                                      child: InkWell(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            isAddObservation =
+                                                                true;
+                                                          });
+                                                        },
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                        child: Container(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal:
+                                                                      16,
+                                                                  vertical: 10),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color:
+                                                                AppColor.white,
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                            border: Border.all(
+                                                                color: AppColor
+                                                                    .buttonGreen,
+                                                                width: 1.4),
+                                                          ),
+                                                          child: Row(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              const Icon(
+                                                                Icons.add,
+                                                                color: AppColor
+                                                                    .buttonGreen,
+                                                                size: 18,
+                                                              ),
+                                                              const SizedBox(
+                                                                  width: 8),
+                                                              Text(
+                                                                "addNewObservation"
+                                                                    .tr,
+                                                                style: NotoSansArabicCustomTextStyle
+                                                                    .semibold
+                                                                    .copyWith(
+                                                                        color: AppColor
+                                                                            .buttonGreen),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
+                                                  const SizedBox(height: 10),
                                                   isAddObservation == true
                                                       ? addObservationUI()
                                                       : SizedBox(),
+                                                  obsList(),
                                                   const SizedBox(height: 20),
                                                 ],
                                               ),
@@ -390,13 +633,6 @@ class _ObservationScreenState extends State<ObservationScreen> {
                         ? Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                                Text(
-                                    "${"date".tr} ${formatDate(date.toString())}",
-                                    style: NotoSansArabicCustomTextStyle.bold
-                                        .copyWith(
-                                            fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
-                                const SizedBox(height: 5),
                                 Text("${"subjectTitle".tr} $subjectName",
                                     style: NotoSansArabicCustomTextStyle.bold
                                         .copyWith(
@@ -415,12 +651,6 @@ class _ObservationScreenState extends State<ObservationScreen> {
                         : Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                  "${"date".tr} ${formatDate(date.toString())}",
-                                  style: NotoSansArabicCustomTextStyle.bold
-                                      .copyWith(
-                                          fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black)),
                               Text("${"subjectTitle".tr} $subjectName",
                                   style: NotoSansArabicCustomTextStyle.bold
                                       .copyWith(
@@ -565,7 +795,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
   Widget obsSelectSubject() {
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
     if (selectedSubject != null && !subjects.contains(selectedSubject)) {
-      selectedSubject = null;
+      selectedSubject = subjects.isNotEmpty ? subjects.first : null;
     }
 
     return SizedBox(
@@ -656,83 +886,94 @@ class _ObservationScreenState extends State<ObservationScreen> {
                 child: Padding(
                   padding:
                       EdgeInsets.only(top: 8, bottom: 8, right: 20, left: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                              "${"date".tr} ${formatDate(sortedList[i]['date'])}",
-                              style: NotoSansArabicCustomTextStyle.medium
-                                  .copyWith(
-                                      fontSize: fontSizeProvider.fontSize,
-                                      color: AppColor.black)),
-                          const SizedBox(height: 7),
-                          Text(sortedList[i]['observation'],
-                              style: NotoSansArabicCustomTextStyle.medium
-                                  .copyWith(
-                                      fontSize: fontSizeProvider.fontSize,
-                                      color: AppColor.black)),
-                          const SizedBox(height: 7),
-                          isMobile
-                              ? Text(
-                                  "${"subject".tr} : ${sortedList[i]['subject']}",
-                                  style: NotoSansArabicCustomTextStyle.medium
-                                      .copyWith(
-                                          fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black))
-                              : SizedBox(),
-                          isMobile ? const SizedBox(height: 5) : SizedBox(),
-                          isMobile
-                              ? AppFillButton3(
-                                  onPressed: () {
-                                    setState(() {
-                                      isViewDetails = true;
-                                      date = sortedList[i]['date'];
-                                      subjectName = sortedList[i]['subject'];
-                                      description =
-                                          sortedList[i]['observation'];
-                                      imageUrl = sortedList[i][
-                                          'attachment_url']; // <-- Add this line
-                                    });
-                                  },
-                                  text: "viewObservation",
-                                  color: AppColor.buttonGreen)
-                              : SizedBox()
-                        ],
-                      ),
-                      isMobile
-                          ? SizedBox()
-                          : Align(
-                              alignment: Alignment.topCenter,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 7),
-                                child: Text(
-                                    "${"subject".tr} : ${sortedList[i]['subject']}",
+                  child: isMobile
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(sortedList[i]['observation'],
+                                style: NotoSansArabicCustomTextStyle.medium
+                                    .copyWith(
+                                        fontSize: fontSizeProvider.fontSize,
+                                        color: AppColor.black)),
+                            const SizedBox(height: 7),
+                            Text("${"subject".tr} : ${sortedList[i]['subject']}",
+                                style: NotoSansArabicCustomTextStyle.medium
+                                    .copyWith(
+                                        fontSize: fontSizeProvider.fontSize,
+                                        color: AppColor.black)),
+                            const SizedBox(height: 5),
+                            AppFillButton3(
+                                onPressed: () {
+                                  setState(() {
+                                    isViewDetails = true;
+                                    date = sortedList[i]['date'];
+                                    subjectName = sortedList[i]['subject'];
+                                    description = sortedList[i]['observation'];
+                                    imageUrl = sortedList[i]['attachment_url'];
+                                  });
+                                },
+                                text: "viewObservation",
+                                color: AppColor.buttonGreen),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    sortedList[i]['observation'],
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
                                     style: NotoSansArabicCustomTextStyle.medium
                                         .copyWith(
-                                            fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
-                              )),
-                      isMobile
-                          ? SizedBox()
-                          : AppFillButton3(
-                              onPressed: () {
-                                setState(() {
-                                  isViewDetails = true;
-                                  date = sortedList[i]['date'];
-                                  subjectName = sortedList[i]['subject'];
-                                  description = sortedList[i]['observation'];
-                                  imageUrl = sortedList[i]
-                                      ['attachment_url']; // <-- Add this line
-                                });
-                              },
-                              text: "viewObservation",
-                              color: AppColor.buttonGreen)
-                    ],
-                  ),
+                                            fontSize:
+                                                fontSizeProvider.fontSize,
+                                            color: AppColor.black),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            SizedBox(
+                              width: 220,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                      "${"subject".tr} : ${sortedList[i]['subject']}",
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.right,
+                                      style: NotoSansArabicCustomTextStyle
+                                          .medium
+                                          .copyWith(
+                                              fontSize:
+                                                  fontSizeProvider.fontSize,
+                                              color: AppColor.black)),
+                                  const SizedBox(height: 8),
+                                  AppFillButton3(
+                                      onPressed: () {
+                                        setState(() {
+                                          isViewDetails = true;
+                                          date = sortedList[i]['date'];
+                                          subjectName = sortedList[i]['subject'];
+                                          description =
+                                              sortedList[i]['observation'];
+                                          imageUrl =
+                                              sortedList[i]['attachment_url'];
+                                        });
+                                      },
+                                      text: "viewObservation",
+                                      color: AppColor.buttonGreen),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
               ),
             ),
@@ -963,6 +1204,87 @@ class _ObservationScreenState extends State<ObservationScreen> {
                           ),
                   ),
                   const SizedBox(height: 15),
+                  Padding(
+                    padding: EdgeInsets.only(
+                        left: selectedLanguage == 'en'
+                            ? isMobile
+                                ? 10
+                                : 20
+                            : isMobile
+                                ? 10
+                                : 20,
+                        right: selectedLanguage == 'en'
+                            ? isMobile
+                                ? 10
+                                : 20
+                            : isMobile
+                                ? 10
+                                : 20),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          Text(
+                            "${"attendance".tr} :",
+                            style: NotoSansArabicCustomTextStyle.medium
+                                .copyWith(
+                                    fontSize: fontSizeProvider.fontSize,
+                                    color: AppColor.black),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Radio<String>(
+                                value: 'Present',
+                                groupValue: attendanceStatus,
+                                activeColor: AppColor.buttonGreen,
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  setState(() {
+                                    attendanceStatus = value;
+                                  });
+                                },
+                              ),
+                              Text(
+                                "present".tr,
+                                style: NotoSansArabicCustomTextStyle.medium
+                                    .copyWith(
+                                        fontSize: fontSizeProvider.fontSize,
+                                        color: AppColor.black),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Radio<String>(
+                                value: 'Absent',
+                                groupValue: attendanceStatus,
+                                activeColor: AppColor.buttonGreen,
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  setState(() {
+                                    attendanceStatus = value;
+                                  });
+                                },
+                              ),
+                              Text(
+                                "absent".tr,
+                                style: NotoSansArabicCustomTextStyle.medium
+                                    .copyWith(
+                                        fontSize: fontSizeProvider.fontSize,
+                                        color: AppColor.black),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   SingleChildScrollView(
                     scrollDirection: isMobile ? Axis.horizontal : Axis.vertical,
                     child: Column(
@@ -974,31 +1296,36 @@ class _ObservationScreenState extends State<ObservationScreen> {
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                "observationTitle".tr,
-                                style: NotoSansArabicCustomTextStyle.medium
-                                    .copyWith(
-                                        fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.black),
+                              SizedBox(
+                                width: isMobile ? 90 : 130,
+                                child: Text(
+                                  "observationTitle".tr,
+                                  style: NotoSansArabicCustomTextStyle.medium
+                                      .copyWith(
+                                          fontSize: fontSizeProvider.fontSize,
+                                          color: AppColor.black),
+                                ),
                               ),
                               const SizedBox(
                                 width: 20,
                               ),
-                              Container(
-                                height: 88,
-                                width: 900,
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(5),
-                                    color: AppColor.extralightGrey),
-                                child: TextField(
-                                  controller: observationController,
-                                  style: PoppinsCustomTextStyle.regular
-                                      .copyWith(
-                                          fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black),
-                                  decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.only(left: 7)),
+                              Expanded(
+                                child: Container(
+                                  height: 88,
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5),
+                                      color: AppColor.extralightGrey),
+                                  child: TextField(
+                                    controller: observationController,
+                                    style: PoppinsCustomTextStyle.regular
+                                        .copyWith(
+                                            fontSize: fontSizeProvider.fontSize,
+                                            color: AppColor.black),
+                                    decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding:
+                                            EdgeInsets.only(left: 7)),
+                                  ),
                                 ),
                               ),
                             ],
@@ -1011,28 +1338,33 @@ class _ObservationScreenState extends State<ObservationScreen> {
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                "attachFiles".tr,
-                                style: NotoSansArabicCustomTextStyle.medium
-                                    .copyWith(
-                                        fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.black),
+                              SizedBox(
+                                width: isMobile ? 90 : 130,
+                                child: Text(
+                                  "attachFiles".tr,
+                                  style: NotoSansArabicCustomTextStyle.medium
+                                      .copyWith(
+                                          fontSize: fontSizeProvider.fontSize,
+                                          color: AppColor.black),
+                                ),
                               ),
                               const SizedBox(width: 25),
-                              InkWell(
-                                onTap: () {
-                                  _pickFiles();
-                                },
-                                child: Container(
-                                    height: 40,
-                                    width: 900,
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5),
-                                        color: AppColor.extralightGrey),
-                                    child: Align(
-                                        alignment: Alignment.center,
-                                        child: Text(
-                                            "${file != null ? file?.name : "supportedFileTypesPDF,JPG".tr}"))),
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () {
+                                    _pickFiles();
+                                  },
+                                  child: Container(
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                          color: AppColor.extralightGrey),
+                                      child: Align(
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                              "${file != null ? file?.name : "supportedFileTypesPDF,JPG".tr}"))),
+                                ),
                               ),
                             ],
                           ),

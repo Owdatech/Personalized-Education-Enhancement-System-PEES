@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pees/API_SERVICES/preference_manager.dart';
+import 'package:pees/API_SERVICES/config.dart';
 import 'package:pees/Common_Screen/Pages/themeWidget.dart';
 import 'package:pees/Common_Screen/Services/font_size_provider.dart';
 import 'package:pees/HeadMaster_Dashboard/Model/headMaster_model.dart';
@@ -31,17 +32,41 @@ class _MasterDashboardState extends State<MasterDashboard> {
   String? userId;
 
   List<dynamic> metrics = [];
+  bool _loadingMetrics = false;
+  String? _metricsError;
   Future<void> fetchPerformanceData() async {
-    final response = await http
-        .get(Uri.parse('https://pees.ddnsking.com/api/school-performance'));
+    setState(() {
+      _loadingMetrics = true;
+      _metricsError = null;
+    });
+    try {
+      final response = await http
+          .get(Uri.parse('${Config.baseURL}api/school-performance'));
 
-    if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          metrics = data is Map && data['metrics'] is List ? data['metrics'] : [];
+          _metricsError = null;
+        });
+      } else {
+        setState(() {
+          metrics = [];
+          _metricsError = 'Failed to load metrics (${response.statusCode})';
+        });
+      }
+    } catch (e) {
       setState(() {
-        metrics = json.decode(response.body)['metrics'];
-        print("Martics : $metrics");
+        metrics = [];
+        _metricsError = 'Unable to load metrics';
       });
-    } else {
-      throw Exception('Failed to load data');
+      print("School performance fetch failed: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingMetrics = false;
+        });
+      }
     }
   }
 
@@ -500,86 +525,99 @@ class _MasterDashboardState extends State<MasterDashboard> {
               ]),
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: ListView.builder(
-              itemCount: metrics.length,
-              itemBuilder: (context, index) {
-                final item = metrics[index];
-                final grade = item['grade'] ?? 'Unknown';
-                final subjects = item['subjects'] as Map<String, dynamic>;
-                return Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                        color: AppColor.white,
-                        borderRadius: BorderRadius.circular(7),
-                        boxShadow: const [
-                          BoxShadow(
-                              blurRadius: 5,
-                              color: AppColor.greyShadow,
-                              offset: Offset(0, 5))
-                        ]),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 5),
-                          Row(
-                            children: [
-                              Text('${"grade".tr} : ',
-                                  style: NotoSansArabicCustomTextStyle.semibold
-                                      .copyWith(
-                                          fontSize: 15, color: AppColor.black)),
-                              Text('$grade',
-                                  style: NotoSansArabicCustomTextStyle.regular
-                                      .copyWith(
-                                          fontSize: 15, color: AppColor.black)),
-                            ],
-                          ),
-                          const SizedBox(height: 5),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('${"subject".tr} : ',
-                                  style: NotoSansArabicCustomTextStyle.semibold
-                                      .copyWith(
-                                          fontSize: 15, color: AppColor.black)),
-                              const SizedBox(width: 5),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: subjects.entries
-                                      .map((e) => Text(
-                                          "${e.key} - ${"Average Grade"} : ${e.value} "))
-                                      .toList(),
+            child: _loadingMetrics
+                ? const Center(child: CircularProgressIndicator())
+                : _metricsError != null
+                    ? Center(
+                        child: Text(_metricsError!,
+                            style: NotoSansArabicCustomTextStyle.medium
+                                .copyWith(color: AppColor.black)),
+                      )
+                    : metrics.isEmpty
+                        ? Center(
+                            child: Text("No school performance data available",
+                                style: NotoSansArabicCustomTextStyle.medium
+                                    .copyWith(color: AppColor.black)),
+                          )
+                        : ListView.builder(
+                            itemCount: metrics.length,
+                            itemBuilder: (context, index) {
+                              final item = metrics[index];
+                              final grade = item['grade'] ?? 'Unknown';
+                              final subjects =
+                                  item['subjects'] as Map<String, dynamic>;
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 10),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      color: AppColor.white,
+                                      borderRadius: BorderRadius.circular(7),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                            blurRadius: 5,
+                                            color: AppColor.greyShadow,
+                                            offset: Offset(0, 5))
+                                      ]),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 5),
+                                        Row(
+                                          children: [
+                                            Text('${"grade".tr} : ',
+                                                style:
+                                                    NotoSansArabicCustomTextStyle
+                                                        .semibold
+                                                        .copyWith(
+                                                            fontSize: 15,
+                                                            color:
+                                                                AppColor.black)),
+                                            Text('$grade',
+                                                style:
+                                                    NotoSansArabicCustomTextStyle
+                                                        .regular
+                                                        .copyWith(
+                                                            fontSize: 15,
+                                                            color:
+                                                                AppColor.black)),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text('${"subject".tr} : ',
+                                                style:
+                                                    NotoSansArabicCustomTextStyle
+                                                        .semibold
+                                                        .copyWith(
+                                                            fontSize: 15,
+                                                            color:
+                                                                AppColor.black)),
+                                            const SizedBox(width: 5),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: subjects.entries
+                                                    .map((e) => Text(
+                                                        "${e.key} - ${"Average Grade"} : ${e.value} "))
+                                                    .toList(),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              );
+                            },
                           ),
-                          // const SizedBox(height: 5),
-                          // Row(
-                          //   crossAxisAlignment: CrossAxisAlignment.start,
-                          //   children: [
-                          //     Text('${"Average Grade"} : ',
-                          //         style: NotoSansArabicCustomTextStyle.semibold
-                          //             .copyWith(
-                          //                 fontSize: 15, color: AppColor.black)),
-                          //     const SizedBox(width: 5),
-                          //     Column(
-                          //       crossAxisAlignment: CrossAxisAlignment.start,
-                          //       children: subjects.entries
-                          //           .map((e) => Text("${e.value}"))
-                          //           .toList(),
-                          //     ),
-                          //   ],
-                          // ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
           ),
         )
       ],

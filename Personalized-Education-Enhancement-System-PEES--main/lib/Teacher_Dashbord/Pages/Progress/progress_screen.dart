@@ -1432,7 +1432,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   Future<void> fetchImprovementAreas(String subjectName) async {
     String apiUrl =
-        "https://pees.ddnsking.com/student/area_need_improvement?studentId=${widget.model?.studentId}&subjectName=$subjectName&lang=$selectedLanguage";
+        "${Config.baseURL}student/area_need_improvement?studentId=${widget.model?.studentId}&subjectName=$subjectName&lang=$selectedLanguage";
     viewModel.setLoading(true);
     print("Imrovement URL : $apiUrl");
     try {

@@ -62,6 +62,17 @@ class AuthVM extends BaseVM {
         setLoading(false);
         return {"role": null, "error": errorMessage};
       }
+    } on http.ClientException catch (error) {
+      print("Request failed: $error");
+      setLoading(false);
+      final msg = error.message.toLowerCase().contains('failed to fetch')
+          ? "Unable to reach server. If running on web, this is usually a CORS/SSL/network issue with the backend URL."
+          : "Unable to connect to the server.";
+      return {"role": null, "error": msg};
+    } on SocketException catch (error) {
+      print("Request failed: $error");
+      setLoading(false);
+      return {"role": null, "error": "No internet or API host is unreachable."};
     } catch (error) {
       print("Request failed: $error");
       setLoading(false);

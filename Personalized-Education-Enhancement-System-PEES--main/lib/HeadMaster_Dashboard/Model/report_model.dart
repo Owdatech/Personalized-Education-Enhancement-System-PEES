@@ -34,6 +34,7 @@ class Subject {
 }
 
 class History {
+  final String? id;
   final String curriculumName;
   final String grade;
   final int marks;
@@ -41,6 +42,7 @@ class History {
   final int? totalMark;
 
   History({
+    this.id,
     required this.curriculumName,
     required this.grade,
     required this.marks,
@@ -50,6 +52,12 @@ class History {
 
   factory History.fromJson(Map<String, dynamic> json) {
     return History(
+      id: json['history_id']?.toString() ??
+          json['historyId']?.toString() ??
+          json['entry_id']?.toString() ??
+          json['entryId']?.toString() ??
+          json['_id']?.toString() ??
+          json['id']?.toString(),
       curriculumName: json['curriculumName'] ?? "N/A",
       grade: json['grade'] ?? "N/A",
       marks: json['marks'] ?? 0,

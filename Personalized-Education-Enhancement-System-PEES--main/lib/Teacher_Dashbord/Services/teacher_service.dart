@@ -109,6 +109,148 @@ class TeacherService extends BaseVM {
     }
   }
 
+  Future<int?> updateStudentMarkEntry({
+    required String studentId,
+    required String entryId,
+    required String subject,
+    required String curriculumName,
+    required int marks,
+    required int totalMark,
+    required String grade,
+    required String timestamp,
+  }) async {
+    setLoading(true);
+    final payload = {
+      "studentId": studentId,
+      "entryId": entryId,
+      "subject": subject,
+      "curriculumName": curriculumName,
+      "marks": marks,
+      "totalMark": totalMark,
+      "grade": grade,
+      "timestamp": timestamp,
+      "action": "update",
+    };
+    final body = jsonEncode(payload);
+
+    final endpoints = [
+      "${Config.baseURL}api/student/report-card/$studentId/history/$entryId",
+      "${Config.baseURL}api/student/report-card/history/$entryId",
+      "${Config.baseURL}${ApiEndPoint.updateReportCard}",
+    ];
+
+    try {
+      for (final endpoint in endpoints) {
+        final uri = Uri.parse(endpoint);
+        try {
+          final postResponse = await http.post(
+            uri,
+            headers: {"Content-Type": "application/json"},
+            body: body,
+          );
+          if (postResponse.statusCode == 200 || postResponse.statusCode == 204) {
+            setLoading(false);
+            return postResponse.statusCode;
+          }
+          if (postResponse.statusCode != 404 && postResponse.statusCode != 405) {
+            setLoading(false);
+            return postResponse.statusCode;
+          }
+
+          final patchResponse = await http.patch(
+            uri,
+            headers: {"Content-Type": "application/json"},
+            body: body,
+          );
+          if (patchResponse.statusCode == 200 || patchResponse.statusCode == 204) {
+            setLoading(false);
+            return patchResponse.statusCode;
+          }
+          if (patchResponse.statusCode != 404 && patchResponse.statusCode != 405) {
+            setLoading(false);
+            return patchResponse.statusCode;
+          }
+        } catch (e) {
+          print("Update mark endpoint failed: $endpoint -> $e");
+        }
+      }
+      setLoading(false);
+      return 404;
+    } catch (error) {
+      print("Update mark failed: $error");
+      setLoading(false);
+      return null;
+    }
+  }
+
+  Future<int?> deleteStudentMarkEntry({
+    required String studentId,
+    required String entryId,
+    required String subject,
+    required String timestamp,
+  }) async {
+    setLoading(true);
+    final payload = {
+      "studentId": studentId,
+      "entryId": entryId,
+      "subject": subject,
+      "timestamp": timestamp,
+      "action": "delete",
+    };
+    final body = jsonEncode(payload);
+
+    final endpoints = [
+      "${Config.baseURL}api/student/report-card/$studentId/history/$entryId",
+      "${Config.baseURL}api/student/report-card/history/$entryId",
+      "${Config.baseURL}${ApiEndPoint.updateReportCard}",
+    ];
+
+    try {
+      for (final endpoint in endpoints) {
+        final uri = Uri.parse(endpoint);
+        try {
+          final postResponse = await http.post(
+            uri,
+            headers: {"Content-Type": "application/json"},
+            body: body,
+          );
+          if (postResponse.statusCode == 200 || postResponse.statusCode == 204) {
+            setLoading(false);
+            return postResponse.statusCode;
+          }
+          if (postResponse.statusCode != 404 && postResponse.statusCode != 405) {
+            setLoading(false);
+            return postResponse.statusCode;
+          }
+
+          final request = http.Request('DELETE', uri);
+          request.headers['Content-Type'] = 'application/json';
+          request.body = body;
+          final streamed = await request.send();
+          final deleteResponse = await http.Response.fromStream(streamed);
+          if (deleteResponse.statusCode == 200 ||
+              deleteResponse.statusCode == 204) {
+            setLoading(false);
+            return deleteResponse.statusCode;
+          }
+          if (deleteResponse.statusCode != 404 &&
+              deleteResponse.statusCode != 405) {
+            setLoading(false);
+            return deleteResponse.statusCode;
+          }
+        } catch (e) {
+          print("Delete mark endpoint failed: $endpoint -> $e");
+        }
+      }
+      setLoading(false);
+      return 404;
+    } catch (error) {
+      print("Delete mark failed: $error");
+      setLoading(false);
+      return null;
+    }
+  }
+
   Future<List<ExamHistory>> fetchExamHistory(String studId) async {
     String url = "${Config.baseURL}get_exam_history/$studId";
     print("Fetching Exam History from: $url");
@@ -359,9 +501,37 @@ class TeacherService extends BaseVM {
     }
   }
 
-  Future<int?> addObservation(String studId, html.File? file, String subject,
-      String observation) async {
-    final data = {"file": file, "subject": subject, "observation": observation};
+  Future<int?> addObservation(
+    String studId,
+    html.File? file,
+    String subject,
+    String observation,
+    String date,
+  ) async {
+    String isoDate = date;
+    String displayDate = date;
+    try {
+      final parsed = DateTime.parse(date);
+      isoDate =
+          "${parsed.year.toString().padLeft(4, '0')}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}";
+      displayDate =
+          "${parsed.day.toString().padLeft(2, '0')}-${parsed.month.toString().padLeft(2, '0')}-${parsed.year.toString().padLeft(4, '0')}";
+    } catch (_) {
+      // Keep as provided if parsing fails.
+    }
+
+    final data = {
+      "file": file,
+      "subject": subject,
+      "observation": observation,
+      "date": isoDate,
+      "entryDate": isoDate,
+      "observation_date": isoDate,
+      "observationDate": isoDate,
+      "selected_date": isoDate,
+      "selectedDate": isoDate,
+      "date_ddmmyyyy": displayDate,
+    };
     print("Request Data : $data");
     setLoading(true);
     try {
@@ -384,8 +554,16 @@ class TeacherService extends BaseVM {
         request.files.add(multipartFile);
       }
 
+      request.fields['date'] = isoDate;
+      request.fields['entryDate'] = isoDate;
+      request.fields['observation_date'] = isoDate;
+      request.fields['observationDate'] = isoDate;
+      request.fields['selected_date'] = isoDate;
+      request.fields['selectedDate'] = isoDate;
+      request.fields['date_ddmmyyyy'] = displayDate;
       request.fields['subject'] = subject;
       request.fields['observation'] = observation;
+      print("Add observation fields: ${request.fields}");
       // Send the request
       var streamedResponse = await request.send();
 
@@ -408,6 +586,267 @@ class TeacherService extends BaseVM {
       setLoading(false);
     }
     return null;
+  }
+
+  Future<int?> updateObservation(
+    String studId,
+    String observationId,
+    String subject,
+    String observation,
+  ) async {
+    setLoading(true);
+    final body = jsonEncode({
+      "subject": subject,
+      "observation": observation,
+    });
+
+    final endpoints = [
+      "${Config.baseURL}students/$studId/observations/$observationId",
+      "${Config.baseURL}api/students/$studId/observations/$observationId",
+      "${Config.baseURL}api/observations/$observationId",
+      "${Config.baseURL}observations/$observationId",
+    ];
+
+    try {
+      for (final endpoint in endpoints) {
+        final uri = Uri.parse(endpoint);
+
+        final patchResponse = await http.patch(
+          uri,
+          headers: {"Content-Type": "application/json"},
+          body: body,
+        );
+        if (patchResponse.statusCode == 200 || patchResponse.statusCode == 204) {
+          setLoading(false);
+          return patchResponse.statusCode;
+        }
+        if (patchResponse.statusCode != 404) {
+          setLoading(false);
+          return patchResponse.statusCode;
+        }
+
+        final putResponse = await http.put(
+          uri,
+          headers: {"Content-Type": "application/json"},
+          body: body,
+        );
+        if (putResponse.statusCode == 200 || putResponse.statusCode == 204) {
+          setLoading(false);
+          return putResponse.statusCode;
+        }
+        if (putResponse.statusCode != 404) {
+          setLoading(false);
+          return putResponse.statusCode;
+        }
+      }
+
+      setLoading(false);
+      return 404;
+    } catch (error) {
+      print("Update observation failed: $error");
+      setLoading(false);
+      return null;
+    }
+  }
+
+  Future<int?> deleteObservation(String studId, String observationId) async {
+    setLoading(true);
+
+    final endpoints = [
+      "${Config.baseURL}students/$studId/observations/$observationId",
+      "${Config.baseURL}api/students/$studId/observations/$observationId",
+      "${Config.baseURL}api/observations/$observationId",
+      "${Config.baseURL}observations/$observationId",
+    ];
+
+    try {
+      for (final endpoint in endpoints) {
+        final response = await http.delete(
+          Uri.parse(endpoint),
+          headers: {"Content-Type": "application/json"},
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          setLoading(false);
+          return response.statusCode;
+        }
+
+        if (response.statusCode != 404) {
+          setLoading(false);
+          return response.statusCode;
+        }
+      }
+
+      setLoading(false);
+      return 404;
+    } catch (error) {
+      print("Delete observation failed: $error");
+      setLoading(false);
+      return null;
+    }
+  }
+
+  Future<int?> updateObservationByMatch(
+    String studId, {
+    required String oldDate,
+    required String oldSubject,
+    required String oldObservation,
+    required String newSubject,
+    required String newObservation,
+  }) async {
+    setLoading(true);
+    final payload = {
+      "old": {
+        "date": oldDate,
+        "subject": oldSubject,
+        "observation": oldObservation,
+      },
+      "new": {
+        "subject": newSubject,
+        "observation": newObservation,
+      },
+      "date": oldDate,
+      "subject": oldSubject,
+      "observation": oldObservation,
+      "updated_subject": newSubject,
+      "updated_observation": newObservation,
+      "action": "update",
+    };
+    final body = jsonEncode(payload);
+
+    final endpoints = [
+      "${Config.baseURL}students/$studId/observations",
+      "${Config.baseURL}api/students/$studId/observations",
+      "${Config.baseURL}students/observations/update",
+      "${Config.baseURL}api/observations/update",
+    ];
+
+    try {
+      for (final endpoint in endpoints) {
+        final uri = Uri.parse(endpoint);
+        try {
+          // POST fallback for web/CORS environments that block PATCH/PUT.
+          final postResponse = await http.post(
+            uri,
+            headers: {"Content-Type": "application/json"},
+            body: body,
+          );
+          if (postResponse.statusCode == 200 || postResponse.statusCode == 204) {
+            setLoading(false);
+            return postResponse.statusCode;
+          }
+          if (postResponse.statusCode != 404 && postResponse.statusCode != 405) {
+            setLoading(false);
+            return postResponse.statusCode;
+          }
+
+          final patchResponse = await http.patch(
+            uri,
+            headers: {"Content-Type": "application/json"},
+            body: body,
+          );
+          if (patchResponse.statusCode == 200 || patchResponse.statusCode == 204) {
+            setLoading(false);
+            return patchResponse.statusCode;
+          }
+          if (patchResponse.statusCode != 404 &&
+              patchResponse.statusCode != 405) {
+            setLoading(false);
+            return patchResponse.statusCode;
+          }
+
+          final putResponse = await http.put(
+            uri,
+            headers: {"Content-Type": "application/json"},
+            body: body,
+          );
+          if (putResponse.statusCode == 200 || putResponse.statusCode == 204) {
+            setLoading(false);
+            return putResponse.statusCode;
+          }
+          if (putResponse.statusCode != 404 && putResponse.statusCode != 405) {
+            setLoading(false);
+            return putResponse.statusCode;
+          }
+        } catch (e) {
+          print("Update by match endpoint failed: $endpoint -> $e");
+        }
+      }
+      setLoading(false);
+      return 404;
+    } catch (error) {
+      print("Update observation by match failed: $error");
+      setLoading(false);
+      return null;
+    }
+  }
+
+  Future<int?> deleteObservationByMatch(
+    String studId, {
+    required String date,
+    required String subject,
+    required String observation,
+  }) async {
+    setLoading(true);
+    final payload = {
+      "date": date,
+      "subject": subject,
+      "observation": observation,
+      "action": "delete",
+    };
+    final body = jsonEncode(payload);
+
+    final endpoints = [
+      "${Config.baseURL}students/$studId/observations",
+      "${Config.baseURL}api/students/$studId/observations",
+      "${Config.baseURL}students/observations/delete",
+      "${Config.baseURL}api/observations/delete",
+    ];
+
+    try {
+      for (final endpoint in endpoints) {
+        final uri = Uri.parse(endpoint);
+        try {
+          // POST fallback for web/CORS environments that block DELETE.
+          final postResponse = await http.post(
+            uri,
+            headers: {"Content-Type": "application/json"},
+            body: body,
+          );
+          if (postResponse.statusCode == 200 || postResponse.statusCode == 204) {
+            setLoading(false);
+            return postResponse.statusCode;
+          }
+          if (postResponse.statusCode != 404 && postResponse.statusCode != 405) {
+            setLoading(false);
+            return postResponse.statusCode;
+          }
+
+          final request = http.Request('DELETE', uri);
+          request.headers['Content-Type'] = 'application/json';
+          request.body = body;
+          final streamed = await request.send();
+          final response = await http.Response.fromStream(streamed);
+
+          if (response.statusCode == 200 || response.statusCode == 204) {
+            setLoading(false);
+            return response.statusCode;
+          }
+          if (response.statusCode != 404 && response.statusCode != 405) {
+            setLoading(false);
+            return response.statusCode;
+          }
+        } catch (e) {
+          print("Delete by match endpoint failed: $endpoint -> $e");
+        }
+      }
+      setLoading(false);
+      return 404;
+    } catch (error) {
+      print("Delete observation by match failed: $error");
+      setLoading(false);
+      return null;
+    }
   }
 
   Future<int?> updateTeachingPlan(
@@ -846,7 +1285,7 @@ class TeacherService extends BaseVM {
     try {
       setLoading(true);
       String url =
-          "https://pees.ddnsking.com/teaching-plans1?teacher_id=$teacherId&student_id=$studentId&lang=$selectedLanguage";
+          "${Config.baseURL}teaching-plans1?teacher_id=$teacherId&student_id=$studentId&lang=$selectedLanguage";
 
       print("URL: $url");
       final response = await http.get(
@@ -1152,7 +1591,7 @@ class TeacherService extends BaseVM {
   Future<int?> deleteEvaluation(String studId, String evaluatedId) async {
     setLoading(true);
     final url = Uri.parse(
-        "https://pees.ddnsking.com/delete_exam_history?student_id=$studId&evaluation_id=$evaluatedId");
+        "${Config.baseURL}delete_exam_history?student_id=$studId&evaluation_id=$evaluatedId");
     try {
       print("Delete Evaluation URL : $url");
       final response = await http.delete(
@@ -1185,7 +1624,7 @@ class TeacherService extends BaseVM {
   Future<int?> fetchProgressData(
       String studentID, String? fromDate, String? toDate) async {
     final url = Uri.parse(
-        'https://pees.ddnsking.com/api/student/progress/$studentID?startDate=$fromDate&endDate=$toDate');
+        '${Config.baseURL}api/student/progress/$studentID?startDate=$fromDate&endDate=$toDate');
     setLoading(true);
     print("Progress : $url");
     try {

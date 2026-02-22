@@ -146,7 +146,7 @@ class _TeachingPlanScreenState extends State<TeachingPlanScreen> {
     );
 
     final url = Uri.parse(
-      "https://pees.ddnsking.com/student/getTeachingPlan?subjectName=$selectedSubject&studentId=$studId&lang=$selectedLanguage",
+      "${Config.baseURL}student/getTeachingPlan?subjectName=$selectedSubject&studentId=$studId&lang=$selectedLanguage",
     );
 
     try {

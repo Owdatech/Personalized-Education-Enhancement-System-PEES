@@ -327,7 +327,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> fetchStudentsList() async {
     try {
       final response = await http.get(
-        Uri.parse("https://pees.ddnsking.com/students/list"),
+        Uri.parse("${Config.baseURL}students/list"),
         headers: {"Content-Type": "application/json"},
       );
 

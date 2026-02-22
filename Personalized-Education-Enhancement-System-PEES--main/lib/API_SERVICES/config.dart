@@ -7,6 +7,8 @@ enum Flavor {
 
 class Config {
   static Flavor appFlavor = Flavor.RELEASE;
+  static const String _baseUrlFromEnv = String.fromEnvironment('API_BASE_URL');
+
   static String get helloMessage {
     switch (appFlavor) {
       case Flavor.RELEASE:
@@ -17,10 +19,14 @@ class Config {
   }
 
   static String get baseURL {
+    if (_baseUrlFromEnv.trim().isNotEmpty) {
+      final custom = _baseUrlFromEnv.trim();
+      return custom.endsWith('/') ? custom : '$custom/';
+    }
+
     switch (appFlavor) {
       case Flavor.RELEASE:
-        return "https://pees.ddnsking.com/"; 
-        //'https://ec2-13-53-130-249.eu-north-1.compute.amazonaws.com/';
+        return "https://api.edupaths.app/";
       case Flavor.DEVELOPMENT:
         return '';
     }

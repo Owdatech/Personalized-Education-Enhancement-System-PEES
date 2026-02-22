@@ -2417,7 +2417,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
 
   Future<void> fetchImprovementAreas(String subjectName) async {
     String apiUrl =
-        "https://pees.ddnsking.com/student/area_need_improvement?studentId=${widget.studentId}&subjectName=$subjectName&lang=$selectedLanguage";
+        "${Config.baseURL}student/area_need_improvement?studentId=${widget.studentId}&subjectName=$subjectName&lang=$selectedLanguage";
     masterViewModel.setLoading(true);
     print("Imrovement URL : $apiUrl");
     try {

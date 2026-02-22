@@ -426,6 +426,144 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     _selectedDate = null;
   }
 
+  Future<void> _showEditMarkDialog(String subjectName, History history) async {
+    if (history.id == null || history.id!.isEmpty) {
+      Utils.snackBar(
+          "This mark entry cannot be edited because no entry ID was returned by server.",
+          context);
+      return;
+    }
+
+    final marksController =
+        TextEditingController(text: history.marks.toString());
+    final totalController =
+        TextEditingController(text: (history.totalMark ?? 0).toString());
+    final gradeController = TextEditingController(text: history.grade);
+
+    final bool? shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Edit Marks"),
+        content: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: marksController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: const InputDecoration(labelText: "Obtained Marks"),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: totalController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: const InputDecoration(labelText: "Total Marks"),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: gradeController,
+                decoration: const InputDecoration(labelText: "Grade"),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSave != true) return;
+
+    final marks = int.tryParse(marksController.text.trim());
+    final totalMarks = int.tryParse(totalController.text.trim());
+    final grade = gradeController.text.trim().isEmpty
+        ? history.grade
+        : gradeController.text.trim();
+
+    if (marks == null || totalMarks == null) {
+      Utils.snackBar("Please enter valid numeric marks", context);
+      return;
+    }
+
+    final code = await teacherViewmodel.updateStudentMarkEntry(
+      studentId: widget.model?.studentId ?? "",
+      entryId: history.id!,
+      subject: subjectName,
+      curriculumName: history.curriculumName,
+      marks: marks,
+      totalMark: totalMarks,
+      grade: grade,
+      timestamp: history.timestamp,
+    );
+
+    if (!mounted) return;
+    if (code == 200 || code == 204) {
+      Utils.snackBar("Marks updated successfully", context);
+      fetchAcademicData();
+    } else if (code == 404) {
+      Utils.snackBar("Update endpoint not available on server", context);
+    } else {
+      Utils.snackBar("Failed to update marks", context);
+    }
+  }
+
+  Future<void> _showDeleteMarkDialog(String subjectName, History history) async {
+    if (history.id == null || history.id!.isEmpty) {
+      Utils.snackBar(
+          "This mark entry cannot be deleted because no entry ID was returned by server.",
+          context);
+      return;
+    }
+
+    final bool? shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Marks"),
+        content: const Text("Are you sure you want to delete this marks entry?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true) return;
+
+    final code = await teacherViewmodel.deleteStudentMarkEntry(
+      studentId: widget.model?.studentId ?? "",
+      entryId: history.id!,
+      subject: subjectName,
+      timestamp: history.timestamp,
+    );
+
+    if (!mounted) return;
+    if (code == 200 || code == 204) {
+      Utils.snackBar("Marks deleted successfully", context);
+      fetchAcademicData();
+    } else if (code == 404) {
+      Utils.snackBar("Delete endpoint not available on server", context);
+    } else {
+      Utils.snackBar("Failed to delete marks", context);
+    }
+  }
+
   // loadCurriculum() async {
   //   SharedPreferences prefs = await SharedPreferences.getInstance();
   //   String? userId = prefs.getString('userId');

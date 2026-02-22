@@ -106,6 +106,7 @@ class LocaleString extends Translations {
           'examName': "Exam Name : ",
           'examNameTitle': "Exam Name",
           'date': "Date : ",
+          'selectedDateLabel': "Selected Date",
           'selectDate': "Select Date",
           'curriculumCoverage': "Curriculum Coverage",
           'multiselectdropdown': "Multiselect dropdown",
@@ -117,6 +118,7 @@ class LocaleString extends Translations {
           'notesHint': "Text area for teachers to add comments.",
           'submit': "Submit",
           'addObservation': "Add Observation",
+          'absentAutoNote': "Student marked absent.",
           'examScipts': "Exam Scipts",
           // Teaching plan
           'currentPlans': "Current Plans",
@@ -433,6 +435,7 @@ class LocaleString extends Translations {
           'examName': "اسم الامتحان :",
           'examNameTitle': "اسم الامتحان",
           'date': "التاريخ :",
+          'selectedDateLabel': "التاريخ المحدد",
           'selectDate': "التاريخ",
           'curriculumCoverage': "تغطية المنهج",
           'multiselectdropdown': "القائمة المنسدلة متعددة التحديد", //
@@ -444,6 +447,7 @@ class LocaleString extends Translations {
           'notesHint': "مساحة نصية للمعلمين لإضافة تعليقات.",
           'submit': "إرسال",
           'addObservation': "إضافة ملاحظة",
+          'absentAutoNote': "تم تسجيل الطالب كغائب.",
           'examScipts': "أوراق الامتحانات",
           // Teaching plan
           'currentPlans': "الخطط الحالية", //

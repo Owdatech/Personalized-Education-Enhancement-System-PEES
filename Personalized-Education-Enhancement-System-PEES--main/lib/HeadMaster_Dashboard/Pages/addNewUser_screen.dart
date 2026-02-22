@@ -167,6 +167,43 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
       }
 
       gradesPayload = passGrade;
+    } else if (roleName == "Parent") {
+      final assignedStudents = selectedStudentIds.toList();
+      if (assignedStudents.isEmpty) {
+        Utils.snackBar("Please select at least one student for parent.", context);
+        return;
+      }
+
+      final Set<String> seenPairs = {};
+      final List<Map<String, dynamic>> parentGrades = [];
+
+      for (final student in allStudents) {
+        final String sid = (student['studentId'] ??
+                student['student_id'] ??
+                student['id'] ??
+                '')
+            .toString();
+        if (!assignedStudents.contains(sid)) continue;
+
+        final String gradeName = (student['grade'] ?? '').toString().trim();
+        final String className =
+            (student['classSection'] ?? student['class'] ?? '')
+                .toString()
+                .trim();
+        if (gradeName.isEmpty || className.isEmpty) continue;
+
+        final key = '$gradeName|$className';
+        if (seenPairs.contains(key)) continue;
+        seenPairs.add(key);
+
+        parentGrades.add({
+          "grade": gradeName,
+          "class": className,
+          "subject": <String>[],
+        });
+      }
+
+      gradesPayload = parentGrades.isNotEmpty ? parentGrades : <dynamic>[];
     }
 
     List<String> assignedStudents = selectedStudentIds.toList();
@@ -452,7 +489,7 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
   Future<void> fetchStudentsList() async {
     try {
       final response = await http.get(
-        Uri.parse("https://pees.ddnsking.com/students/list"),
+        Uri.parse("${Config.baseURL}students/list"),
         headers: {"Content-Type": "application/json"},
       );
 
