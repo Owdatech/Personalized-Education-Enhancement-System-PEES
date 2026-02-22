@@ -15,6 +15,7 @@ import 'package:pees/Teacher_Dashbord/Services/teacher_service.dart';
 import 'package:pees/Widgets/AppButton.dart';
 import 'package:pees/Widgets/AppColor.dart';
 import 'package:pees/Widgets/AppImage.dart';
+import 'package:pees/Widgets/AppSection.dart';
 import 'package:pees/Widgets/Loader_view.dart';
 import 'package:pees/Widgets/back_button.dart';
 import 'package:pees/Widgets/custom_style.dart';
@@ -143,6 +144,11 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
         subjects =
             filteredCurriculumList.map((e) => e.subject).toSet().toList();
         print("Filtered Subject List == $subjects");
+
+        if (subjects.isNotEmpty &&
+            (selectedSubject == null || !subjects.contains(selectedSubject))) {
+          selectedSubject = subjects.first;
+        }
 
         // If a subject is selected, filter curriculum names
         filterCurriculumBySubject();
@@ -314,14 +320,8 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                                     children: [
                                       studentInformation(),
                                       const SizedBox(height: 30),
-                                      headtitle(),
-                                      Container(
-                                        decoration: const BoxDecoration(
-                                            color: AppColor.extralightGrey,
-                                            borderRadius: BorderRadius.only(
-                                                bottomRight: Radius.circular(5),
-                                                bottomLeft:
-                                                    Radius.circular(5))),
+                                      AppSection(
+                                        title: "observation".tr,
                                         child: isViewDetails == true
                                             ? detailsViewUI()
                                             : Column(
@@ -449,7 +449,14 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                                                       ),
                                                     ),
                                                   ),
-                                                  obsList(),
+                                                  SizedBox(
+                                                    height:
+                                                        isMobile ? 420 : 520,
+                                                    child:
+                                                        SingleChildScrollView(
+                                                      child: obsList(),
+                                                    ),
+                                                  ),
                                                   const SizedBox(height: 10),
                                                 ],
                                               ),
@@ -468,29 +475,6 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
             );
           });
         }));
-  }
-
-  headtitle() {
-    final fontSizeProvider = Provider.of<FontSizeProvider>(context);
-    return Container(
-      // height: 40,
-      width: double.infinity,
-      decoration: const BoxDecoration(
-          color: AppColor.buttonGreen,
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(5), topRight: Radius.circular(5))),
-      child: Padding(
-        padding: const EdgeInsets.only(left: 20, top: 8, bottom: 8),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            "observation".tr,
-            style: NotoSansArabicCustomTextStyle.semibold.copyWith(
-                color: AppColor.white, fontSize: fontSizeProvider.fontSize + 1),
-          ),
-        ),
-      ),
-    );
   }
 
   Widget detailsViewUI() {
@@ -692,7 +676,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
   Widget obsSelectSubject() {
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
     if (selectedSubject != null && !subjects.contains(selectedSubject)) {
-      selectedSubject = null;
+      selectedSubject = subjects.isNotEmpty ? subjects.first : null;
     }
 
     return SizedBox(

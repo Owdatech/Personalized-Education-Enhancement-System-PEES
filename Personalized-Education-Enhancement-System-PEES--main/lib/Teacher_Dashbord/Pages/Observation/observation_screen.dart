@@ -16,6 +16,7 @@ import 'package:pees/Teacher_Dashbord/Services/teacher_service.dart';
 import 'package:pees/Widgets/AppButton.dart';
 import 'package:pees/Widgets/AppColor.dart';
 import 'package:pees/Widgets/AppImage.dart';
+import 'package:pees/Widgets/AppSection.dart';
 import 'package:pees/Widgets/AppTextField.dart';
 import 'package:pees/Widgets/Loader_view.dart';
 import 'package:pees/Widgets/back_button.dart';
@@ -484,14 +485,8 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                     children: [
                                       studentInformation(),
                                       const SizedBox(height: 30),
-                                      headtitle(),
-                                      Container(
-                                        decoration: const BoxDecoration(
-                                            color: AppColor.extralightGrey,
-                                            borderRadius: BorderRadius.only(
-                                                bottomRight: Radius.circular(5),
-                                                bottomLeft:
-                                                    Radius.circular(5))),
+                                      AppSection(
+                                        title: "observation".tr,
                                         child: isViewDetails == true
                                             ? detailsViewUI()
                                             : Column(
@@ -564,7 +559,14 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                                   isAddObservation == true
                                                       ? addObservationUI()
                                                       : SizedBox(),
-                                                  obsList(),
+                                                  SizedBox(
+                                                    height:
+                                                        isMobile ? 420 : 520,
+                                                    child:
+                                                        SingleChildScrollView(
+                                                      child: obsList(),
+                                                    ),
+                                                  ),
                                                   const SizedBox(height: 20),
                                                 ],
                                               ),
@@ -583,29 +585,6 @@ class _ObservationScreenState extends State<ObservationScreen> {
             );
           });
         }));
-  }
-
-  headtitle() {
-    final fontSizeProvider = Provider.of<FontSizeProvider>(context);
-    return Container(
-      // height: 40,
-      width: double.infinity,
-      decoration: const BoxDecoration(
-          color: AppColor.buttonGreen,
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(5), topRight: Radius.circular(5))),
-      child: Padding(
-        padding: const EdgeInsets.only(left: 20, top: 8, bottom: 8),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            "observation".tr,
-            style: NotoSansArabicCustomTextStyle.semibold.copyWith(
-                color: AppColor.white, fontSize: fontSizeProvider.fontSize + 1),
-          ),
-        ),
-      ),
-    );
   }
 
   Widget detailsViewUI() {

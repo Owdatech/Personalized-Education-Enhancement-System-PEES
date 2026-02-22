@@ -1,6 +1,7 @@
 // ignore_for_file: unrelated_type_equality_checks
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pees/Teacher_Dashbord/Services/teacher_service.dart';
 import 'package:pees/Widgets/AppButton.dart';
@@ -95,6 +96,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isMobile = MediaQuery.of(context).size.width <= 800;
     return Scaffold(
       body: Stack(
         children: [
@@ -106,8 +108,10 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                     width: MediaQuery.of(context).size.width,
                     // height: MediaQuery.of(context).size.height,
                     child: Padding(
-                      padding:
-                          const EdgeInsets.only(left: 70, right: 70, top: 44),
+                      padding: EdgeInsets.only(
+                          left: isMobile ? 12 : 70,
+                          right: isMobile ? 12 : 70,
+                          top: isMobile ? 16 : 44),
                       child: Column(
                         children: [
                           dropDownBox(),
@@ -124,23 +128,26 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                                         offset: Offset(0, 15))
                                   ]),
                               child: Padding(
-                                padding: const EdgeInsets.only(
-                                    top: 30, left: 70, right: 70),
+                                padding: EdgeInsets.only(
+                                    top: 30,
+                                    left: isMobile ? 12 : 70,
+                                    right: isMobile ? 12 : 70),
                                 child: Column(
                                   children: [
-                                    userDetails(),
+                                    userDetails(isMobile),
                                     const SizedBox(height: 25),
                                     topTabBar(),
                                     viewModel.selectedExamTab ==
                                             ExamScriptFor.academic
-                                        ? academicTable()
-                                        : formView(),
+                                        ? academicTable(isMobile)
+                                        : formView(isMobile),
                                     const SizedBox(height: 10),
                                     viewModel.selectedExamTab ==
                                             ExamScriptFor.academic
-                                        ? Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                        ? Wrap(
+                                            spacing: 10,
+                                            runSpacing: 10,
+                                            alignment: WrapAlignment.end,
                                             children: [
                                               InkWell(
                                                 onTap: () {
@@ -160,7 +167,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                                                               .buttonGreen)),
                                                   child: Center(
                                                     child: Text(
-                                                      "Discard",
+                                                      "discard".tr,
                                                       style: PoppinsCustomTextStyle
                                                           .medium
                                                           .copyWith(
@@ -173,16 +180,16 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                                               ),
                                               AppFillButton3(
                                                 onPressed: () {},
-                                                text: "Exam Script",
+                                                text: "examScript",
                                                 color: AppColor.buttonGreen,
                                               ),
                                               AppFillButton3(
                                                   onPressed: () {},
-                                                  text: "Save",
+                                                  text: "save",
                                                   color: AppColor.buttonGreen),
                                             ],
                                           )
-                                        : SizedBox(),
+                                        : const SizedBox(),
                                     const SizedBox(height: 30)
                                   ],
                                 ),
@@ -201,9 +208,9 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
     );
   }
 
-  Widget academicTable() {
+  Widget academicTable(bool isMobile) {
     return Container(
-      height: 475,
+      constraints: BoxConstraints(minHeight: isMobile ? 0 : 475),
       decoration: const BoxDecoration(
           color: AppColor.extralightGrey,
           borderRadius: BorderRadius.only(
@@ -213,13 +220,15 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 453,
+                      width: isMobile ? 320 : 453,
                       height: 38,
                       decoration: const BoxDecoration(
                           color: AppColor.buttonGreen,
@@ -231,19 +240,19 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("Subject",
+                            Text("subject".tr,
                                 style: NotoSansArabicCustomTextStyle.bold
                                     .copyWith(
                                         fontSize: 13, color: AppColor.white)),
                             Row(
                               children: [
-                                Text("Marks",
+                                Text("marks".tr,
                                     style: NotoSansArabicCustomTextStyle.bold
                                         .copyWith(
                                             fontSize: 13,
                                             color: AppColor.white)),
                                 const SizedBox(width: 25),
-                                Text("Grade",
+                                Text("gradee".tr,
                                     style: NotoSansArabicCustomTextStyle.bold
                                         .copyWith(
                                             fontSize: 13,
@@ -254,21 +263,22 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                         ),
                       ),
                     ),
-                    subjectTable(),
+                    subjectTable(isMobile),
                   ],
                 ),
-                const SizedBox(width: 70),
+                SizedBox(width: isMobile ? 20 : 70),
                 Padding(
                   padding: const EdgeInsets.only(top: 15),
                   child: Column(
                     children: [
-                      attendance(),
+                      attendance(isMobile),
                       const SizedBox(height: 45),
-                      curriculumRelevance()
+                      curriculumRelevance(isMobile)
                     ],
                   ),
                 )
               ],
+              ),
             ),
             Container(
               width: 120,
@@ -278,7 +288,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                   borderRadius: BorderRadius.circular(5)),
               child: Center(
                 child: Text(
-                  "Add Subject",
+                  "addSubject".tr,
                   style: PoppinsCustomTextStyle.medium
                       .copyWith(fontSize: 15, color: AppColor.white),
                 ),
@@ -290,28 +300,28 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
     );
   }
 
-  Widget attendance() {
-    return Container(
+  Widget attendance(bool isMobile) {
+    return SizedBox(
       height: 175,
-      width: 300,
+      width: isMobile ? 280 : 300,
       child: Column(
         children: [
           Container(
             height: 20,
-            width: 300,
+            width: isMobile ? 280 : 300,
             decoration: const BoxDecoration(
                 color: AppColor.buttonGreen,
                 borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(5), topRight: Radius.circular(5))),
             child: Center(
-              child: Text("Attendance",
+              child: Text("attendance".tr,
                   style: PoppinsCustomTextStyle.medium
                       .copyWith(color: AppColor.white, fontSize: 13)),
             ),
           ),
           Container(
             height: 155,
-            width: 300,
+            width: isMobile ? 280 : 300,
             decoration: const BoxDecoration(
                 color: AppColor.white,
                 borderRadius: BorderRadius.only(
@@ -321,14 +331,13 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
               padding: const EdgeInsets.only(top: 12),
               child: Column(
                 children: [
-                  attendanceDetails(
-                      "Total no. of working Days", workingController),
+                  attendanceDetails("totalWorkingDay".tr, workingController),
                   const SizedBox(height: 10),
-                  attendanceDetails("Present Days ", presentController),
+                  attendanceDetails("presentDays".tr, presentController),
                   const SizedBox(height: 10),
-                  attendanceDetails("Absent Days ", absentController),
+                  attendanceDetails("absentDays".tr, absentController),
                   const SizedBox(height: 10),
-                  attendanceDetails("Half Days ", halfController),
+                  attendanceDetails("halfDay".tr, halfController),
                 ],
               ),
             ),
@@ -338,28 +347,28 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
     );
   }
 
-  Widget curriculumRelevance() {
-    return Container(
+  Widget curriculumRelevance(bool isMobile) {
+    return SizedBox(
       height: 175,
-      width: 300,
+      width: isMobile ? 280 : 300,
       child: Column(
         children: [
           Container(
             height: 20,
-            width: 300,
+            width: isMobile ? 280 : 300,
             decoration: const BoxDecoration(
                 color: AppColor.buttonGreen,
                 borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(5), topRight: Radius.circular(5))),
             child: Center(
-              child: Text("Curriculum Relevance",
+              child: Text("curriculumCoverage".tr,
                   style: PoppinsCustomTextStyle.medium
                       .copyWith(color: AppColor.white, fontSize: 13)),
             ),
           ),
           Container(
             height: 155,
-            width: 300,
+            width: isMobile ? 280 : 300,
             decoration: const BoxDecoration(
                 color: AppColor.white,
                 borderRadius: BorderRadius.only(
@@ -371,7 +380,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                 Align(
                   alignment: Alignment.topCenter,
                   child: Text(
-                    "Checkbox or dropdown to select relevant",
+                    "multiselectdropdown".tr,
                     style: NotoSansArabicCustomTextStyle.regular
                         .copyWith(color: AppColor.black, fontSize: 13),
                   ),
@@ -438,58 +447,59 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                 .copyWith(color: AppColor.black, fontSize: 10),
             decoration: const InputDecoration(
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.only(left: 5, bottom: 22)),
+                contentPadding: EdgeInsetsDirectional.only(start: 5, bottom: 22)),
           ),
         ),
       ]),
     );
   }
 
-  Widget subjectTable() {
+  Widget subjectTable(bool isMobile) {
     return Column(
       children: [
-        subjectItem("English", engMarksController, engGradeController),
-        subjectItem("Math", mathMarksController, mathGradeController),
-        subjectItem("Science", sciMarksController, sciGradeController),
-        subjectItem("History", historyMarksController, historyGradeController),
-        subjectItem("GK", gkMarksController, gkGradeController),
-        subjectItem("Computer", compMarksController, compGradeController),
-        subjectItem("Drawing", drwaMarksController, drwaGradeController),
+        subjectItem("English", engMarksController, engGradeController, isMobile),
+        subjectItem("Math", mathMarksController, mathGradeController, isMobile),
+        subjectItem("Science", sciMarksController, sciGradeController, isMobile),
         subjectItem(
-            "Business Studies", busStuMarksController, busStuGradeController),
-        subjectItem("Economics", ecoMarksController, ecoGradeController),
+            "History", historyMarksController, historyGradeController, isMobile),
+        subjectItem("GK", gkMarksController, gkGradeController, isMobile),
+        subjectItem(
+            "Computer", compMarksController, compGradeController, isMobile),
+        subjectItem("Drawing", drwaMarksController, drwaGradeController, isMobile),
+        subjectItem(
+            "Business Studies", busStuMarksController, busStuGradeController, isMobile),
+        subjectItem("Economics", ecoMarksController, ecoGradeController, isMobile),
       ],
     );
   }
 
   Widget subjectItem(String text, TextEditingController marksController,
-      TextEditingController gradeController) {
+      TextEditingController gradeController, bool isMobile) {
     return Row(
       children: [
         Container(
-          width: 314,
+          width: isMobile ? 220 : 314,
           height: 38,
           decoration: BoxDecoration(
               color: AppColor.white,
               border: Border.all(width: 1, color: AppColor.buttonGreen)),
           child: Padding(
-            padding: const EdgeInsets.only(
-              left: 23,
-            ),
+            padding: const EdgeInsetsDirectional.only(start: 23),
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               child: Text(
                 text,
+                overflow: TextOverflow.ellipsis,
                 style: NotoSansArabicCustomTextStyle.bold
                     .copyWith(fontSize: 13, color: AppColor.black),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 25),
+        SizedBox(width: isMobile ? 10 : 25),
         Container(
           height: 36,
-          width: 36,
+          width: isMobile ? 48 : 36,
           decoration: BoxDecoration(
             color: AppColor.white,
             borderRadius: BorderRadius.circular(5),
@@ -505,17 +515,17 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                 border: InputBorder.none),
           ),
         ),
-        const SizedBox(width: 25),
+        SizedBox(width: isMobile ? 10 : 25),
         Container(
           height: 36,
-          width: 36,
+          width: isMobile ? 48 : 36,
           decoration: BoxDecoration(
             color: AppColor.white,
             borderRadius: BorderRadius.circular(5),
             border: Border.all(color: AppColor.buttonGreen, width: 1),
           ),
           child: Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: TextField(
               textAlign: TextAlign.center,
               controller: gradeController,
@@ -531,51 +541,71 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
     );
   }
 
-  Widget userDetails() {
-    return Row(
+  Widget userDetails(bool isMobile) {
+    final detailsColumn = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Text("Alex",
+            style: NotoSansArabicCustomTextStyle.bold
+                .copyWith(fontSize: 18, color: AppColor.black)),
+        const SizedBox(height: 15),
+        Wrap(
+          spacing: isMobile ? 10 : 100,
+          runSpacing: 6,
           children: [
-            Text("Alex",
-                style: NotoSansArabicCustomTextStyle.bold
-                    .copyWith(fontSize: 18, color: AppColor.black)),
-            const SizedBox(height: 15),
-            Row(
-              children: [
-                Text("Student ID : XYZ123456",
-                    style: NotoSansArabicCustomTextStyle.medium
-                        .copyWith(fontSize: 13, color: AppColor.black)),
-                const SizedBox(width: 100),
-                Text("Class/Section : 10th",
-                    style: NotoSansArabicCustomTextStyle.medium
-                        .copyWith(fontSize: 13, color: AppColor.black)),
-              ],
-            ),
-            const SizedBox(height: 15),
-            Text("Contact Information :",
-                style: NotoSansArabicCustomTextStyle.semibold
-                    .copyWith(fontSize: 15, color: AppColor.black)),
-            const SizedBox(height: 15),
-            Row(
-              children: [
-                Text("Phone Number : +911234567890",
-                    style: NotoSansArabicCustomTextStyle.medium
-                        .copyWith(fontSize: 13, color: AppColor.black)),
-                const SizedBox(width: 100),
-                Text("Email : abcd@gmail.com",
-                    style: NotoSansArabicCustomTextStyle.medium
-                        .copyWith(fontSize: 13, color: AppColor.black))
-              ],
-            ),
-            const SizedBox(height: 5),
-            Text("Address : XYZ City, USA",
+            Text("${"studentId".tr} : XYZ123456",
+                style: NotoSansArabicCustomTextStyle.medium
+                    .copyWith(fontSize: 13, color: AppColor.black)),
+            Text("${"class/section".tr} : 10th",
+                style: NotoSansArabicCustomTextStyle.medium
+                    .copyWith(fontSize: 13, color: AppColor.black)),
+          ],
+        ),
+        const SizedBox(height: 15),
+        Text("contactInformation".tr,
+            style: NotoSansArabicCustomTextStyle.semibold
+                .copyWith(fontSize: 15, color: AppColor.black)),
+        const SizedBox(height: 15),
+        Wrap(
+          spacing: isMobile ? 10 : 100,
+          runSpacing: 6,
+          children: [
+            Text("${"phoneNumber".tr} : +911234567890",
+                style: NotoSansArabicCustomTextStyle.medium
+                    .copyWith(fontSize: 13, color: AppColor.black)),
+            Text("${"email".tr} : abcd@gmail.com",
                 style: NotoSansArabicCustomTextStyle.medium
                     .copyWith(fontSize: 13, color: AppColor.black))
           ],
         ),
+        const SizedBox(height: 5),
+        Text("${"address".tr} : XYZ City, USA",
+            style: NotoSansArabicCustomTextStyle.medium
+                .copyWith(fontSize: 13, color: AppColor.black))
+      ],
+    );
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          detailsColumn,
+          const SizedBox(height: 10),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: Container(
+                width: 70,
+                height: 70,
+                decoration: const BoxDecoration(
+                    shape: BoxShape.circle, color: AppColor.lightGrey)),
+          ),
+        ],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        detailsColumn,
         Container(
             width: 100,
             height: 100,
@@ -602,22 +632,25 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 15),
-            child: Text(
-              "Student Name or Student ID",
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.only(start: 15, end: 8),
+              child: Text(
+              "searchHint".tr,
+              overflow: TextOverflow.ellipsis,
               style: NotoSansArabicCustomTextStyle.bold
                   .copyWith(color: AppColor.labelText, fontSize: 18),
             ),
+          ),
           ),
           Container(
             height: 60,
             width: 60,
             decoration: const BoxDecoration(
                 color: AppColor.buttonGreen,
-                borderRadius: BorderRadius.only(
-                  bottomRight: Radius.circular(10),
-                  topRight: Radius.circular(10),
+                borderRadius: BorderRadiusDirectional.only(
+                  bottomEnd: Radius.circular(10),
+                  topEnd: Radius.circular(10),
                 )),
             child: Padding(
               padding: const EdgeInsets.all(12.0),
@@ -629,24 +662,26 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
     );
   }
 
-  Widget formView() {
+  Widget formView(bool isMobile) {
     return Container(
-      height: 500,
+      constraints: BoxConstraints(minHeight: isMobile ? 0 : 500),
       decoration: const BoxDecoration(
           color: AppColor.extralightGrey,
           borderRadius: BorderRadius.only(
               bottomRight: Radius.circular(5), bottomLeft: Radius.circular(5))),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 30),
         child: Column(
           children: [
             const SizedBox(height: 20),
-            Row(
+            Wrap(
+              runSpacing: 10,
+              spacing: 20,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    Text("Exam Name : ",
+                    Text("examName".tr,
                         style: NotoSansArabicCustomTextStyle.medium
                             .copyWith(fontSize: 13, color: AppColor.black)),
                     const SizedBox(width: 10),
@@ -655,7 +690,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                 ),
                 Row(
                   children: [
-                    Text("Date : ",
+                    Text("date".tr,
                         style: NotoSansArabicCustomTextStyle.medium
                             .copyWith(fontSize: 13, color: AppColor.black)),
                     const SizedBox(width: 10),
@@ -669,27 +704,38 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                                 onPressed: () {
                                   _selectDate(context);
                                 },
-                                padding: const EdgeInsets.only(left: 15),
+                                padding: const EdgeInsetsDirectional.only(start: 15),
                                 icon: Image.asset(
                                   AppImage.calendar,
                                   width: 45,
                                 )),
-                            hintText: "Select Date",
+                            hintText: "selectDate".tr,
                             icon: null)),
                   ],
                 )
               ],
             ),
             const SizedBox(height: 15),
-            Row(
-              children: [
-                Text("Curriculum Coverage : ",
-                    style: NotoSansArabicCustomTextStyle.medium
-                        .copyWith(fontSize: 13, color: AppColor.black)),
-                const SizedBox(width: 10),
-                crriculumTextField()
-              ],
-            ),
+            isMobile
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("curriculumCoverage".tr,
+                          style: NotoSansArabicCustomTextStyle.medium
+                              .copyWith(fontSize: 13, color: AppColor.black)),
+                      const SizedBox(height: 10),
+                      crriculumTextField()
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Text("curriculumCoverage".tr,
+                          style: NotoSansArabicCustomTextStyle.medium
+                              .copyWith(fontSize: 13, color: AppColor.black)),
+                      const SizedBox(width: 10),
+                      crriculumTextField()
+                    ],
+                  ),
             const SizedBox(height: 20),
             Container(
               height: 96,
@@ -702,15 +748,15 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text("Upload Files",
+                    Text("uploadFiles".tr,
                         style: PoppinsCustomTextStyle.semibold
                             .copyWith(fontSize: 18, color: AppColor.black)),
                     const SizedBox(height: 5),
-                    Text("Drag and Drop Files",
+                    Text("dragandDropFiles".tr,
                         style: PoppinsCustomTextStyle.medium
                             .copyWith(fontSize: 13, color: AppColor.black)),
                     const SizedBox(height: 5),
-                    Text("Supported File Types PDF,JPG",
+                    Text("supportedFileTypesPDF,JPG".tr,
                         style: PoppinsCustomTextStyle.regular
                             .copyWith(fontSize: 10, color: AppColor.black)),
                     const SizedBox(height: 20),
@@ -720,14 +766,14 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
             ),
             const SizedBox(height: 20),
             Align(
-                alignment: Alignment.centerRight,
+                alignment: AlignmentDirectional.centerEnd,
                 child: AppFillButton3(
                     onPressed: () {},
-                    text: "Upload",
+                    text: "upload",
                     color: AppColor.buttonGreen)),
             Align(
-              alignment: Alignment.topLeft,
-              child: Text("Notes and Observations",
+              alignment: AlignmentDirectional.topStart,
+              child: Text("notesandObservations".tr,
                   style: PoppinsCustomTextStyle.semibold
                       .copyWith(fontSize: 18, color: AppColor.black)),
             ),
@@ -739,18 +785,18 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                   color: AppColor.white,
                   borderRadius: BorderRadius.circular(5)),
               child: Padding(
-                padding: const EdgeInsets.only(top: 7, left: 17),
-                child: Text("Text area for teachers to add comments.",
+                padding: const EdgeInsetsDirectional.only(top: 7, start: 17),
+                child: Text("notesHint".tr,
                     style: PoppinsCustomTextStyle.medium
                         .copyWith(fontSize: 13, color: AppColor.black)),
               ),
             ),
             const SizedBox(height: 20),
             Align(
-                alignment: Alignment.centerRight,
+                alignment: AlignmentDirectional.centerEnd,
                 child: AppFillButton3(
                     onPressed: () {},
-                    text: "Submit",
+                    text: "submit",
                     color: AppColor.buttonGreen)),
             const SizedBox(height: 30),
           ],
@@ -771,13 +817,13 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
             border: Border.all(width: 1.0, color: AppColor.textGrey)),
         child: DropdownButton(
           hint: Padding(
-            padding: const EdgeInsets.only(left: 15, top: 1),
-            child: Text("Multiselect dropdown",
+            padding: const EdgeInsetsDirectional.only(start: 15, top: 1),
+            child: Text("multiselectdropdown".tr,
                 style: NotoSansArabicCustomTextStyle.medium
                     .copyWith(fontSize: 13, color: AppColor.textGrey)),
           ),
           icon: Padding(
-            padding: const EdgeInsets.only(right: 5),
+            padding: const EdgeInsetsDirectional.only(end: 5),
             child: Image.asset(
               AppImage.arrowDown,
               width: 16,
@@ -795,7 +841,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
             return DropdownMenuItem(
                 value: value,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 1, left: 10),
+                  padding: const EdgeInsetsDirectional.only(top: 1, start: 10),
                   child: Text(
                     value,
                     style: NotoSansArabicCustomTextStyle.regular
@@ -820,13 +866,13 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
             border: Border.all(width: 1.0, color: AppColor.textGrey)),
         child: DropdownButton(
           hint: Padding(
-            padding: const EdgeInsets.only(left: 15, top: 1),
-            child: Text("Exam Name",
+            padding: const EdgeInsetsDirectional.only(start: 15, top: 1),
+            child: Text("examNameTitle".tr,
                 style: NotoSansArabicCustomTextStyle.medium
                     .copyWith(fontSize: 13, color: AppColor.textGrey)),
           ),
           icon: Padding(
-            padding: const EdgeInsets.only(right: 5),
+            padding: const EdgeInsetsDirectional.only(end: 5),
             child: Image.asset(
               AppImage.arrowDown,
               width: 16,
@@ -844,7 +890,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
             return DropdownMenuItem(
                 value: value,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 1, left: 10),
+                  padding: const EdgeInsetsDirectional.only(top: 1, start: 10),
                   child: Text(
                     value,
                     style: NotoSansArabicCustomTextStyle.regular
@@ -861,8 +907,8 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
     return Center(
         child: Row(
       children: [
-        tabTitle("Academic Data", ExamScriptFor.academic, 0),
-        tabTitle("Exam Script", ExamScriptFor.examScript, 1),
+        tabTitle("academicData", ExamScriptFor.academic, 0),
+        tabTitle("examScript", ExamScriptFor.examScript, 1),
       ],
     ));
   }
@@ -896,9 +942,13 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                   topRight:
                       Radius.circular(type == ExamScriptFor.academic ? 0 : 5))),
           child: Center(
-            child: Text("$text",
+            child: Text("$text".tr,
                 style: PoppinsCustomTextStyle.bold
-                    .copyWith(fontSize: 18, color: AppColor.white)),
+                    .copyWith(
+                        fontSize: 18,
+                        color: isSelected
+                            ? AppColor.white
+                            : AppColor.buttonGreen)),
           ),
         ),
       ),

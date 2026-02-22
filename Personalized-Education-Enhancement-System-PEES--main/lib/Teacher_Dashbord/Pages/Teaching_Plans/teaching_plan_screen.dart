@@ -641,7 +641,18 @@ class _TeachingPlanScreenState extends State<TeachingPlanScreen> {
               .toSet()
               .toList();
           print("Subject List : $filterSubject");
+          if (filterSubject.isNotEmpty) {
+            selectedSubject = filterSubject.first;
+            isSubjectSelect = true;
+          } else {
+            selectedSubject = null;
+            isSubjectSelect = false;
+          }
         });
+
+        if (selectedSubject != null) {
+          fetchTeachingPlan(selectedSubject!);
+        }
 
         viewModel.setLoading(false);
         viewModel.notifyListeners();
@@ -902,6 +913,11 @@ class _TeachingPlanScreenState extends State<TeachingPlanScreen> {
     Color textColor = themeManager.isHighContrast ? Colors.white : Colors.black;
     Color borderColor =
         themeManager.isHighContrast ? Colors.yellow : Colors.grey;
+    if (selectedSubject != null && !filterSubject.contains(selectedSubject)) {
+      selectedSubject = filterSubject.isNotEmpty ? filterSubject.first : null;
+      isSubjectSelect = selectedSubject != null;
+    }
+
     return SizedBox(
       height: 50,
       width: 250,

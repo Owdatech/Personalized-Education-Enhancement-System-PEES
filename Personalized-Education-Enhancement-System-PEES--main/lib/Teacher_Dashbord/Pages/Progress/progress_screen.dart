@@ -78,6 +78,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
   GlobalKey keyPerformance = GlobalKey();
   String? firstDate;
   String? lastDate;
+  DateTime? availableStartDate;
+  DateTime? availableEndDate;
   String? fromDates;
   String? toDates;
   String selectedLanguage = Get.locale?.languageCode ?? 'en';
@@ -192,7 +194,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
               .toSet()
               .toList();
           print("Subject List : $filterSubject");
+          if (filterSubject.isNotEmpty) {
+            fetchSelectSubject = filterSubject.first;
+          } else {
+            fetchSelectSubject = null;
+          }
         });
+        if (fetchSelectSubject != null) {
+          fetchImprovementAreas(fetchSelectSubject!);
+        }
 
         viewModel.setLoading(false);
         viewModel.notifyListeners();
@@ -217,18 +227,72 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   String? firstDateStr;
   String? lastDateStr;
+
+  DateTime? _parseRecordDate(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) return null;
+
+    final parsed = DateTime.tryParse(value) ??
+        DateTime.tryParse(value.replaceFirst(' ', 'T')) ??
+        (value.length >= 10 ? DateTime.tryParse(value.substring(0, 10)) : null);
+
+    if (parsed == null) return null;
+    return DateTime(parsed.year, parsed.month, parsed.day);
+  }
+
+  Future<void> _initializeDateRangeFromRecords() async {
+    final today = DateTime.now();
+    final wideStart = "2000-01-01";
+    final wideEnd = DateFormat('yyyy-MM-dd').format(today);
+
+    await fetchNewData(wideStart, wideEnd);
+
+    final List<DateTime> recordDates = viewModel.fullDataTableEntries
+        .map((entry) => _parseRecordDate(entry.timestamp))
+        .whereType<DateTime>()
+        .toList();
+
+    if (!mounted) return;
+
+    if (recordDates.isEmpty) {
+      setState(() {
+        availableStartDate = DateTime(today.year, today.month, today.day);
+        availableEndDate = DateTime(today.year, today.month, today.day);
+        firstDateStr = DateFormat('yyyy-MM-dd').format(availableStartDate!);
+        lastDateStr = DateFormat('yyyy-MM-dd').format(availableEndDate!);
+        firstDate = firstDateStr;
+        lastDate = lastDateStr;
+        fromDateController.text = firstDateStr!;
+        toDateController.text = lastDateStr!;
+        _selectedFDate = availableStartDate;
+        _selectedTDate = availableEndDate;
+      });
+      return;
+    }
+
+    recordDates.sort((a, b) => a.compareTo(b));
+    final minDate = recordDates.first;
+    final maxDate = recordDates.last;
+    final formatter = DateFormat('yyyy-MM-dd');
+
+    setState(() {
+      availableStartDate = minDate;
+      availableEndDate = maxDate;
+      firstDateStr = formatter.format(minDate);
+      lastDateStr = formatter.format(maxDate);
+      firstDate = firstDateStr;
+      lastDate = lastDateStr;
+      fromDateController.text = firstDateStr!;
+      toDateController.text = lastDateStr!;
+      _selectedFDate = minDate;
+      _selectedTDate = maxDate;
+    });
+  }
+
   @override
   void initState() {
-    final now = DateTime.now();
-    final firstDay = DateTime(now.year, now.month, 1);
-    final lastDay = DateTime(now.year, now.month + 1, 0);
-    final formatter = DateFormat('yyyy-MM-dd');
-    firstDateStr = formatter.format(firstDay);
-    lastDateStr = formatter.format(lastDay);
-    firstDate = lastDateStr;
-    lastDate = firstDateStr;
-    fetchNewData(firstDateStr.toString(), lastDateStr.toString());
     super.initState();
+    _initializeDateRangeFromRecords();
     // subjectVisibility = {
     //   for (var sp in viewModel.subjectPercentages) sp.subject: true,
     // };
@@ -383,6 +447,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
     Color textColor = themeManager.isHighContrast ? Colors.white : Colors.black;
     Color borderColor =
         themeManager.isHighContrast ? Colors.yellow : Colors.grey;
+    if (fetchSelectSubject != null &&
+        !filterSubject.contains(fetchSelectSubject)) {
+      fetchSelectSubject = filterSubject.isNotEmpty ? filterSubject.first : null;
+    }
+
     return SizedBox(
       height: 50,
       width: 250,
@@ -489,7 +558,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   color: AppColor.buttonGreen)
               : SizedBox.shrink(),
           Align(
-            alignment: Alignment.centerRight,
+            alignment: AlignmentDirectional.centerEnd,
             child: PopupMenuButton<String>(
                 onSelected: (value) {
                   print('Selected Export: $value');
@@ -1107,71 +1176,106 @@ class _ProgressScreenState extends State<ProgressScreen> {
   bool isShowall = false;
   Widget studentMarksTable() {
     List<DataRow> rows = [];
+    final List<Map<String, String>> items = [];
     viewModel.fullDataTableEntries.map((entry) {
+      final dateString = entry.timestamp.toString();
+      final shortDate =
+          dateString.length >= 10 ? dateString.substring(0, 10) : dateString;
+      items.add({
+        "subject": entry.subject,
+        "marks": entry.marks.toString(),
+        "totalMarks": entry.totalMarks.toString(),
+        "date": shortDate,
+      });
       return rows.add(DataRow(cells: [
         DataCell(Text(entry.subject)),
         DataCell(Text(entry.marks.toString())),
         DataCell(Text(entry.totalMarks.toString())),
-        DataCell(Text(entry.timestamp.toString())),
+        DataCell(Text(shortDate)),
       ]));
     }).toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        viewModel.fullDataTableEntries.isEmpty
-            ? const SizedBox()
-            : SizedBox(
-                width: MediaQuery.of(context).size.width / 1.4,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    headingRowColor: WidgetStateColor.resolveWith(
-                        (states) => AppColor.buttonGreen), // Header row color
-                    decoration: BoxDecoration(
-                      border: Border.all(width: 0.8, color: AppColor.black),
-                    ),
-                    columns: [
-                      DataColumn(
-                          label: Text("subject".tr,
-                              style: NotoSansArabicCustomTextStyle.bold
-                                  .copyWith(
-                                      fontSize: 15, color: AppColor.white))),
-                      DataColumn(
-                          label: Text("obtainedMarks".tr,
-                              style: NotoSansArabicCustomTextStyle.bold
-                                  .copyWith(
-                                      fontSize: 15, color: AppColor.white))),
-                      DataColumn(
-                          label: Text("totalMarks".tr,
-                              style: NotoSansArabicCustomTextStyle.bold
-                                  .copyWith(
-                                      fontSize: 15, color: AppColor.white))),
-                      DataColumn(
-                          label: Text("dateTitle".tr,
-                              style: NotoSansArabicCustomTextStyle.bold
-                                  .copyWith(
-                                      fontSize: 15, color: AppColor.white))),
-                    ],
-                    rows: isShowall ? rows : rows.take(5).toList(),
-                  ),
+    return LayoutBuilder(builder: (context, constraints) {
+      final isNarrow = constraints.maxWidth < 1200;
+      final visibleItems = isShowall ? items : items.take(5).toList();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (viewModel.fullDataTableEntries.isNotEmpty && isNarrow)
+            Column(
+              children: visibleItems
+                  .map((item) => Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColor.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border:
+                              Border.all(width: 0.8, color: AppColor.lightGrey),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("${"subject".tr}: ${item["subject"]}"),
+                            const SizedBox(height: 4),
+                            Text(
+                                "${"marks".tr}: ${item["marks"]} / ${item["totalMarks"]}"),
+                            const SizedBox(height: 4),
+                            Text("${"dateTitle".tr}: ${item["date"]}"),
+                          ],
+                        ),
+                      ))
+                  .toList(),
+            )
+          else if (viewModel.fullDataTableEntries.isNotEmpty)
+            SizedBox(
+              width: MediaQuery.of(context).size.width / 1.4,
+              child: DataTable(
+                headingRowColor: WidgetStateColor.resolveWith(
+                    (states) => AppColor.buttonGreen),
+                decoration: BoxDecoration(
+                  border: Border.all(width: 0.8, color: AppColor.black),
                 ),
+                columnSpacing: 16,
+                columns: [
+                  DataColumn(
+                      label: Text("subject".tr,
+                          style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                              fontSize: 15, color: AppColor.white))),
+                  DataColumn(
+                      label: Text("marks".tr,
+                          style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                              fontSize: 15, color: AppColor.white))),
+                  DataColumn(
+                      label: Text("totalMarks".tr,
+                          style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                              fontSize: 15, color: AppColor.white))),
+                  DataColumn(
+                      label: Text("dateTitle".tr,
+                          style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                              fontSize: 15, color: AppColor.white))),
+                ],
+                rows: isShowall ? rows : rows.take(5).toList(),
               ),
-        const SizedBox(height: 10),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-              onPressed: () {
-                setState(() {
-                  isShowall = !isShowall;
-                });
-              },
-              child: Text(isShowall ? "showLess".tr : "showMore".tr,
-                  style: NotoSansArabicCustomTextStyle.medium
-                      .copyWith(fontSize: 15, color: AppColor.buttonGreen))),
-        ),
-        const SizedBox(height: 30),
-      ],
-    );
+            ),
+          if (viewModel.fullDataTableEntries.length > 5) const SizedBox(height: 10),
+          if (viewModel.fullDataTableEntries.length > 5)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton(
+                  onPressed: () {
+                    setState(() {
+                      isShowall = !isShowall;
+                    });
+                  },
+                  child: Text(isShowall ? "showLess".tr : "showMore".tr,
+                      style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                          fontSize: 15, color: AppColor.buttonGreen))),
+            ),
+          const SizedBox(height: 30),
+        ],
+      );
+    });
   }
 
   filters() {
@@ -1244,7 +1348,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                   AppImage.calendar,
                                   width: 45,
                                 )),
-                            hintText: "$lastDate",
+                            hintText: "$firstDate",
                             icon: null)),
                     const SizedBox(height: 15),
                     Text("toDate".tr,
@@ -1266,7 +1370,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                   AppImage.calendar,
                                   width: 45,
                                 )),
-                            hintText: "$firstDate",
+                            hintText: "$lastDate",
                             icon: null)),
                     const SizedBox(height: 15),
                   ],
@@ -1281,11 +1385,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   selectFromDate(BuildContext context) async {
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
+    final minDate = availableStartDate ?? DateTime(2000);
+    final maxDate = availableEndDate ?? DateTime.now();
+    final fallbackInitial = minDate.isAfter(maxDate) ? maxDate : minDate;
+    final initialDate = _selectedFDate ?? fallbackInitial;
     DateTime? newSelectedDate = await showDatePicker(
       context: context,
-      initialDate: _selectedFDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
+      initialDate: initialDate,
+      firstDate: minDate,
+      lastDate: maxDate,
       // selectableDayPredicate: (DateTime value) =>
       //     value.isAfter(DateTime.now()) ? false : true,
       initialEntryMode: DatePickerEntryMode.calendarOnly,
@@ -1326,11 +1434,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   selectToDate(BuildContext context) async {
+    final minDate = _selectedFDate ?? availableStartDate ?? DateTime(2000);
+    final maxDate = availableEndDate ?? DateTime.now();
+    final fallbackInitial = _selectedTDate ?? maxDate;
+    final initialDate = fallbackInitial.isBefore(minDate)
+        ? minDate
+        : (fallbackInitial.isAfter(maxDate) ? maxDate : fallbackInitial);
     DateTime? newSelectedDate = await showDatePicker(
       context: context,
-      initialDate: _selectedTDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
+      initialDate: initialDate,
+      firstDate: minDate,
+      lastDate: maxDate,
       // selectableDayPredicate: (DateTime value) =>
       //     value.isAfter(DateTime.now()) ? false : true,
       initialEntryMode: DatePickerEntryMode.calendarOnly,

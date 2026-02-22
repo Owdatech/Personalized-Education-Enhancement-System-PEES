@@ -41,6 +41,10 @@ class LocaleString extends Translations {
           'settings': 'SETTINGS',
           'welcome': "Welcome",
           'schoolperfo': "School Performance Metrics",
+          'performanceByGrade': "Performance by Grade",
+          'subjectsByGrade': "Subjects by Grade",
+          'noSubjectMarksForSelectedGrade':
+              "No subject marks available for selected grade",
           'schoolHint':
               "Key indicators (e.g., average grades,\nattendance rates).",
           'userManagement': "User Management",
@@ -295,6 +299,26 @@ class LocaleString extends Translations {
           'assignMarks': "Please assign marks",
           'assignGrade': "Please assign grade",
           'assignTotalMark': "Please assign Total Mark",
+          'selectSubjectAndCurriculumHint':
+              "Select a subject and curriculum to enter marks.",
+          'noMarksHistoryYet': "No marks history available yet.",
+          'editMarksTitle': "Edit Marks",
+          'deleteMarksTitle': "Delete Marks",
+          'deleteMarksConfirm':
+              "Are you sure you want to delete this marks entry?",
+          'validNumericMarks': "Please enter valid numeric marks",
+          'marksUpdatedSuccess': "Marks updated successfully",
+          'updateMarksEndpointUnavailable':
+              "Update endpoint not available on server",
+          'updateMarksFailed': "Failed to update marks",
+          'markEntryEditIdMissing':
+              "This mark entry cannot be edited because no entry ID was returned by server.",
+          'markEntryDeleteIdMissing':
+              "This mark entry cannot be deleted because no entry ID was returned by server.",
+          'marksDeletedSuccess': "Marks deleted successfully",
+          'deleteMarksEndpointUnavailable':
+              "Delete endpoint not available on server",
+          'deleteMarksFailed': "Failed to delete marks",
           'updateSuccessReportCard': "Your Report Card Successfully Updated",
           'successTeachingPlan': "Teaching Plan Successfully Updated.",
           'downloadPlan': "Teaching Plans Successfully Downloaded.",
@@ -368,6 +392,10 @@ class LocaleString extends Translations {
           'settings': 'الإعدادات',
           'welcome': "مرحباً،",
           'schoolperfo': "مقاييس أداء المدرسة",
+          'performanceByGrade': "الأداء حسب الصف",
+          'subjectsByGrade': "المواد حسب الصف",
+          'noSubjectMarksForSelectedGrade':
+              "لا توجد درجات مواد متاحة للصف المحدد",
           'schoolHint':
               "المؤشرات الرئيسية (مثل: متوسط الدرجات، معدلات الحضور).",
           'userManagement': "إدارة المستخدمين",
@@ -625,6 +653,25 @@ class LocaleString extends Translations {
           'assignMarks': "يرجى تخصيص الدرجات",
           'assignGrade': "يرجى تخصيص التقدير",
           'assignTotalMark': "يرجى تخصيص الدرجة الكلية",
+          'selectSubjectAndCurriculumHint':
+              "اختر المادة والمنهج لإدخال الدرجات.",
+          'noMarksHistoryYet': "لا يوجد سجل درجات حتى الآن.",
+          'editMarksTitle': "تعديل الدرجات",
+          'deleteMarksTitle': "حذف الدرجات",
+          'deleteMarksConfirm': "هل أنت متأكد أنك تريد حذف سجل الدرجات هذا؟",
+          'validNumericMarks': "يرجى إدخال درجات رقمية صحيحة",
+          'marksUpdatedSuccess': "تم تحديث الدرجات بنجاح",
+          'updateMarksEndpointUnavailable':
+              "نقطة نهاية تحديث الدرجات غير متاحة على الخادم",
+          'updateMarksFailed': "فشل تحديث الدرجات",
+          'markEntryEditIdMissing':
+              "لا يمكن تعديل سجل الدرجات هذا لأنه لم يتم إرجاع معرف السجل من الخادم.",
+          'markEntryDeleteIdMissing':
+              "لا يمكن حذف سجل الدرجات هذا لأنه لم يتم إرجاع معرف السجل من الخادم.",
+          'marksDeletedSuccess': "تم حذف الدرجات بنجاح",
+          'deleteMarksEndpointUnavailable':
+              "نقطة نهاية حذف الدرجات غير متاحة على الخادم",
+          'deleteMarksFailed': "فشل حذف الدرجات",
           'updateSuccessReportCard': "تم تحديث بطاقة التقرير بنجاح",
           'successTeachingPlan': "تم تحديث خطة التدريس بنجاح",
           'downloadPlan': "تم تحميل خطة التدريس بنجاح",

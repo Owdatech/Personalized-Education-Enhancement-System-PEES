@@ -23,6 +23,7 @@ import 'package:pees/Teacher_Dashbord/Services/teacher_service.dart';
 import 'package:pees/Widgets/AppButton.dart';
 import 'package:pees/Widgets/AppColor.dart';
 import 'package:pees/Widgets/AppImage.dart';
+import 'package:pees/Widgets/AppSection.dart';
 import 'package:pees/Widgets/AppTextField.dart';
 import 'package:pees/Widgets/Loader_view.dart';
 import 'package:pees/Widgets/back_button.dart';
@@ -428,9 +429,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
 
   Future<void> _showEditMarkDialog(String subjectName, History history) async {
     if (history.id == null || history.id!.isEmpty) {
-      Utils.snackBar(
-          "This mark entry cannot be edited because no entry ID was returned by server.",
-          context);
+      Utils.snackBar("markEntryEditIdMissing".tr, context);
       return;
     }
 
@@ -443,7 +442,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     final bool? shouldSave = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Edit Marks"),
+        title: Text("editMarksTitle".tr),
         content: SizedBox(
           width: 420,
           child: Column(
@@ -453,19 +452,19 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                 controller: marksController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(labelText: "Obtained Marks"),
+                decoration: InputDecoration(labelText: "marks".tr),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: totalController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(labelText: "Total Marks"),
+                decoration: InputDecoration(labelText: "totalMarks".tr),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: gradeController,
-                decoration: const InputDecoration(labelText: "Grade"),
+                decoration: InputDecoration(labelText: "gradee".tr),
               ),
             ],
           ),
@@ -473,11 +472,11 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
+            child: Text("cancel".tr),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Save"),
+            child: Text("save".tr),
           ),
         ],
       ),
@@ -492,7 +491,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
         : gradeController.text.trim();
 
     if (marks == null || totalMarks == null) {
-      Utils.snackBar("Please enter valid numeric marks", context);
+      Utils.snackBar("validNumericMarks".tr, context);
       return;
     }
 
@@ -509,36 +508,34 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
 
     if (!mounted) return;
     if (code == 200 || code == 204) {
-      Utils.snackBar("Marks updated successfully", context);
+      Utils.snackBar("marksUpdatedSuccess".tr, context);
       fetchAcademicData();
     } else if (code == 404) {
-      Utils.snackBar("Update endpoint not available on server", context);
+      Utils.snackBar("updateMarksEndpointUnavailable".tr, context);
     } else {
-      Utils.snackBar("Failed to update marks", context);
+      Utils.snackBar("updateMarksFailed".tr, context);
     }
   }
 
   Future<void> _showDeleteMarkDialog(String subjectName, History history) async {
     if (history.id == null || history.id!.isEmpty) {
-      Utils.snackBar(
-          "This mark entry cannot be deleted because no entry ID was returned by server.",
-          context);
+      Utils.snackBar("markEntryDeleteIdMissing".tr, context);
       return;
     }
 
     final bool? shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Delete Marks"),
-        content: const Text("Are you sure you want to delete this marks entry?"),
+        title: Text("deleteMarksTitle".tr),
+        content: Text("deleteMarksConfirm".tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
+            child: Text("cancel".tr),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Delete"),
+            child: Text("delete".tr),
           ),
         ],
       ),
@@ -555,12 +552,12 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
 
     if (!mounted) return;
     if (code == 200 || code == 204) {
-      Utils.snackBar("Marks deleted successfully", context);
+      Utils.snackBar("marksDeletedSuccess".tr, context);
       fetchAcademicData();
     } else if (code == 404) {
-      Utils.snackBar("Delete endpoint not available on server", context);
+      Utils.snackBar("deleteMarksEndpointUnavailable".tr, context);
     } else {
-      Utils.snackBar("Failed to delete marks", context);
+      Utils.snackBar("deleteMarksFailed".tr, context);
     }
   }
 
@@ -628,6 +625,31 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
               .toSet()
               .toList();
           print("Subject List : $filterSubject");
+
+          if (filterSubject.isNotEmpty) {
+            fetchSelectSubject = filterSubject.first;
+            isSubjectSelcet = true;
+            filteredCurriculumList = filteredCurricula
+                .where((curriculum) => curriculum.subject == fetchSelectSubject)
+                .toList();
+            selectedFetchCurriculum = null;
+            fetchSelectCurriculumId = null;
+
+            fetchSelectSubjectExam = filterSubject.first;
+            isSubjectSelectedExam = true;
+            selectedFetchCurriculumExam = null;
+            fetchSelectCurriculumExamId = null;
+          } else {
+            fetchSelectSubject = null;
+            fetchSelectSubjectExam = null;
+            isSubjectSelcet = false;
+            isSubjectSelectedExam = false;
+            filteredCurriculumList = [];
+            selectedFetchCurriculum = null;
+            selectedFetchCurriculumExam = null;
+            fetchSelectCurriculumId = null;
+            fetchSelectCurriculumExamId = null;
+          }
         });
 
         teacherViewmodel.setLoading(false);
@@ -674,6 +696,15 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     super.initState();
     fetchAcademicData();
     loadCurriculum();
+  }
+
+  bool _isHiddenGrade(String? grade) {
+    final value = grade?.trim().toUpperCase() ?? "";
+    return value == "N/A" || value == "NA";
+  }
+
+  String _displayGrade(String? grade) {
+    return _isHiddenGrade(grade) ? "" : (grade ?? "");
   }
 
   @override
@@ -737,43 +768,74 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                   children: [
                                     studentInformation(),
                                     const SizedBox(height: 10),
-                                    topTabBar(),
-                                    viewModel.selectedExamTab ==
-                                            ExamScriptFor.academic
-                                        ? academicTable()
-                                        : formView(),
-                                    const SizedBox(height: 15),
-                                    viewModel.selectedExamTab ==
-                                            ExamScriptFor.academic
-                                        ? Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: [
-                                              AppFillButton3(
-                                                  onPressed: () {
-                                                    if (_formKey.currentState!
-                                                        .validate()) {
-                                                      if (markController
-                                                          .text.isEmpty) {
-                                                        Utils.snackBar(
-                                                            "assignMarks".tr,
-                                                            context);
-                                                      }  else if (subjectTotalMarkController
-                                                          .text.isEmpty) {
-                                                        Utils.snackBar(
-                                                            "assignTotalMark"
-                                                                .tr,
-                                                            context);
-                                                      } else {
-                                                        saveReports();
-                                                      }
-                                                    }
-                                                  },
-                                                  text: "save",
-                                                  color: AppColor.buttonGreen),
-                                            ],
-                                          )
-                                        : const SizedBox(),
+                                    AppSection(
+                                      title:
+                                          viewModel.selectedExamTab ==
+                                                  ExamScriptFor.academic
+                                              ? "academicData".tr
+                                              : "examScript".tr,
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            0, 10, 0, 10),
+                                        child: Column(
+                                          children: [
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12),
+                                              child: topTabBar(),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            viewModel.selectedExamTab ==
+                                                    ExamScriptFor.academic
+                                                ? academicTable()
+                                                : formView(),
+                                            const SizedBox(height: 15),
+                                            viewModel.selectedExamTab ==
+                                                    ExamScriptFor.academic
+                                                ? Padding(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 12),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment.end,
+                                                      children: [
+                                                        AppFillButton3(
+                                                            onPressed: () {
+                                                              if (_formKey
+                                                                  .currentState!
+                                                                  .validate()) {
+                                                                if (markController
+                                                                    .text
+                                                                    .isEmpty) {
+                                                                  Utils.snackBar(
+                                                                      "assignMarks"
+                                                                          .tr,
+                                                                      context);
+                                                                } else if (subjectTotalMarkController
+                                                                    .text
+                                                                    .isEmpty) {
+                                                                  Utils.snackBar(
+                                                                      "assignTotalMark"
+                                                                          .tr,
+                                                                      context);
+                                                                } else {
+                                                                  saveReports();
+                                                                }
+                                                              }
+                                                            },
+                                                            text: "save",
+                                                            color: AppColor
+                                                                .buttonGreen),
+                                                      ],
+                                                    ),
+                                                  )
+                                                : const SizedBox(),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                     const SizedBox(height: 50),
                                   ],
                                 ),
@@ -981,14 +1043,21 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
 
   Widget academicTable() {
     List<DataRow> rows = [];
+    final List<Map<String, String>> historyItems = [];
     reportModel?.subjects.forEach((subjectName, subject) {
       subject.history.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       for (var history in subject.history) {
-        // String formattedTimestamp =
-        //     "${history.timestamp.substring(0, 10)} ${history.timestamp.substring(10)}";
-        // DateTime dateTime = DateTime.parse(formattedTimestamp);
-        // String formattedDate =
-        //     DateFormat("dd-MM-yyyy hh:mm a").format(dateTime);
+        final String formattedDate = history.timestamp.length >= 10
+            ? history.timestamp.substring(0, 10)
+            : history.timestamp;
+        historyItems.add({
+          "subject": subjectName,
+          "curriculum": history.curriculumName,
+          "marks": history.marks.toString(),
+          "totalMarks": history.totalMark?.toString() ?? "",
+          "grade": _displayGrade(history.grade),
+          "date": formattedDate,
+        });
         rows.add(DataRow(cells: [
           DataCell(Text(subjectName,
               style: const TextStyle(color: AppColor.black))), // Subject
@@ -1003,9 +1072,9 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                   style:
                       const TextStyle(color: AppColor.black)))), // Total Marks
           DataCell(Center(
-              child: Text(history.grade,
+              child: Text(_displayGrade(history.grade),
                   style: const TextStyle(color: AppColor.black)))), // Grade
-          DataCell(Text(history.timestamp,
+          DataCell(Text(formattedDate,
               style: const TextStyle(color: AppColor.black))), // Date
         ]));
       }
@@ -1093,18 +1162,69 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                           ],
                         ),
                   const SizedBox(height: 10),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: fetchSelectSubject != null
-                        ? DataTable(
-                            headingRowColor: WidgetStateColor.resolveWith(
-                                (states) =>
-                                    AppColor.buttonGreen), // Header row color
-                            decoration: BoxDecoration(
-                              border:
-                                  Border.all(width: 0.8, color: AppColor.black),
-                            ),
-                            columns: [
+                  fetchSelectSubject != null
+                      ? (isMobile
+                          ? Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColor.white,
+                                border: Border.all(
+                                    width: 0.8, color: AppColor.buttonGreen),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(fetchSelectSubject ?? "",
+                                      style: NotoSansArabicCustomTextStyle.bold
+                                          .copyWith(
+                                              color: AppColor.black,
+                                              fontSize:
+                                                  fontSizeProvider.fontSize)),
+                                  const SizedBox(height: 10),
+                                  AppTextField(
+                                      textController: markController,
+                                      inputType: TextInputType.number,
+                                      validator: (value) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
+                                          return "assignMarks".tr;
+                                        }
+                                        return null;
+                                      },
+                                      hintText: "marks".tr,
+                                      icon: null),
+                                  const SizedBox(height: 10),
+                                  AppTextField(
+                                      textController: gradeeController,
+                                      hintText: "gradee".tr,
+                                      icon: null),
+                                  const SizedBox(height: 10),
+                                  AppTextField(
+                                      textController: subjectTotalMarkController,
+                                      inputType: TextInputType.number,
+                                      validator: (value) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
+                                          return "assignTotalMark".tr;
+                                        }
+                                        return null;
+                                      },
+                                      hintText: "totalMarks".tr,
+                                      icon: null),
+                                ],
+                              ),
+                            )
+                          : DataTable(
+                              headingRowColor: WidgetStateColor.resolveWith(
+                                  (states) => AppColor.buttonGreen),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    width: 0.8, color: AppColor.black),
+                              ),
+                              columnSpacing: 16,
+                              columns: [
                                 DataColumn(
                                     label: Text("subject".tr,
                                         style: NotoSansArabicCustomTextStyle
@@ -1113,7 +1233,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                                 color: AppColor.white,
                                                 fontSize: 15))),
                                 DataColumn(
-                                    label: Text("obtainedMarks".tr,
+                                    label: Text("marks".tr,
                                         style: NotoSansArabicCustomTextStyle
                                             .semibold
                                             .copyWith(
@@ -1134,7 +1254,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                                 color: AppColor.white,
                                                 fontSize: 15))),
                               ],
-                            rows: [
+                              rows: [
                                 DataRow(cells: [
                                   DataCell(
                                     Text(
@@ -1147,114 +1267,145 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                     ),
                                   ),
                                   DataCell(
-                                    Container(
-                                      height: 36,
-                                      width: 36,
-                                      decoration: BoxDecoration(
-                                        color: AppColor.white,
-                                        borderRadius: BorderRadius.circular(5),
-                                        border: Border.all(
-                                            color: AppColor.buttonGreen,
-                                            width: 1),
-                                      ),
+                                    SizedBox(
+                                      width: 70,
                                       child: TextFormField(
-                                        // key: _formKey,
                                         textAlign: TextAlign.center,
                                         controller: markController,
+                                        keyboardType: TextInputType.number,
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.digitsOnly
+                                        ],
                                         validator: (value) {
-                                          value == null
-                                              ? 'Please assign marks'
-                                              : null;
+                                          if (value == null ||
+                                              value.trim().isEmpty) {
+                                            return "assignMarks".tr;
+                                          }
+                                          return null;
                                         },
                                         style: PoppinsCustomTextStyle.regular
                                             .copyWith(
                                                 color: AppColor.black,
                                                 fontSize: 13),
                                         decoration: const InputDecoration(
-                                            contentPadding:
-                                                EdgeInsets.only(bottom: 10),
-                                            border: InputBorder.none),
+                                            isDense: true,
+                                            border: OutlineInputBorder()),
                                       ),
                                     ),
                                   ),
                                   DataCell(
-                                    Container(
-                                      height: 36,
-                                      width: 36,
-                                      decoration: BoxDecoration(
-                                        color: AppColor.white,
-                                        borderRadius: BorderRadius.circular(5),
-                                        border: Border.all(
-                                            color: AppColor.buttonGreen,
-                                            width: 1),
-                                      ),
-                                      child: Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: TextFormField(
-                                          // key: _formKey,
-                                          textAlign: TextAlign.center,
-                                          controller: gradeeController,
-                                          // validator: (value) {
-                                          //   value == null
-                                          //       ? "Please assign grade"
-                                          //       : null;
-                                          // },
-                                          style: PoppinsCustomTextStyle.regular
-                                              .copyWith(
-                                                  color: AppColor.black,
-                                                  fontSize: 13),
-                                          decoration: const InputDecoration(
-                                              contentPadding:
-                                                  EdgeInsets.only(bottom: 10),
-                                              border: InputBorder.none),
-                                        ),
+                                    SizedBox(
+                                      width: 70,
+                                      child: TextFormField(
+                                        textAlign: TextAlign.center,
+                                        controller: gradeeController,
+                                        style: PoppinsCustomTextStyle.regular
+                                            .copyWith(
+                                                color: AppColor.black,
+                                                fontSize: 13),
+                                        decoration: const InputDecoration(
+                                            isDense: true,
+                                            border: OutlineInputBorder()),
                                       ),
                                     ),
                                   ),
-                                  DataCell(Container(
-                                    height: 36,
-                                    width: 100,
-                                    decoration: BoxDecoration(
-                                      color: AppColor.white,
-                                      borderRadius: BorderRadius.circular(5),
-                                      border: Border.all(
-                                          color: AppColor.buttonGreen,
-                                          width: 1),
-                                    ),
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
+                                  DataCell(
+                                    SizedBox(
+                                      width: 90,
                                       child: TextFormField(
                                         textAlign: TextAlign.center,
                                         controller: subjectTotalMarkController,
+                                        keyboardType: TextInputType.number,
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.digitsOnly
+                                        ],
                                         validator: (value) {
-                                          value == null
-                                              ? "Please assign Total Marks"
-                                              : null;
+                                          if (value == null ||
+                                              value.trim().isEmpty) {
+                                            return "assignTotalMark".tr;
+                                          }
+                                          return null;
                                         },
                                         style: PoppinsCustomTextStyle.regular
                                             .copyWith(
                                                 color: AppColor.black,
                                                 fontSize: 13),
                                         decoration: const InputDecoration(
-                                            contentPadding:
-                                                EdgeInsets.only(bottom: 10),
-                                            border: InputBorder.none),
+                                            isDense: true,
+                                            border: OutlineInputBorder()),
                                       ),
                                     ),
-                                  ))
+                                  )
                                 ])
-                              ])
-                        : const SizedBox(),
-                  ),
+                              ],
+                            ))
+                      : Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 4),
+                          child: Text(
+                            "selectSubjectAndCurriculumHint".tr,
+                            style: NotoSansArabicCustomTextStyle.medium
+                                .copyWith(
+                                    color: AppColor.labelText,
+                                    fontSize: fontSizeProvider.fontSize),
+                          ),
+                        ),
                   const SizedBox(height: 20),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
+                  if (rows.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 4),
+                      child: Text(
+                        "noMarksHistoryYet".tr,
+                        style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                            color: AppColor.labelText,
+                            fontSize: fontSizeProvider.fontSize),
+                      ),
+                    )
+                  else if (constraints.maxWidth < 1200)
+                    Column(
+                      children: (showAll
+                              ? historyItems
+                              : historyItems.take(5).toList())
+                          .map((item) => Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColor.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                      width: 0.8, color: AppColor.lightGrey),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("${"subject".tr}: ${item["subject"]}"),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                        "${"curriculum".tr}: ${item["curriculum"]}"),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                        "${"marks".tr}: ${item["marks"]} / ${item["totalMarks"]}"),
+                                    const SizedBox(height: 4),
+                                    if ((item["grade"] ?? "").isNotEmpty)
+                                      Text("${"gradee".tr}: ${item["grade"]}"),
+                                    if ((item["grade"] ?? "").isNotEmpty)
+                                      const SizedBox(height: 4),
+                                    Text("${"dateTitle".tr}: ${item["date"]}"),
+                                  ],
+                                ),
+                              ))
+                          .toList(),
+                    )
+                  else
+                    DataTable(
                       headingRowColor: WidgetStateColor.resolveWith(
-                          (states) => AppColor.buttonGreen), // Header row color
+                          (states) => AppColor.buttonGreen),
                       decoration: BoxDecoration(
                         border: Border.all(width: 0.8, color: AppColor.black),
                       ),
+                      columnSpacing: 16,
                       columns: [
                         DataColumn(
                             label: Text("subject".tr,
@@ -1267,7 +1418,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                     .copyWith(
                                         fontSize: 15, color: AppColor.white))),
                         DataColumn(
-                            label: Text("obtainedMarks".tr,
+                            label: Text("marks".tr,
                                 style: NotoSansArabicCustomTextStyle.bold
                                     .copyWith(
                                         fontSize: 15, color: AppColor.white))),
@@ -1289,17 +1440,19 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                       ],
                       rows: showAll ? rows : rows.take(5).toList(),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton(
-                      onPressed: () {
-                        setState(() {
-                          showAll = !showAll;
-                        });
-                      },
-                      child: Text(showAll ? "showLess".tr : "showMore".tr,
-                          style: NotoSansArabicCustomTextStyle.medium.copyWith(
-                              fontSize: 15, color: AppColor.buttonGreen))),
+                  if (rows.isNotEmpty) const SizedBox(height: 10),
+                  if (rows.length > 5)
+                    TextButton(
+                        onPressed: () {
+                          setState(() {
+                            showAll = !showAll;
+                          });
+                        },
+                        child: Text(showAll ? "showLess".tr : "showMore".tr,
+                            style:
+                                NotoSansArabicCustomTextStyle.medium.copyWith(
+                                    fontSize: 15,
+                                    color: AppColor.buttonGreen))),
                   const SizedBox(height: 30),
                 ],
               ),
@@ -1383,7 +1536,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                         const SizedBox(height: 5),
                         crriculumTextFieldExam(isMobile),
                         const SizedBox(height: 5),
-                        Text("${"curriculumCoverage".tr} :".tr,
+                        Text("${"curriculumCoverage".tr} :",
                             style: NotoSansArabicCustomTextStyle.medium
                                 .copyWith(
                                     fontSize: fontSizeProvider.fontSize,
@@ -1419,7 +1572,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                       textController: examNameController,
                                       hintText: "examNameTitle".tr,
                                       validator: (value) => value!.isEmpty
-                                          ? "Exam name is required"
+                                          ? "examEmpty".tr
                                           : null,
                                       icon: null),
                                 ),
@@ -1603,7 +1756,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
 
               const SizedBox(height: 20),
               Align(
-                  alignment: Alignment.centerRight,
+                  alignment: AlignmentDirectional.centerEnd,
                   child: AppFillButton3(
                       onPressed: () {
                         _pickFiles();
@@ -1635,7 +1788,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Align(
-                      alignment: Alignment.centerRight,
+                      alignment: AlignmentDirectional.centerEnd,
                       child: AppFillButton3(
                           onPressed: () {
                             Navigator.push(
@@ -1647,7 +1800,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                           text: "showHistory",
                           color: AppColor.buttonGreen)),
                   Align(
-                      alignment: Alignment.centerRight,
+                      alignment: AlignmentDirectional.centerEnd,
                       child: AppFillButton3(
                           onPressed: () {
                             if (_formKey2.currentState!.validate()) {
@@ -1746,7 +1899,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
         themeManager.isHighContrast ? Colors.yellow : Colors.grey;
 
     if (fetchSelectSubjectExam != null &&
-        !subjects.contains(fetchSelectSubjectExam)) {
+        !filterSubject.contains(fetchSelectSubjectExam)) {
       fetchSelectSubjectExam = null;
     }
 
@@ -1848,7 +2001,9 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
               child: Text("$text".tr,
                   style: PoppinsCustomTextStyle.bold.copyWith(
                       fontSize: fontSizeProvider.fontSize + 1,
-                      color: AppColor.white)),
+                      color: isSelected
+                          ? AppColor.white
+                          : AppColor.buttonGreen)),
             ),
           ),
         ),

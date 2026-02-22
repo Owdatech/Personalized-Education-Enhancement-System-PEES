@@ -64,74 +64,67 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                                   left: isMobile ? 12 : 20,
                                   right: isMobile ? 12 : 20,
                                   top: isMobile ? 12 : 20),
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    classTable(isMobile),
-                                    const SizedBox(height: 30),
-                                    isMobile
-                                        ? Column(
-                                            children: [
-                                              // recentAlerts(),
-                                              recentActivity("recentsAlerts",
-                                                  () {
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  classTable(isMobile),
+                                  const SizedBox(height: 30),
+                                  isMobile
+                                      ? Column(
+                                          children: [
+                                            recentActivity("recentsAlerts", () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          AlertsNotificationScreen(
+                                                              isAlerts: true)));
+                                            }),
+                                            const SizedBox(height: 20),
+                                            recentActivity("upcomingActions",
+                                                () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const UpcomingActionScreen()));
+                                            }),
+                                            const SizedBox(height: 100),
+                                          ],
+                                        )
+                                      : Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              flex: 1,
+                                              child: recentActivity(
+                                                  "recentsAlerts", () {
                                                 Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
                                                         builder: (context) =>
                                                             AlertsNotificationScreen(
-                                                                isAlerts:
-                                                                    true)));
+                                                                isAlerts: true)));
                                               }),
-                                              const SizedBox(height: 20),
-                                              // upcomingActions(),
-                                              recentActivity("upcomingActions",
-                                                  () {
+                                            ),
+                                            const SizedBox(width: 20),
+                                            Expanded(
+                                              flex: 1,
+                                              child: recentActivity(
+                                                  "upcomingActions", () {
                                                 Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
                                                         builder: (context) =>
                                                             const UpcomingActionScreen()));
                                               }),
-                                              const SizedBox(height: 100),
-                                            ],
-                                          )
-                                        : Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Expanded(
-                                                flex: 1,
-                                                child: recentActivity(
-                                                    "recentsAlerts", () {
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              AlertsNotificationScreen(
-                                                                  isAlerts:
-                                                                      true)));
-                                                }),
-                                              ),
-                                              const SizedBox(width: 50),
-                                              Expanded(
-                                                flex: 1,
-                                                child: recentActivity(
-                                                    "upcomingActions", () {
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              const UpcomingActionScreen()));
-                                                }),
-                                              )
-                                            ],
-                                          ),
-                                    const SizedBox(height: 100)
-                                  ],
-                                ),
+                                            )
+                                          ],
+                                        ),
+                                  const SizedBox(height: 100)
+                                ],
                               ),
                             ),
                           ),
@@ -168,12 +161,15 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             color: themeManager.isHighContrast
                 ? AppColor.labelText
                 : AppColor.white),
-        child: Center(
+          child: Center(
             child: Text(
-          title.tr,
-          style: NotoSansArabicCustomTextStyle.medium.copyWith(
-              fontSize: fontSizeProvider.fontSize, color: AppColor.black),
-        )),
+              title.tr,
+              style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                  fontSize: fontSizeProvider.fontSize,
+                  color: themeManager.isHighContrast
+                      ? AppColor.white
+                      : AppColor.black),
+            )),
       ),
     );
   }
@@ -347,39 +343,20 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               child: Padding(
                 padding: const EdgeInsets.only(top: 10, bottom: 10),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Padding(
-                      padding: EdgeInsets.only(
-                          left: selectedLanguage == "en"
-                              ? isMobile
-                                  ? 5
-                                  : 49
-                              : 0,
-                          right: selectedLanguage == "en"
-                              ? 0
-                              : isMobile
-                                  ? 5
-                                  : 49),
+                    Expanded(
                       child: Text("className".tr,
+                          textAlign: selectedLanguage == "en"
+                              ? TextAlign.left
+                              : TextAlign.right,
                           style: PoppinsCustomTextStyle.bold.copyWith(
                               fontSize: fontSizeProvider.fontSize + 1,
                               color: AppColor.white)),
                     ),
-                    Padding(
-                      padding: EdgeInsets.only(
-                          right: selectedLanguage == 'en'
-                              ? isMobile
-                                  ? 5
-                                  : 20
-                              : 0,
-                          left: selectedLanguage == "en"
-                              ? 0
-                              : isMobile
-                                  ? 5
-                                  : 20),
+                    Expanded(
                       child: Text(
                         "numberofStudents".tr,
+                        textAlign: TextAlign.center,
                         style: PoppinsCustomTextStyle.bold.copyWith(
                             fontSize: fontSizeProvider.fontSize + 1,
                             color: AppColor.white),

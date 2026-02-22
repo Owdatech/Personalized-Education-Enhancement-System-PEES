@@ -284,6 +284,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         setState(() {
           classes = fetchedClasses;
           subjects = uniqueSubjects.values.toList();
+          if (subjects.isNotEmpty) {
+            selectedSubject = subjects.first["id"]?.toString();
+          } else {
+            selectedSubject = null;
+          }
 
           // Merge into global list
           allClasses.addAll(fetchedClasses.where((newClass) =>
@@ -1886,7 +1891,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
             ),
             isExpanded: true,
-            value: selectedSubject,
+            value: (selectedSubject != null &&
+                    subjects.any((s) => s["id"] == selectedSubject))
+                ? selectedSubject
+                : (subjects.isNotEmpty ? subjects.first["id"]?.toString() : null),
             underline: const SizedBox.shrink(),
             onChanged: (newValue) {
               setState(() {

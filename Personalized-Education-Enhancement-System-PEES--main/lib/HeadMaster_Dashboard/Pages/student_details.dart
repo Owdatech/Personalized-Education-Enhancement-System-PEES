@@ -129,7 +129,16 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               .toSet()
               .toList();
           print("Subject List : $filterSubject");
+          if (filterSubject.isNotEmpty) {
+            fetchSelectSubject = filterSubject.first;
+          } else {
+            fetchSelectSubject = null;
+          }
         });
+
+        if (fetchSelectSubject != null) {
+          fetchImprovementAreas(fetchSelectSubject!);
+        }
 
         masterViewModel.setLoading(false);
         masterViewModel.notifyListeners();
@@ -2065,6 +2074,11 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     Color textColor = themeManager.isHighContrast ? Colors.white : Colors.black;
     Color borderColor =
         themeManager.isHighContrast ? Colors.yellow : Colors.grey;
+    if (fetchSelectSubject != null &&
+        !filterSubject.contains(fetchSelectSubject)) {
+      fetchSelectSubject = filterSubject.isNotEmpty ? filterSubject.first : null;
+    }
+
     return SizedBox(
       height: 50,
       width: 250,
