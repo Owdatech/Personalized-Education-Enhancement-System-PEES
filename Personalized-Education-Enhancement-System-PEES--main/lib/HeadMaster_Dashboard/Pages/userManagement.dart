@@ -111,12 +111,17 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   void _filterSearchResults(List<UserManageModel> list) {
     setState(() {
       isSearching = true;
-      searchResults = list
-          .where((element) =>
-              element.name!.toLowerCase().contains(searchText.toLowerCase()) ||
-              element.role!.toLowerCase().contains(searchText.toLowerCase()) ||
-              element.status!.toLowerCase().contains(searchText.toLowerCase()))
-          .toList();
+      final query = searchText.toLowerCase().trim();
+      searchResults = list.where((element) {
+        final name = (element.name ?? '').toLowerCase();
+        final email = (element.email ?? '').toLowerCase();
+        final role = (element.role ?? '').toLowerCase();
+        final status = (element.status ?? '').toLowerCase();
+        return name.contains(query) ||
+            email.contains(query) ||
+            role.contains(query) ||
+            status.contains(query);
+      }).toList();
       currentPage = 1;
     });
   }

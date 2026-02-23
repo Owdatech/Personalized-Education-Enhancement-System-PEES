@@ -60,7 +60,7 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                         right: isMobile ? 12 : 30),
                     child: Column(
                       children: [
-                         const SizedBox(height: 5),
+                        const SizedBox(height: 5),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
@@ -99,6 +99,8 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                                           child: Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 isMobile
                                                     ? Row(
@@ -127,78 +129,87 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                                                     ? const SizedBox(height: 5)
                                                     : const SizedBox(),
                                                 Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.start,
                                                   children: [
-                                                    Row(
-                                                      children: [
-                                                        Text(
-                                                            "${"subject".tr} : ",
-                                                            style: NotoSansArabicCustomTextStyle
-                                                                .bold
-                                                                .copyWith(
-                                                                    fontSize:
-                                                                        15,
-                                                                    color: AppColor
-                                                                        .black)),
-                                                        Text(
-                                                            "${viewModel.recentUpdatesList[index].subject}",
-                                                            style: NotoSansArabicCustomTextStyle
-                                                                .regular
-                                                                .copyWith(
-                                                                    fontSize:
-                                                                        14,
-                                                                    color: AppColor
-                                                                        .black))
-                                                      ],
+                                                    Expanded(
+                                                      child: RichText(
+                                                        softWrap: true,
+                                                        text: TextSpan(
+                                                          children: [
+                                                            TextSpan(
+                                                              text:
+                                                                  "${"subject".tr} : ",
+                                                              style: NotoSansArabicCustomTextStyle
+                                                                  .bold
+                                                                  .copyWith(
+                                                                      fontSize:
+                                                                          15,
+                                                                      color: AppColor
+                                                                          .black),
+                                                            ),
+                                                            TextSpan(
+                                                              text:
+                                                                  "${viewModel.recentUpdatesList[index].subject}",
+                                                              style: NotoSansArabicCustomTextStyle
+                                                                  .regular
+                                                                  .copyWith(
+                                                                      fontSize:
+                                                                          14,
+                                                                      color: AppColor
+                                                                          .black),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
                                                     ),
                                                     isMobile
                                                         ? const SizedBox()
-                                                        : Row(
-                                                            children: [
-                                                              Text("date".tr,
-                                                                  style: NotoSansArabicCustomTextStyle
-                                                                      .bold
-                                                                      .copyWith(
-                                                                          fontSize:
-                                                                              15,
-                                                                          color:
-                                                                              AppColor.black)),
-                                                              Text(
-                                                                  "${viewModel.recentUpdatesList[index].date}",
-                                                                  style: NotoSansArabicCustomTextStyle
-                                                                      .regular
-                                                                      .copyWith(
-                                                                          fontSize:
-                                                                              14,
-                                                                          color:
-                                                                              AppColor.black))
-                                                            ],
+                                                        : Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 12),
+                                                            child: Text(
+                                                              "${"date".tr} ${viewModel.recentUpdatesList[index].date}",
+                                                              style: NotoSansArabicCustomTextStyle
+                                                                  .bold
+                                                                  .copyWith(
+                                                                      fontSize:
+                                                                          15,
+                                                                      color: AppColor
+                                                                          .black),
+                                                            ),
                                                           )
                                                   ],
                                                 ),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                        "${"observation".tr} : ",
+                                                const SizedBox(height: 4),
+                                                RichText(
+                                                  softWrap: true,
+                                                  text: TextSpan(
+                                                    children: [
+                                                      TextSpan(
+                                                        text:
+                                                            "${"observation".tr} : ",
                                                         style: NotoSansArabicCustomTextStyle
                                                             .bold
                                                             .copyWith(
                                                                 fontSize: 15,
                                                                 color: AppColor
-                                                                    .black)),
-                                                    Text(
-                                                        "${viewModel.recentUpdatesList[index].observation}",
+                                                                    .black),
+                                                      ),
+                                                      TextSpan(
+                                                        text:
+                                                            "${viewModel.recentUpdatesList[index].observation}",
                                                         style: NotoSansArabicCustomTextStyle
                                                             .regular
                                                             .copyWith(
                                                                 fontSize: 14,
                                                                 color: AppColor
-                                                                    .black))
-                                                  ],
+                                                                    .black),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 )
                                               ],
                                             ),

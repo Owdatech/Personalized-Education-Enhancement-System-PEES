@@ -41,6 +41,10 @@ class LocaleString extends Translations {
           'settings': 'SETTINGS',
           'welcome': "Welcome",
           'schoolperfo': "School Performance Metrics",
+          'schoolPerformanceWindow30Days':
+              "Showing results from the last 30 days",
+          'noSchoolPerformanceDataLast30Days':
+              "No school performance data in the last 30 days",
           'performanceByGrade': "Performance by Grade",
           'subjectsByGrade': "Subjects by Grade",
           'noSubjectMarksForSelectedGrade':
@@ -84,7 +88,7 @@ class LocaleString extends Translations {
           'saveChanges': "Save Changes",
           // Student List(Headmaster)
           'grade': "Grade",
-          'gradee':"Grade",
+          'gradee': "Grade",
           'studentId': "Student ID",
           'contactInformation': "Contact Information : ",
           'phoneNumber': "Phone Number",
@@ -214,6 +218,9 @@ class LocaleString extends Translations {
           'resourcesTitle': "Resources",
           'resounceList': "Links to support materials or guides.",
           'alertsSub': "Section for important messages.",
+          'lowMarksAlertsTitle': "Students With Marks Below 6/10",
+          'noLowMarksAlerts': "No students currently below 6/10.",
+          'marksOutOfTen': "Mark (out of 10)",
           'assList': "List of recent assessments, feedback, or observations.",
           'inApp': "In-app",
 
@@ -353,6 +360,20 @@ class LocaleString extends Translations {
           "length8less":
               "The length of the contact number should not be less than 8",
           "sendFeedback": "Send Feedback",
+          "teacherClassReportTitle": "Teacher Class Report",
+          "selectTeacherHint": "Select teacher",
+          "noTeachersFound": "No teachers found.",
+          "selectTeacherToViewReport": "Select a teacher to view report.",
+          "noClassReportDataForSelectedTeacher":
+              "No class report data for selected teacher.",
+          "averageMarkLabel": "Average mark:",
+          "studentsBelowSixLastEntry": "Students below 6 (last entry):",
+          "noneLabel": "None",
+          "failedToLoadTeachers": "Failed to load teachers",
+          "unableToLoadTeachers": "Unable to load teachers.",
+          "teacherNotFound": "Teacher not found.",
+          "failedToLoadStudents": "Failed to load students",
+          "unableToBuildTeacherReport": "Unable to build teacher report.",
           //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         },
         'ar': {
@@ -392,6 +413,9 @@ class LocaleString extends Translations {
           'settings': 'الإعدادات',
           'welcome': "مرحباً،",
           'schoolperfo': "مقاييس أداء المدرسة",
+          'schoolPerformanceWindow30Days': "عرض النتائج لآخر 30 يومًا",
+          'noSchoolPerformanceDataLast30Days':
+              "لا توجد بيانات أداء للمدرسة خلال آخر 30 يومًا",
           'performanceByGrade': "الأداء حسب الصف",
           'subjectsByGrade': "المواد حسب الصف",
           'noSubjectMarksForSelectedGrade':
@@ -436,7 +460,7 @@ class LocaleString extends Translations {
           'saveChanges': "حفظ التغييرات",
           // Student List(Headmaster)
           'grade': "الصف",
-          'gradee':"الرمز",
+          'gradee': "الرمز",
           'studentId': "رقم الطالب",
           'contactInformation': "معلومات الاتصال",
           'phoneNumber': "رقم الهاتف",
@@ -566,6 +590,9 @@ class LocaleString extends Translations {
           'resourcesTitle': "الموارد",
           'resounceList': "روابط لمواد الدعم أو الأدلة.", //
           'alertsSub': "قسم للرسائل الهامة.", //
+          'lowMarksAlertsTitle': "الطلاب ذوو الدرجات الأقل من 6/10",
+          'noLowMarksAlerts': "لا يوجد طلاب بدرجات أقل من 6/10 حالياً.",
+          'marksOutOfTen': "الدرجة (من 10)",
           'assList': "قائمة التقييمات أو التعليقات أو الملاحظات الأخيرة.", //
           'inApp': "داخل التطبيق",
 
@@ -702,7 +729,21 @@ class LocaleString extends Translations {
           "recentUpdates": "آخر التحديثات",
           "length8greater": "يجب ألا يزيد طول رقم الاتصال عن 8",
           "length8less": "يجب ألا يقل طول رقم الاتصال عن 8",
-          "sendFeedback": "إرسال ملاحظات"
+          "sendFeedback": "إرسال ملاحظات",
+          "teacherClassReportTitle": "تقرير صفوف المعلم",
+          "selectTeacherHint": "اختر المعلم",
+          "noTeachersFound": "لم يتم العثور على معلمين.",
+          "selectTeacherToViewReport": "اختر معلمًا لعرض التقرير.",
+          "noClassReportDataForSelectedTeacher":
+              "لا توجد بيانات تقرير صف للمعلم المحدد.",
+          "averageMarkLabel": "متوسط الدرجة:",
+          "studentsBelowSixLastEntry": "الطلاب الأقل من 6 (آخر إدخال):",
+          "noneLabel": "لا يوجد",
+          "failedToLoadTeachers": "فشل تحميل المعلمين",
+          "unableToLoadTeachers": "تعذر تحميل المعلمين.",
+          "teacherNotFound": "المعلم غير موجود.",
+          "failedToLoadStudents": "فشل تحميل الطلاب",
+          "unableToBuildTeacherReport": "تعذر إنشاء تقرير المعلم."
         },
       };
 }

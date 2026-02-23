@@ -10,7 +10,6 @@ import 'package:pees/Common_Screen/Pages/themeWidget.dart';
 import 'package:pees/Common_Screen/Services/font_size_provider.dart';
 import 'package:pees/HeadMaster_Dashboard/Model/headMaster_model.dart';
 import 'package:pees/HeadMaster_Dashboard/Pages/reports_screen.dart';
-import 'package:pees/HeadMaster_Dashboard/Pages/userManagement.dart';
 import 'package:pees/HeadMaster_Dashboard/Services/headMaster_services.dart';
 import 'package:pees/Models/user_model.dart';
 import 'package:pees/Parent_Dashboard/Pages/alerts&Noti_Screen.dart';
@@ -30,6 +29,7 @@ class MasterDashboard extends StatefulWidget {
 }
 
 class _MasterDashboardState extends State<MasterDashboard> {
+  static const int _schoolMetricsWindowDays = 30;
   HeadMasterServices viewModel = HeadMasterServices();
   String? userId;
   String? _selectedGradeForSubjects;
@@ -67,6 +67,63 @@ class _MasterDashboardState extends State<MasterDashboard> {
     return double.parse(value.toStringAsFixed(2));
   }
 
+  DateTime? _parseAnyDate(dynamic raw) {
+    if (raw == null) return null;
+
+    if (raw is num) {
+      final value = raw.toInt();
+      final ms = value > 1000000000000 ? value : value * 1000;
+      return DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true).toLocal();
+    }
+
+    if (raw is! String) return null;
+    final text = raw.trim();
+    if (text.isEmpty) return null;
+
+    final iso = DateTime.tryParse(text);
+    if (iso != null) return iso.toLocal();
+
+    final dmy = RegExp(r'^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$').firstMatch(text);
+    if (dmy != null) {
+      final day = int.tryParse(dmy.group(1)!);
+      final month = int.tryParse(dmy.group(2)!);
+      final year = int.tryParse(dmy.group(3)!);
+      if (day != null && month != null && year != null) {
+        return DateTime(year, month, day);
+      }
+    }
+
+    return null;
+  }
+
+  DateTime? _extractHistoryDate(Map<dynamic, dynamic> item) {
+    const keys = [
+      'date',
+      'examDate',
+      'exam_date',
+      'createdAt',
+      'created_at',
+      'updatedAt',
+      'updated_at',
+      'timestamp',
+    ];
+
+    for (final key in keys) {
+      if (!item.containsKey(key)) continue;
+      final parsed = _parseAnyDate(item[key]);
+      if (parsed != null) return parsed;
+    }
+    return null;
+  }
+
+  bool _isWithinLastDays(DateTime date, int days) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final start = today.subtract(Duration(days: days - 1));
+    final target = DateTime(date.year, date.month, date.day);
+    return !target.isBefore(start) && !target.isAfter(today);
+  }
+
   String _formatChartValue(double value) {
     return value.toStringAsFixed(2);
   }
@@ -97,8 +154,9 @@ class _MasterDashboardState extends State<MasterDashboard> {
     final List<_GradeChartPoint> points = [];
 
     for (final metric in metrics) {
-      final metricItem =
-          metric is Map ? metric.cast<dynamic, dynamic>() : <dynamic, dynamic>{};
+      final metricItem = metric is Map
+          ? metric.cast<dynamic, dynamic>()
+          : <dynamic, dynamic>{};
       final grade = (metricItem['grade'] ?? 'Unknown').toString().trim();
       final dynamic subjectsRaw = metricItem['subjects'];
       final Map<String, dynamic> subjects = subjectsRaw is Map
@@ -165,7 +223,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
 
     final points = <_SubjectChartPoint>[];
     for (final entry in subjects.entries) {
-      final mark = _resolveSubjectAverageMark(metricItem, entry.key, entry.value);
+      final mark =
+          _resolveSubjectAverageMark(metricItem, entry.key, entry.value);
       final numeric = double.tryParse(mark);
       if (numeric != null) {
         points.add(_SubjectChartPoint(
@@ -234,17 +293,23 @@ class _MasterDashboardState extends State<MasterDashboard> {
         final history = details['history'];
         if (history is! List || history.isEmpty) continue;
 
-        // Reuse existing app behavior: last item is the latest marks record.
-        final latest = history.last;
-        if (latest is! Map) continue;
+        for (final item in history) {
+          if (item is! Map) continue;
+          final historyItem = item.cast<dynamic, dynamic>();
+          final historyDate = _extractHistoryDate(historyItem);
+          if (historyDate == null ||
+              !_isWithinLastDays(historyDate, _schoolMetricsWindowDays)) {
+            continue;
+          }
 
-        final marks = _asDouble(latest['marks']);
-        if (marks == null) continue;
+          final marks = _asDouble(historyItem['marks']);
+          if (marks == null) continue;
 
-        gradeSubjectMarks
-            .putIfAbsent(grade, () => {})
-            .putIfAbsent(subjectName, () => [])
-            .add(marks);
+          gradeSubjectMarks
+              .putIfAbsent(grade, () => {})
+              .putIfAbsent(subjectName, () => [])
+              .add(marks);
+        }
       }
     }
 
@@ -278,42 +343,15 @@ class _MasterDashboardState extends State<MasterDashboard> {
     });
     try {
       final frontendMetrics = await _buildMetricsFromReportCards();
-      if (frontendMetrics.isNotEmpty) {
-        setState(() {
-          metrics = frontendMetrics;
-          final grades = _availableGradesFromMetrics();
-          if (_selectedGradeForSubjects == null ||
-              !grades.contains(_selectedGradeForSubjects)) {
-            _selectedGradeForSubjects = grades.isNotEmpty ? grades.first : null;
-          }
-          _metricsError = null;
-        });
-      } else {
-        // Fallback to backend summary endpoint if frontend aggregation had no data.
-        final response = await http
-            .get(Uri.parse('${Config.baseURL}api/school-performance'));
-
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          final fallbackMetrics =
-              data is Map && data['metrics'] is List ? List<dynamic>.from(data['metrics']) : <dynamic>[];
-          _sortMetricsByGrade(fallbackMetrics);
-          setState(() {
-            metrics = fallbackMetrics;
-            final grades = _availableGradesFromMetrics();
-            if (_selectedGradeForSubjects == null ||
-                !grades.contains(_selectedGradeForSubjects)) {
-              _selectedGradeForSubjects = grades.isNotEmpty ? grades.first : null;
-            }
-            _metricsError = null;
-          });
-        } else {
-          setState(() {
-            metrics = [];
-            _metricsError = 'Failed to load metrics (${response.statusCode})';
-          });
+      setState(() {
+        metrics = frontendMetrics;
+        final grades = _availableGradesFromMetrics();
+        if (_selectedGradeForSubjects == null ||
+            !grades.contains(_selectedGradeForSubjects)) {
+          _selectedGradeForSubjects = grades.isNotEmpty ? grades.first : null;
         }
-      }
+        _metricsError = null;
+      });
     } catch (e) {
       setState(() {
         metrics = [];
@@ -427,7 +465,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
     return "-";
   }
 
-  dynamic _lookupBySubjectKey(Map<dynamic, dynamic> source, String subjectName) {
+  dynamic _lookupBySubjectKey(
+      Map<dynamic, dynamic> source, String subjectName) {
     if (source.containsKey(subjectName)) return source[subjectName];
 
     final normalized = subjectName.trim().toLowerCase();
@@ -438,8 +477,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
     return null;
   }
 
-  String _resolveSubjectAverageMark(
-      Map<dynamic, dynamic> metricItem, String subjectName, dynamic subjectValue) {
+  String _resolveSubjectAverageMark(Map<dynamic, dynamic> metricItem,
+      String subjectName, dynamic subjectValue) {
     // 1) Try subject-level payload first.
     final fromSubject = _formatAverageMark(subjectValue);
     if (fromSubject != "-") return fromSubject;
@@ -526,76 +565,69 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    schoolPerformance(isMobile),
-                                    const SizedBox(height: 40),
                                     isMobile
                                         ? Column(
                                             children: [
-                                              recentActivity(
-                                                "userManagement",
-                                                () {
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              const UserManagementScreen()));
-                                                },
-                                              ),
-
-                                              // userManagement(isMobile),
-                                              const SizedBox(height: 10),
-                                              recentActivity(
-                                                "reports",
-                                                () {
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              const ReposrtsScreen()));
-                                                },
+                                              ConstrainedBox(
+                                                constraints:
+                                                    const BoxConstraints(
+                                                        maxWidth: 520),
+                                                child: recentActivity(
+                                                  "reports",
+                                                  () {
+                                                    Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                const ReposrtsScreen()));
+                                                  },
+                                                ),
                                               ),
                                               // reports(),
                                               const SizedBox(height: 10),
                                               // alertsAndNotification(),
-                                              recentActivity(
-                                                "alerts&Noti",
-                                                () {
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              AlertsNotificationScreen(
-                                                                  isAlerts:
-                                                                      false)));
-                                                },
+                                              ConstrainedBox(
+                                                constraints:
+                                                    const BoxConstraints(
+                                                        maxWidth: 520),
+                                                child: recentActivity(
+                                                  "alerts&Noti",
+                                                  () {
+                                                    Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                AlertsNotificationScreen(
+                                                                    isAlerts:
+                                                                        false)));
+                                                  },
+                                                ),
                                               ),
+                                              const SizedBox(height: 10),
+                                              schoolPerformance(isMobile),
                                               const SizedBox(height: 70),
                                             ],
                                           )
                                         : Row(
                                             mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                                MainAxisAlignment.center,
                                             children: [
-                                              Expanded(
-                                                  flex: 1,
-                                                  child:
-                                                      userManagement(isMobile)),
+                                              SizedBox(
+                                                width: 360,
+                                                child: recentActivity(
+                                                  "reports",
+                                                  () {
+                                                    Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                const ReposrtsScreen()));
+                                                  },
+                                                ),
+                                              ),
                                               const SizedBox(width: 15),
-                                              Expanded(
-                                                  flex: 1,
-                                                  child: recentActivity(
-                                                    "reports",
-                                                    () {
-                                                      Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  const ReposrtsScreen()));
-                                                    },
-                                                  )),
-                                              const SizedBox(width: 15),
-                                              Expanded(
-                                                flex: 1,
+                                              SizedBox(
+                                                width: 360,
                                                 child: recentActivity(
                                                   "alerts&Noti",
                                                   () {
@@ -611,6 +643,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                               ),
                                             ],
                                           ),
+                                    const SizedBox(height: 20),
+                                    schoolPerformance(isMobile),
                                     const SizedBox(height: 30),
                                   ],
                                 ),
@@ -918,6 +952,18 @@ class _MasterDashboardState extends State<MasterDashboard> {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "schoolPerformanceWindow30Days".tr,
+                    style: NotoSansArabicCustomTextStyle.regular.copyWith(
+                        fontSize: fontSizeProvider.fontSize - 1,
+                        color: AppColor.textGrey),
+                  ),
+                ),
+              ),
               Expanded(
                 child: _loadingMetrics
                     ? const Center(child: CircularProgressIndicator())
@@ -929,7 +975,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
                           )
                         : metrics.isEmpty
                             ? Center(
-                                child: Text("No school performance data available",
+                                child: Text(
+                                    "noSchoolPerformanceDataLast30Days".tr,
                                     style: NotoSansArabicCustomTextStyle.medium
                                         .copyWith(color: AppColor.black)),
                               )
@@ -940,19 +987,22 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                   final metricItem = item is Map
                                       ? item.cast<dynamic, dynamic>()
                                       : <dynamic, dynamic>{};
-                                  final grade = metricItem['grade'] ?? 'Unknown';
-                                  final dynamic subjectsRaw = metricItem['subjects'];
+                                  final grade =
+                                      metricItem['grade'] ?? 'Unknown';
+                                  final dynamic subjectsRaw =
+                                      metricItem['subjects'];
                                   final Map<String, dynamic> subjects =
                                       subjectsRaw is Map
-                                          ? subjectsRaw.map(
-                                              (k, v) => MapEntry(k.toString(), v))
+                                          ? subjectsRaw.map((k, v) =>
+                                              MapEntry(k.toString(), v))
                                           : <String, dynamic>{};
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 10),
                                     child: Container(
                                       decoration: BoxDecoration(
                                           color: AppColor.white,
-                                          borderRadius: BorderRadius.circular(7),
+                                          borderRadius:
+                                              BorderRadius.circular(7),
                                           boxShadow: const [
                                             BoxShadow(
                                                 blurRadius: 5,
@@ -974,16 +1024,16 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                                             .semibold
                                                             .copyWith(
                                                                 fontSize: 15,
-                                                                color:
-                                                                    AppColor.black)),
+                                                                color: AppColor
+                                                                    .black)),
                                                 Text('$grade',
                                                     style:
                                                         NotoSansArabicCustomTextStyle
                                                             .regular
                                                             .copyWith(
                                                                 fontSize: 15,
-                                                                color:
-                                                                    AppColor.black)),
+                                                                color: AppColor
+                                                                    .black)),
                                               ],
                                             ),
                                             const SizedBox(height: 5),
@@ -997,13 +1047,14 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                                             .semibold
                                                             .copyWith(
                                                                 fontSize: 15,
-                                                                color:
-                                                                    AppColor.black)),
+                                                                color: AppColor
+                                                                    .black)),
                                                 const SizedBox(width: 5),
                                                 Expanded(
                                                   child: Column(
                                                     crossAxisAlignment:
-                                                        CrossAxisAlignment.start,
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: subjects.entries
                                                         .map((e) {
                                                       final mark =
@@ -1066,7 +1117,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
                       series: <CartesianSeries<_GradeChartPoint, String>>[
                         ColumnSeries<_GradeChartPoint, String>(
                           dataSource: chartData,
-                          xValueMapper: (_GradeChartPoint data, _) => data.grade,
+                          xValueMapper: (_GradeChartPoint data, _) =>
+                              data.grade,
                           yValueMapper: (_GradeChartPoint data, _) =>
                               data.averageMark,
                           dataLabelMapper: (_GradeChartPoint data, _) =>
@@ -1109,7 +1161,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                           fontSize: fontSizeProvider.fontSize,
                                           color: AppColor.black),
                                 ),
-                                if (gradeOptions.isNotEmpty) const SizedBox(height: 8),
+                                if (gradeOptions.isNotEmpty)
+                                  const SizedBox(height: 8),
                                 if (gradeOptions.isNotEmpty)
                                   SizedBox(
                                     width: double.infinity,
@@ -1125,7 +1178,9 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                       items: gradeOptions
                                           .map((g) => DropdownMenuItem<String>(
                                                 value: g,
-                                                child: Text(g, overflow: TextOverflow.ellipsis),
+                                                child: Text(g,
+                                                    overflow:
+                                                        TextOverflow.ellipsis),
                                               ))
                                           .toList(),
                                       onChanged: (value) {
@@ -1151,7 +1206,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                           color: AppColor.black),
                                 ),
                               ),
-                              if (gradeOptions.isNotEmpty) const SizedBox(width: 12),
+                              if (gradeOptions.isNotEmpty)
+                                const SizedBox(width: 12),
                               if (gradeOptions.isNotEmpty)
                                 SizedBox(
                                   height: 40,
@@ -1167,7 +1223,9 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                     items: gradeOptions
                                         .map((g) => DropdownMenuItem<String>(
                                               value: g,
-                                              child: Text(g, overflow: TextOverflow.ellipsis),
+                                              child: Text(g,
+                                                  overflow:
+                                                      TextOverflow.ellipsis),
                                             ))
                                         .toList(),
                                     onChanged: (value) {
@@ -1214,7 +1272,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                       yValueMapper:
                                           (_SubjectChartPoint data, _) =>
                                               data.averageMark,
-                                      dataLabelMapper: (_SubjectChartPoint data, _) =>
+                                      dataLabelMapper: (_SubjectChartPoint data,
+                                              _) =>
                                           _formatChartValue(data.averageMark),
                                       color: Colors.teal,
                                       dataLabelSettings:

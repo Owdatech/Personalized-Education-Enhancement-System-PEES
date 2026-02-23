@@ -241,8 +241,8 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
       }
     }
 
-    int? code =
-        await viewModel.addObservation(studId, file, subject, observation, apiDate);
+    int? code = await viewModel.addObservation(
+        studId, file, subject, observation, apiDate);
     if (context.mounted) {
       if (code == 200) {
         setState(() {
@@ -525,19 +525,28 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                                     color: AppColor.buttonGreen),
                               ])
                         : Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                  "${"date".tr} ${formatDate(date.toString())}",
-                                  style: NotoSansArabicCustomTextStyle.bold
-                                      .copyWith(
-                                          fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black)),
-                              Text("${"subjectTitle".tr} $subjectName",
-                                  style: NotoSansArabicCustomTextStyle.bold
-                                      .copyWith(
-                                          fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black)),
+                              Expanded(
+                                child: Text(
+                                    "${"date".tr} ${formatDate(date.toString())}",
+                                    style: NotoSansArabicCustomTextStyle.bold
+                                        .copyWith(
+                                            fontSize: fontSizeProvider.fontSize,
+                                            color: AppColor.black)),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text("${"subjectTitle".tr} $subjectName",
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: NotoSansArabicCustomTextStyle.bold
+                                        .copyWith(
+                                            fontSize: fontSizeProvider.fontSize,
+                                            color: AppColor.black)),
+                              ),
+                              const SizedBox(width: 10),
                               AppFillButton3(
                                   onPressed: () {
                                     setState(() {
@@ -774,81 +783,77 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                 child: Padding(
                   padding:
                       EdgeInsets.only(top: 8, bottom: 8, right: 20, left: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                              "${"date".tr} ${formatDate(filteredList[i]['date'])}",
-                              style: NotoSansArabicCustomTextStyle.medium
-                                  .copyWith(
-                                      fontSize: fontSizeProvider.fontSize,
-                                      color: AppColor.black)),
-                          const SizedBox(height: 7),
-                          Text(filteredList[i]['observation'],
-                              style: NotoSansArabicCustomTextStyle.medium
-                                  .copyWith(
-                                      fontSize: fontSizeProvider.fontSize,
-                                      color: AppColor.black)),
-                          const SizedBox(height: 7),
-                          isMobile
-                              ? Text(
-                                  "${"subject".tr} : ${filteredList[i]['subject']}",
-                                  style: NotoSansArabicCustomTextStyle.medium
-                                      .copyWith(
-                                          fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black))
-                              : SizedBox(),
-                          isMobile ? const SizedBox(height: 5) : SizedBox(),
-                          isMobile
-                              ? AppFillButton3(
-                                  onPressed: () {
-                                    setState(() {
-                                      isViewDetails = true;
-                                      date = filteredList[i]['date'];
-                                      subjectName = filteredList[i]['subject'];
-                                      description =
-                                          filteredList[i]['observation'];
-                                      imageUrl = filteredList[i][
-                                          'attachment_url']; // <-- Add this line
-                                    });
-                                  },
-                                  text: "viewObservation",
-                                  color: AppColor.buttonGreen)
-                              : SizedBox()
-                        ],
+                      Text(
+                          "${"date".tr} ${formatDate(filteredList[i]['date'])}",
+                          style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                              fontSize: fontSizeProvider.fontSize,
+                              color: AppColor.black)),
+                      const SizedBox(height: 7),
+                      Text(
+                        filteredList[i]['observation'] ?? "",
+                        softWrap: true,
+                        style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                            fontSize: fontSizeProvider.fontSize,
+                            color: AppColor.black),
                       ),
-                      isMobile
-                          ? SizedBox()
-                          : Align(
-                              alignment: Alignment.topCenter,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 7),
-                                child: Text(
-                                    "${"subject".tr} : ${filteredList[i]['subject']}",
-                                    style: NotoSansArabicCustomTextStyle.medium
-                                        .copyWith(
-                                            fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
-                              )),
-                      isMobile
-                          ? SizedBox()
-                          : AppFillButton3(
-                              onPressed: () {
-                                setState(() {
-                                  isViewDetails = true;
-                                  date = filteredList[i]['date'];
-                                  subjectName = filteredList[i]['subject'];
-                                  description = filteredList[i]['observation'];
-                                  imageUrl = filteredList[i]
-                                      ['attachment_url']; // <-- Add this line
-                                });
-                              },
-                              text: "viewObservation",
-                              color: AppColor.buttonGreen)
+                      const SizedBox(height: 8),
+                      if (isMobile)
+                        Text(
+                          "${"subject".tr} : ${filteredList[i]['subject']}",
+                          softWrap: true,
+                          style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                              fontSize: fontSizeProvider.fontSize,
+                              color: AppColor.black),
+                        ),
+                      if (isMobile) const SizedBox(height: 8),
+                      if (isMobile)
+                        AppFillButton3(
+                            onPressed: () {
+                              setState(() {
+                                isViewDetails = true;
+                                date = filteredList[i]['date'];
+                                subjectName = filteredList[i]['subject'];
+                                description = filteredList[i]['observation'];
+                                imageUrl = filteredList[i]['attachment_url'];
+                              });
+                            },
+                            text: "viewObservation",
+                            color: AppColor.buttonGreen),
+                      if (!isMobile)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "${"subject".tr} : ${filteredList[i]['subject']}",
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: NotoSansArabicCustomTextStyle.medium
+                                    .copyWith(
+                                        fontSize: fontSizeProvider.fontSize,
+                                        color: AppColor.black),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            AppFillButton3(
+                                onPressed: () {
+                                  setState(() {
+                                    isViewDetails = true;
+                                    date = filteredList[i]['date'];
+                                    subjectName = filteredList[i]['subject'];
+                                    description =
+                                        filteredList[i]['observation'];
+                                    imageUrl =
+                                        filteredList[i]['attachment_url'];
+                                  });
+                                },
+                                text: "viewObservation",
+                                color: AppColor.buttonGreen),
+                          ],
+                        ),
                     ],
                   ),
                 ),
