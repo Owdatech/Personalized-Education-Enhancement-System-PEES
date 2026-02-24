@@ -466,7 +466,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           DataCell(Center(
               child: Text(history.grade,
                   style: const TextStyle(color: AppColor.black)))),
-          DataCell(Text(history.timestamp,
+          DataCell(Text(_formatTableDate(history.timestamp),
               style: const TextStyle(color: AppColor.black))),
         ]));
       }
@@ -808,6 +808,17 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         .format(parsedDate); // Format it as dd-MM-yyyy
   }
 
+  String _formatTableDate(String raw) {
+    if (raw.trim().isEmpty) return "-";
+    final normalized = raw.trim().replaceAll(' ', 'T');
+    final parsed = DateTime.tryParse(normalized);
+    if (parsed == null) {
+      final dateOnly = raw.split('T').first.trim();
+      return dateOnly.isEmpty ? raw : dateOnly;
+    }
+    return DateFormat('dd-MM-yyyy').format(parsed);
+  }
+
   Widget detailsViewUI() {
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
@@ -949,9 +960,18 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                       shrinkWrap: true,
                       itemCount: masterViewModel.observationsList.length,
                       itemBuilder: (context, index) {
-                        final sortedList = masterViewModel.observationsList
-                          ..sort((a, b) => DateTime.parse(b['date'])
-                              .compareTo(DateTime.parse(a['date'])));
+                        final sortedList = List<Map<dynamic, dynamic>>.from(
+                            masterViewModel.observationsList)
+                          ..sort((a, b) {
+                            final aDate =
+                                DateTime.tryParse((a['date'] ?? '').toString());
+                            final bDate =
+                                DateTime.tryParse((b['date'] ?? '').toString());
+                            if (aDate == null && bDate == null) return 0;
+                            if (aDate == null) return 1;
+                            if (bDate == null) return -1;
+                            return bDate.compareTo(aDate);
+                          });
 
                         return Padding(
                           padding: const EdgeInsets.only(top: 8, bottom: 8),
@@ -972,87 +992,42 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                             child: Padding(
                               padding: const EdgeInsets.only(
                                   top: 8, bottom: 8, right: 20, left: 20),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                          "${"date".tr} ${formatDate(sortedList[index]['date'])}",
-                                          style: NotoSansArabicCustomTextStyle
-                                              .medium
-                                              .copyWith(
-                                                  fontSize:
-                                                      fontSizeProvider.fontSize,
-                                                  color: AppColor.black)),
-                                      const SizedBox(height: 7),
-                                      Text(sortedList[index]['observation'],
-                                          style: NotoSansArabicCustomTextStyle
-                                              .medium
-                                              .copyWith(
-                                                  fontSize:
-                                                      fontSizeProvider.fontSize,
-                                                  color: AppColor.black)),
-                                      isMobile
-                                          ? Text(
-                                              "${"subject".tr} : ${sortedList[index]['subject']}",
-                                              style:
-                                                  NotoSansArabicCustomTextStyle
-                                                      .medium
-                                                      .copyWith(
-                                                          fontSize:
-                                                              fontSizeProvider
-                                                                  .fontSize,
-                                                          color:
-                                                              AppColor.black))
-                                          : const SizedBox(),
-                                      isMobile
-                                          ? const SizedBox(height: 5)
-                                          : const SizedBox(),
-                                      isMobile
-                                          ? AppFillButton3(
-                                              onPressed: () {
-                                                setState(() {
-                                                  isViewDetails = true;
-                                                  date =
-                                                      sortedList[index]['date'];
-                                                  subjectName =
-                                                      sortedList[index]
-                                                          ['subject'];
-                                                  description =
-                                                      sortedList[index]
-                                                          ['observation'];
-                                                });
-                                              },
-                                              text: "viewObservation",
-                                              color: AppColor.buttonGreen)
-                                          : const SizedBox()
-                                    ],
+                                  Text(
+                                      "${"date".tr} ${formatDate(sortedList[index]['date'])}",
+                                      style: NotoSansArabicCustomTextStyle
+                                          .medium
+                                          .copyWith(
+                                              fontSize:
+                                                  fontSizeProvider.fontSize,
+                                              color: AppColor.black)),
+                                  const SizedBox(height: 7),
+                                  Text(
+                                    (sortedList[index]['observation'] ?? "")
+                                        .toString(),
+                                    softWrap: true,
+                                    style: NotoSansArabicCustomTextStyle.medium
+                                        .copyWith(
+                                            fontSize: fontSizeProvider.fontSize,
+                                            color: AppColor.black),
                                   ),
+                                  const SizedBox(height: 7),
+                                  if (isMobile)
+                                    Text(
+                                      "${"subject".tr} : ${sortedList[index]['subject']}",
+                                      softWrap: true,
+                                      style: NotoSansArabicCustomTextStyle
+                                          .medium
+                                          .copyWith(
+                                              fontSize:
+                                                  fontSizeProvider.fontSize,
+                                              color: AppColor.black),
+                                    ),
+                                  if (isMobile) const SizedBox(height: 8),
                                   isMobile
-                                      ? const SizedBox()
-                                      : Align(
-                                          alignment: Alignment.topCenter,
-                                          child: Padding(
-                                            padding:
-                                                const EdgeInsets.only(top: 7),
-                                            child: Text(
-                                                "${"subject".tr} : ${sortedList[index]['subject']}",
-                                                style: NotoSansArabicCustomTextStyle
-                                                    .medium
-                                                    .copyWith(
-                                                        fontSize:
-                                                            fontSizeProvider
-                                                                .fontSize,
-                                                        color: AppColor.black)),
-                                          )),
-                                  isMobile
-                                      ? const SizedBox()
-                                      : AppFillButton3(
+                                      ? AppFillButton3(
                                           onPressed: () {
                                             setState(() {
                                               isViewDetails = true;
@@ -1065,6 +1040,46 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                                           },
                                           text: "viewObservation",
                                           color: AppColor.buttonGreen)
+                                      : Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                "${"subject".tr} : ${sortedList[index]['subject']}",
+                                                softWrap: true,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style:
+                                                    NotoSansArabicCustomTextStyle
+                                                        .medium
+                                                        .copyWith(
+                                                            fontSize:
+                                                                fontSizeProvider
+                                                                    .fontSize,
+                                                            color:
+                                                                AppColor.black),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            AppFillButton3(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    isViewDetails = true;
+                                                    date = sortedList[index]
+                                                        ['date'];
+                                                    subjectName =
+                                                        sortedList[index]
+                                                            ['subject'];
+                                                    description =
+                                                        sortedList[index]
+                                                            ['observation'];
+                                                  });
+                                                },
+                                                text: "viewObservation",
+                                                color: AppColor.buttonGreen)
+                                          ],
+                                        )
                                 ],
                               ),
                             ),
@@ -1779,7 +1794,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         DataCell(Text(entry.subject)),
         DataCell(Text(entry.marks.toString())),
         DataCell(Text(entry.totalMarks.toString())),
-        DataCell(Text(entry.timestamp.toString())),
+        DataCell(Text(_formatTableDate(entry.timestamp.toString()))),
       ]));
     }).toList();
     return Column(
@@ -2076,7 +2091,8 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         themeManager.isHighContrast ? Colors.yellow : Colors.grey;
     if (fetchSelectSubject != null &&
         !filterSubject.contains(fetchSelectSubject)) {
-      fetchSelectSubject = filterSubject.isNotEmpty ? filterSubject.first : null;
+      fetchSelectSubject =
+          filterSubject.isNotEmpty ? filterSubject.first : null;
     }
 
     return SizedBox(

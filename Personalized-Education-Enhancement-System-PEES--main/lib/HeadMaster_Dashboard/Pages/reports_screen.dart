@@ -20,11 +20,15 @@ class ReposrtsScreen extends StatefulWidget {
 
 class _ReposrtsScreenState extends State<ReposrtsScreen> {
   static const String _teachersCacheKey = 'cached_headmaster_teachers_v1';
+  static const int _activityWindowDays = 7;
   List<_TeacherOption> _teacherOptions = [];
   String? _selectedTeacherId;
   bool _loadingTeachers = false;
   bool _loadingTeacherReport = false;
   List<_ClassReportItem> _classReports = [];
+  List<_TeacherActivityItem> _teacherActivities = [];
+  int _totalClassAssignments = 0;
+  int _loadedClassAssignments = 0;
   String? _teacherReportError;
 
   @override
@@ -62,6 +66,75 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
       return (marks / totalMark) * 10.0;
     }
     return marks;
+  }
+
+  String _readStringFromMap(Map<dynamic, dynamic> map, List<String> keys) {
+    for (final key in keys) {
+      if (!map.containsKey(key)) continue;
+      final text = map[key]?.toString().trim();
+      if (text != null && text.isNotEmpty && text.toLowerCase() != 'null') {
+        return text;
+      }
+    }
+    return '';
+  }
+
+  DateTime? _parseAnyDate(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is num) {
+      final value = raw.toInt();
+      final ms = value > 1000000000000 ? value : value * 1000;
+      return DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true).toLocal();
+    }
+    if (raw is! String) return null;
+    final text = raw.trim();
+    if (text.isEmpty) return null;
+    final iso = DateTime.tryParse(text);
+    if (iso != null) return iso.toLocal();
+    final dmy = RegExp(r'^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$').firstMatch(text);
+    if (dmy != null) {
+      final day = int.tryParse(dmy.group(1)!);
+      final month = int.tryParse(dmy.group(2)!);
+      final year = int.tryParse(dmy.group(3)!);
+      if (day != null && month != null && year != null) {
+        return DateTime(year, month, day);
+      }
+    }
+    return null;
+  }
+
+  DateTime? _extractDateFromMap(Map<dynamic, dynamic> map) {
+    const keys = [
+      'date',
+      'timestamp',
+      'createdAt',
+      'created_at',
+      'updatedAt',
+      'updated_at',
+      'examDate',
+      'exam_date',
+      'observation_date',
+      'observationDate',
+    ];
+    for (final key in keys) {
+      if (!map.containsKey(key)) continue;
+      final parsed = _parseAnyDate(map[key]);
+      if (parsed != null) return parsed;
+    }
+    return null;
+  }
+
+  bool _isWithinLastDays(DateTime date, int days) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final start = today.subtract(Duration(days: days - 1));
+    final target = DateTime(date.year, date.month, date.day);
+    return !target.isBefore(start) && !target.isAfter(today);
+  }
+
+  String _fmtDate(DateTime date) {
+    String p2(int n) => n.toString().padLeft(2, '0');
+    return '${p2(date.day)}-${p2(date.month)}-${date.year}';
   }
 
   Map<String, String> _buildAuthHeaders(String? jwtToken, String? token) {
@@ -110,7 +183,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
               });
 
               if (_classReports.isEmpty && _selectedTeacherId != null) {
-                _buildTeacherClassReport(_selectedTeacherId!);
+                _buildTeacherReports(_selectedTeacherId!);
               }
             }
           }
@@ -179,7 +252,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
       await prefs.setString(_teachersCacheKey, json.encode(cachePayload));
 
       if (_selectedTeacherId != null && _classReports.isEmpty) {
-        _buildTeacherClassReport(_selectedTeacherId!);
+        _buildTeacherReports(_selectedTeacherId!);
       }
     } catch (e) {
       setState(() {
@@ -235,7 +308,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
       });
   }
 
-  Future<void> _buildTeacherClassReport(String teacherId) async {
+  Future<void> _buildTeacherReports(String teacherId) async {
     final selectedTeacher = _teacherOptions
         .where((t) => t.id == teacherId)
         .cast<_TeacherOption?>()
@@ -243,6 +316,9 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
     if (selectedTeacher == null) {
       setState(() {
         _classReports = [];
+        _teacherActivities = [];
+        _totalClassAssignments = 0;
+        _loadedClassAssignments = 0;
         _teacherReportError = "teacherNotFound".tr;
       });
       return;
@@ -252,6 +328,9 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
       _loadingTeacherReport = true;
       _teacherReportError = null;
       _classReports = [];
+      _teacherActivities = [];
+      _totalClassAssignments = 0;
+      _loadedClassAssignments = 0;
     });
 
     try {
@@ -276,15 +355,26 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
               : <dynamic>[];
 
       final assignments = _parseTeacherAssignments(selectedTeacher);
+      if (mounted) {
+        setState(() {
+          _totalClassAssignments = assignments.length;
+          _loadedClassAssignments = 0;
+        });
+      }
       if (assignments.isEmpty) {
         setState(() {
           _classReports = [];
+          _teacherActivities = [];
+          _totalClassAssignments = 0;
+          _loadedClassAssignments = 0;
           _loadingTeacherReport = false;
         });
         return;
       }
 
       final reports = <_ClassReportItem>[];
+      final activities = <_TeacherActivityItem>[];
+
       for (final assignment in assignments) {
         final matchedStudents = students
             .whereType<Map>()
@@ -383,22 +473,117 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
                 markOutOfTen: outOfTen,
               ));
             }
+
+            // Last 7 days marks activity.
+            for (final item in history) {
+              if (item is! Map) continue;
+              final h = item.cast<dynamic, dynamic>();
+              final date = _extractDateFromMap(h);
+              if (date == null ||
+                  !_isWithinLastDays(date, _activityWindowDays)) {
+                continue;
+              }
+
+              final markRaw = h['marks'];
+              final mark = markRaw is num
+                  ? markRaw.toDouble()
+                  : double.tryParse(markRaw.toString());
+              if (mark == null) continue;
+              final totalRaw = h['totalMark'];
+              final total = totalRaw is num
+                  ? totalRaw.toDouble()
+                  : double.tryParse(totalRaw.toString());
+              final outTen = _toOutOfTen(mark, total);
+
+              activities.add(_TeacherActivityItem(
+                type: _TeacherActivityType.mark,
+                date: date,
+                dateLabel: _fmtDate(date),
+                studentName: studentName,
+                grade: assignment.grade,
+                className: assignment.className,
+                subject: taughtSubject,
+                summary:
+                    "${"marksOutOfTen".tr}: ${outTen.toStringAsFixed(2)} / 10",
+              ));
+            }
+          }
+
+          // Last 7 days observations activity.
+          try {
+            final obsResp = await http.get(
+              Uri.parse('${Config.baseURL}students/$studentId/observations'),
+              headers: {"Content-Type": "application/json"},
+            );
+            if (obsResp.statusCode == 200) {
+              final obsDecoded = json.decode(obsResp.body);
+              final obsList =
+                  obsDecoded is Map && obsDecoded['observations'] is List
+                      ? List<dynamic>.from(obsDecoded['observations'])
+                      : <dynamic>[];
+              for (final obsRaw in obsList) {
+                if (obsRaw is! Map) continue;
+                final obs = obsRaw.cast<dynamic, dynamic>();
+                final obsDate = _extractDateFromMap(obs);
+                if (obsDate == null ||
+                    !_isWithinLastDays(obsDate, _activityWindowDays)) {
+                  continue;
+                }
+                final obsSubject = _readStringFromMap(
+                    obs, ['subject', 'subjectName', 'subject_name']);
+                if (obsSubject.isNotEmpty &&
+                    !assignment.subjects.any((s) =>
+                        _normalizeText(s) == _normalizeText(obsSubject))) {
+                  continue;
+                }
+                final observationText = _readStringFromMap(
+                    obs, ['observation', 'description', 'notes']);
+                activities.add(_TeacherActivityItem(
+                  type: _TeacherActivityType.observation,
+                  date: obsDate,
+                  dateLabel: _fmtDate(obsDate),
+                  studentName: studentName,
+                  grade: assignment.grade,
+                  className: assignment.className,
+                  subject: obsSubject.isEmpty ? "-" : obsSubject,
+                  summary: observationText.isEmpty
+                      ? "observation".tr
+                      : observationText,
+                ));
+              }
+            }
+          } catch (_) {
+            // Keep report available even if observations endpoint has partial failures.
           }
         }
 
         final average = classMarks.isEmpty
             ? null
             : classMarks.reduce((a, b) => a + b) / classMarks.length;
-        reports.add(_ClassReportItem(
+        final reportItem = _ClassReportItem(
           grade: assignment.grade,
           className: assignment.className,
           averageOutOfTen: average,
           lowStudents: lows,
-        ));
+        );
+        reports.add(reportItem);
+
+        // Stream partial results while more classes are still being processed.
+        activities.sort((a, b) => b.date.compareTo(a.date));
+        if (!mounted) return;
+        setState(() {
+          _classReports = List<_ClassReportItem>.from(reports);
+          _teacherActivities = List<_TeacherActivityItem>.from(activities);
+          _loadedClassAssignments = reports.length;
+        });
       }
+
+      activities.sort((a, b) => b.date.compareTo(a.date));
 
       setState(() {
         _classReports = reports;
+        _teacherActivities = activities;
+        _loadedClassAssignments = reports.length;
         _loadingTeacherReport = false;
       });
     } catch (e) {
@@ -501,7 +686,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
                       setState(() {
                         _selectedTeacherId = value;
                       });
-                      await _buildTeacherClassReport(value);
+                      await _buildTeacherReports(value);
                     },
             ),
             if (_loadingTeachers) ...[
@@ -509,6 +694,16 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
               const LinearProgressIndicator(minHeight: 2),
             ],
             const SizedBox(height: 10),
+            if (_selectedTeacherId != null &&
+                (_loadingTeacherReport || _totalClassAssignments > 0))
+              Text(
+                "${"loadedClassesLabel".tr}: $_loadedClassAssignments/${_totalClassAssignments == 0 ? "-" : _totalClassAssignments}",
+                style: NotoSansArabicCustomTextStyle.regular
+                    .copyWith(fontSize: 12, color: AppColor.textGrey),
+              ),
+            if (_selectedTeacherId != null &&
+                (_loadingTeacherReport || _totalClassAssignments > 0))
+              const SizedBox(height: 8),
             if (_teacherOptions.isEmpty && !_loadingTeachers)
               Text(
                 "noTeachersFound".tr,
@@ -533,93 +728,228 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
               ),
             if (_teacherOptions.isNotEmpty &&
                 _selectedTeacherId != null &&
-                _loadingTeacherReport)
+                _loadingTeacherReport &&
+                _classReports.isEmpty &&
+                _teacherActivities.isEmpty)
               const Center(child: CircularProgressIndicator()),
             if (_teacherOptions.isNotEmpty &&
                 _selectedTeacherId != null &&
-                !_loadingTeacherReport &&
+                _loadingTeacherReport &&
+                (_classReports.isNotEmpty ||
+                    _teacherActivities.isNotEmpty)) ...[
+              const SizedBox(height: 8),
+              const LinearProgressIndicator(minHeight: 2),
+              const SizedBox(height: 8),
+            ],
+            if (_teacherOptions.isNotEmpty &&
+                _selectedTeacherId != null &&
                 _teacherReportError == null)
-              _classReports.isEmpty
-                  ? Text(
-                      "noClassReportDataForSelectedTeacher".tr,
-                      style: NotoSansArabicCustomTextStyle.regular
-                          .copyWith(color: AppColor.black),
-                    )
-                  : ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _classReports.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final c = _classReports[index];
-                        return Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColor.lightGrey),
+              LayoutBuilder(
+                builder: (context, c) {
+                  final isNarrow = c.maxWidth < 1050;
+                  if (isNarrow) {
+                    return Column(
+                      children: [
+                        _buildClassReportPanel(),
+                        const SizedBox(height: 12),
+                        _buildActivityPanel(),
+                      ],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _buildClassReportPanel()),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildActivityPanel()),
+                    ],
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClassReportPanel() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColor.lightGrey),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "teacherClassReportTitle".tr,
+              style: NotoSansArabicCustomTextStyle.semibold
+                  .copyWith(fontSize: 15, color: AppColor.black),
+            ),
+            const SizedBox(height: 6),
+            if (_classReports.isEmpty && !_loadingTeacherReport)
+              Text(
+                "noClassReportDataForSelectedTeacher".tr,
+                style: NotoSansArabicCustomTextStyle.regular
+                    .copyWith(color: AppColor.black),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _classReports.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final c = _classReports[index];
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColor.lightGrey),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${c.grade} - ${c.className}",
+                            style: NotoSansArabicCustomTextStyle.semibold
+                                .copyWith(fontSize: 15, color: AppColor.black),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "${c.grade} - ${c.className}",
-                                  style: NotoSansArabicCustomTextStyle.semibold
-                                      .copyWith(
-                                          fontSize: 15, color: AppColor.black),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "${"averageMarkLabel".tr} ${c.averageOutOfTen == null ? "-" : c.averageOutOfTen!.toStringAsFixed(2)} / 10",
+                          const SizedBox(height: 4),
+                          Text(
+                            "${"averageMarkLabel".tr} ${c.averageOutOfTen == null ? "-" : c.averageOutOfTen!.toStringAsFixed(2)} / 10",
+                            style: NotoSansArabicCustomTextStyle.regular
+                                .copyWith(fontSize: 13, color: AppColor.black),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "studentsBelowSixLastEntry".tr,
+                            style: NotoSansArabicCustomTextStyle.semibold
+                                .copyWith(fontSize: 13, color: AppColor.black),
+                          ),
+                          const SizedBox(height: 4),
+                          c.lowStudents.isEmpty
+                              ? Text(
+                                  "noneLabel".tr,
                                   style: NotoSansArabicCustomTextStyle.regular
                                       .copyWith(
-                                          fontSize: 13, color: AppColor.black),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  "studentsBelowSixLastEntry".tr,
-                                  style: NotoSansArabicCustomTextStyle.semibold
-                                      .copyWith(
-                                          fontSize: 13, color: AppColor.black),
-                                ),
-                                const SizedBox(height: 4),
-                                c.lowStudents.isEmpty
-                                    ? Text(
-                                        "noneLabel".tr,
-                                        style: NotoSansArabicCustomTextStyle
-                                            .regular
-                                            .copyWith(
-                                                fontSize: 12,
-                                                color: AppColor.textGrey),
+                                          fontSize: 12,
+                                          color: AppColor.textGrey),
+                                )
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: c.lowStudents
+                                      .map(
+                                        (s) => Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 2),
+                                          child: Text(
+                                            "${s.studentName} (${s.subject}) - ${s.markOutOfTen.toStringAsFixed(2)}/10",
+                                            style: NotoSansArabicCustomTextStyle
+                                                .regular
+                                                .copyWith(
+                                                    fontSize: 12,
+                                                    color: AppColor.black),
+                                          ),
+                                        ),
                                       )
-                                    : Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: c.lowStudents
-                                            .map(
-                                              (s) => Padding(
-                                                padding: const EdgeInsets.only(
-                                                    bottom: 2),
-                                                child: Text(
-                                                  "${s.studentName} (${s.subject}) - ${s.markOutOfTen.toStringAsFixed(2)}/10",
-                                                  style:
-                                                      NotoSansArabicCustomTextStyle
-                                                          .regular
-                                                          .copyWith(
-                                                              fontSize: 12,
-                                                              color: AppColor
-                                                                  .black),
-                                                ),
-                                              ),
-                                            )
-                                            .toList(),
-                                      ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                                      .toList(),
+                                ),
+                        ],
+                      ),
                     ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityPanel() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColor.lightGrey),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "teacherActivitiesLast7DaysTitle".tr,
+              style: NotoSansArabicCustomTextStyle.semibold
+                  .copyWith(fontSize: 15, color: AppColor.black),
+            ),
+            const SizedBox(height: 6),
+            if (_teacherActivities.isEmpty && !_loadingTeacherReport)
+              Text(
+                "noTeacherActivitiesLast7Days".tr,
+                style: NotoSansArabicCustomTextStyle.regular
+                    .copyWith(color: AppColor.textGrey),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _teacherActivities.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final a = _teacherActivities[index];
+                  final typeLabel = a.type == _TeacherActivityType.mark
+                      ? "activityMarksAdded".tr
+                      : "activityObservationAdded".tr;
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColor.lightGrey),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${a.dateLabel} • $typeLabel",
+                            style: NotoSansArabicCustomTextStyle.semibold
+                                .copyWith(fontSize: 13, color: AppColor.black),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "${"nameTitle".tr}: ${a.studentName}",
+                            style: NotoSansArabicCustomTextStyle.regular
+                                .copyWith(fontSize: 12, color: AppColor.black),
+                          ),
+                          Text(
+                            "${"grade".tr}: ${a.grade} | ${"className".tr}: ${a.className}",
+                            style: NotoSansArabicCustomTextStyle.regular
+                                .copyWith(fontSize: 12, color: AppColor.black),
+                          ),
+                          Text(
+                            "${"subject".tr}: ${a.subject}",
+                            style: NotoSansArabicCustomTextStyle.regular
+                                .copyWith(fontSize: 12, color: AppColor.black),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            a.summary,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: NotoSansArabicCustomTextStyle.regular
+                                .copyWith(
+                                    fontSize: 12, color: AppColor.textGrey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
           ],
         ),
       ),
@@ -676,5 +1006,29 @@ class _LowStudentMark {
     required this.studentName,
     required this.subject,
     required this.markOutOfTen,
+  });
+}
+
+enum _TeacherActivityType { observation, mark }
+
+class _TeacherActivityItem {
+  final _TeacherActivityType type;
+  final DateTime date;
+  final String dateLabel;
+  final String studentName;
+  final String grade;
+  final String className;
+  final String subject;
+  final String summary;
+
+  _TeacherActivityItem({
+    required this.type,
+    required this.date,
+    required this.dateLabel,
+    required this.studentName,
+    required this.grade,
+    required this.className,
+    required this.subject,
+    required this.summary,
   });
 }

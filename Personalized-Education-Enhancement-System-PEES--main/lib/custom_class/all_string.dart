@@ -374,6 +374,12 @@ class LocaleString extends Translations {
           "teacherNotFound": "Teacher not found.",
           "failedToLoadStudents": "Failed to load students",
           "unableToBuildTeacherReport": "Unable to build teacher report.",
+          "teacherActivitiesLast7DaysTitle": "Teacher Activities (Last 7 Days)",
+          "noTeacherActivitiesLast7Days":
+              "No teacher activities in the last 7 days.",
+          "activityMarksAdded": "Marks Added",
+          "activityObservationAdded": "Observation Added",
+          "loadedClassesLabel": "Loaded classes",
           //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         },
         'ar': {
@@ -743,7 +749,13 @@ class LocaleString extends Translations {
           "unableToLoadTeachers": "تعذر تحميل المعلمين.",
           "teacherNotFound": "المعلم غير موجود.",
           "failedToLoadStudents": "فشل تحميل الطلاب",
-          "unableToBuildTeacherReport": "تعذر إنشاء تقرير المعلم."
+          "unableToBuildTeacherReport": "تعذر إنشاء تقرير المعلم.",
+          "teacherActivitiesLast7DaysTitle": "أنشطة المعلم (آخر 7 أيام)",
+          "noTeacherActivitiesLast7Days":
+              "لا توجد أنشطة للمعلم خلال آخر 7 أيام.",
+          "activityMarksAdded": "تمت إضافة درجات",
+          "activityObservationAdded": "تمت إضافة ملاحظة",
+          "loadedClassesLabel": "الفصول المحملة"
         },
       };
 }

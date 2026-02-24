@@ -23,6 +23,8 @@ class AlertsNotificationScreen extends StatefulWidget {
 class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
   ParentService viewModel = ParentService();
   String? _userRole;
+  String _selectedGradeFilter = 'all';
+  String _selectedSubjectFilter = 'all';
 
   bool get _isHeadmasterRole {
     final role =
@@ -74,6 +76,97 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
   }
 
   String _formatOutOfTen(double value) => value.toStringAsFixed(2);
+
+  int _extractGradeOrder(String gradeText) {
+    final normalized = gradeText.toUpperCase().replaceAll('_', ' ');
+    final match = RegExp(r'\b(\d{1,2})\b').firstMatch(normalized);
+    if (match == null) return 999;
+    return int.tryParse(match.group(1)!) ?? 999;
+  }
+
+  String _canonicalGrade(String gradeText) {
+    final raw = gradeText.trim();
+    if (raw.isEmpty) return raw;
+    final normalized = raw
+        .replaceAll('_', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim()
+        .toUpperCase();
+    final match = RegExp(r'\b(\d{1,2})\b').firstMatch(normalized);
+    if (match == null) return normalized;
+    final n = match.group(1)!;
+    final hasScience = RegExp(r'\bSCIENCE\b').hasMatch(normalized);
+    final hasLiterature = RegExp(r'\bLITERATURE\b').hasMatch(normalized);
+    if (hasScience) return 'GRADE $n(SCIENCE)';
+    if (hasLiterature) return 'GRADE $n(LITERATURE)';
+    return 'GRADE $n';
+  }
+
+  String _displayGradeLabel(String gradeValue) {
+    if (gradeValue == 'all') return "all".tr;
+    final canonical = _canonicalGrade(gradeValue);
+    final gradeNo = _extractGradeOrder(canonical);
+    final isArabic = (Get.locale?.languageCode ?? 'en').startsWith('ar');
+
+    if (isArabic && gradeNo >= 1 && gradeNo <= 12) {
+      if (canonical.contains('(SCIENCE)')) return 'الصف $gradeNo (علمي)';
+      if (canonical.contains('(LITERATURE)')) return 'الصف $gradeNo (أدبي)';
+      return 'الصف $gradeNo';
+    }
+    return canonical;
+  }
+
+  List<String> _availableGrades() {
+    final baseGrades = <String>[
+      ...List<String>.generate(10, (i) => 'GRADE ${i + 1}'),
+      'GRADE 11(SCIENCE)',
+      'GRADE 11(LITERATURE)',
+      'GRADE 12(SCIENCE)',
+      'GRADE 12(LITERATURE)',
+    ];
+    final gradesFromData = viewModel.lowMarkAlerts
+        .map((e) => _canonicalGrade(e.grade))
+        .where((g) => g.isNotEmpty)
+        .where((g) => g != 'GRADE 11' && g != 'GRADE 12')
+        .toSet()
+        .toList();
+    final grades = <String>{...baseGrades, ...gradesFromData}.toList()
+      ..sort((a, b) {
+        final aOrder = _extractGradeOrder(a);
+        final bOrder = _extractGradeOrder(b);
+        if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+        final aTrack = a.contains('(SCIENCE)') || a.contains('(LITERATURE)');
+        final bTrack = b.contains('(SCIENCE)') || b.contains('(LITERATURE)');
+        if (aTrack != bTrack) return aTrack ? 1 : -1;
+        return a.compareTo(b);
+      });
+    return ['all', ...grades];
+  }
+
+  List<String> _availableSubjectsForSelectedGrade() {
+    final source = _selectedGradeFilter == 'all'
+        ? viewModel.lowMarkAlerts
+        : viewModel.lowMarkAlerts
+            .where((e) => _canonicalGrade(e.grade) == _selectedGradeFilter)
+            .toList();
+    final subjects = source
+        .map((e) => e.subject.trim())
+        .where((s) => s.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+    return ['all', ...subjects];
+  }
+
+  List<LowMarkAlertItem> _filteredLowMarkAlerts() {
+    return viewModel.lowMarkAlerts.where((e) {
+      final gradeOk = _selectedGradeFilter == 'all' ||
+          _canonicalGrade(e.grade) == _selectedGradeFilter;
+      final subjectOk = _selectedSubjectFilter == 'all' ||
+          e.subject.trim() == _selectedSubjectFilter;
+      return gradeOk && subjectOk;
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -300,6 +393,16 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
   }
 
   Widget lowMarksAlertsSection(ThemeManager themeManager) {
+    final gradeOptions = _availableGrades();
+    if (!gradeOptions.contains(_selectedGradeFilter)) {
+      _selectedGradeFilter = 'all';
+    }
+    final subjectOptions = _availableSubjectsForSelectedGrade();
+    if (!subjectOptions.contains(_selectedSubjectFilter)) {
+      _selectedSubjectFilter = 'all';
+    }
+    final filteredItems = _filteredLowMarkAlerts();
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -321,7 +424,72 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                   .copyWith(fontSize: 16, color: AppColor.buttonGreen),
             ),
             const SizedBox(height: 8),
-            viewModel.lowMarkAlerts.isEmpty
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedGradeFilter,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: "grade".tr,
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 10),
+                      filled: true,
+                      fillColor: AppColor.white,
+                    ),
+                    items: gradeOptions
+                        .map((g) => DropdownMenuItem<String>(
+                              value: g,
+                              child: Text(
+                                _displayGradeLabel(g),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _selectedGradeFilter = value;
+                        _selectedSubjectFilter = 'all';
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedSubjectFilter,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: "subject".tr,
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 10),
+                      filled: true,
+                      fillColor: AppColor.white,
+                    ),
+                    items: subjectOptions
+                        .map((s) => DropdownMenuItem<String>(
+                              value: s,
+                              child: Text(
+                                s == 'all' ? "all".tr : s,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _selectedSubjectFilter = value;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            filteredItems.isEmpty
                 ? Text(
                     "noLowMarksAlerts".tr,
                     style: NotoSansArabicCustomTextStyle.regular
@@ -330,10 +498,10 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                 : ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: viewModel.lowMarkAlerts.length,
+                    itemCount: filteredItems.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
-                      final item = viewModel.lowMarkAlerts[index];
+                      final item = filteredItems[index];
                       return Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
@@ -360,7 +528,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                "${"grade".tr} : ${item.grade}",
+                                "${"grade".tr} : ${_displayGradeLabel(item.grade)}",
                                 style: NotoSansArabicCustomTextStyle.regular
                                     .copyWith(
                                         fontSize: 13, color: AppColor.black),
