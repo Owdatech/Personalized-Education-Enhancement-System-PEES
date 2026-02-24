@@ -17,6 +17,7 @@ class AppSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
     return Column(
       children: [
         Container(
@@ -29,9 +30,10 @@ class AppSection extends StatelessWidget {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(left: 20, top: 8, bottom: 8),
+            padding: EdgeInsets.only(
+                left: isRtl ? 0 : 20, right: isRtl ? 20 : 0, top: 8, bottom: 8),
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: isRtl ? Alignment.centerRight : Alignment.centerLeft,
               child: Text(
                 title,
                 style: NotoSansArabicCustomTextStyle.semibold.copyWith(

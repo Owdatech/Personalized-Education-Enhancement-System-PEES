@@ -49,9 +49,19 @@ class _MasterDashboardState extends State<MasterDashboard> {
   String _extractStudentGrade(dynamic student, {String fallback = "Unknown"}) {
     if (student is! Map) return fallback;
     final map = student.cast<dynamic, dynamic>();
-    final grade = map['grade'] ?? map['gradeName'];
-    final text = grade?.toString().trim();
-    return (text == null || text.isEmpty) ? fallback : text;
+    final gradeCandidates = [
+      map['grade'],
+      map['gradeName'],
+      map['grade_ref'],
+      map['gradeRef'],
+    ];
+    for (final candidate in gradeCandidates) {
+      final text = candidate?.toString().trim();
+      if (text != null && text.isNotEmpty) {
+        return text.replaceFirst(RegExp(r'^ref_to_', caseSensitive: false), '');
+      }
+    }
+    return fallback;
   }
 
   double? _asDouble(dynamic value) {
@@ -128,11 +138,68 @@ class _MasterDashboardState extends State<MasterDashboard> {
     return value.toStringAsFixed(2);
   }
 
+  Color _scoreColor(double value) {
+    if (value >= 8.0) return const Color(0xFF0B7A2D);
+    if (value >= 6.0) return const Color(0xFF1A9A73);
+    if (value >= 4.0) return const Color(0xFFF59E0B);
+    return const Color(0xFFE53935);
+  }
+
   int _extractGradeOrder(String gradeText) {
     final normalized = gradeText.toUpperCase().replaceAll('_', ' ');
     final match = RegExp(r'\b(\d{1,2})\b').firstMatch(normalized);
     if (match == null) return 999; // Unknown grades go last.
     return int.tryParse(match.group(1)!) ?? 999;
+  }
+
+  String _shortGradeLabel(String gradeText) {
+    if (gradeText.trim().isEmpty) return gradeText;
+    return gradeText
+        .replaceAllMapped(
+            RegExp(r'\(\s*SCIENCE\s*\)', caseSensitive: false), (_) => '(SC)')
+        .replaceAllMapped(RegExp(r'\(\s*LITERATURE\s*\)', caseSensitive: false),
+            (_) => '(LI)');
+  }
+
+  String _compactGradeForChart(String gradeText) {
+    final canonical = _canonicalGrade(gradeText).toUpperCase();
+    final numMatch = RegExp(r'\b(\d{1,2})\b').firstMatch(canonical);
+    if (numMatch == null) return _shortGradeLabel(gradeText);
+    final n = numMatch.group(1)!;
+    if (canonical.contains('SCIENCE')) return 'G$n-SC';
+    if (canonical.contains('LITERATURE')) return 'G$n-LI';
+    return 'G$n';
+  }
+
+  String _canonicalGrade(String gradeText) {
+    final raw = gradeText.trim();
+    if (raw.isEmpty) return raw;
+
+    final normalized = raw
+        .replaceAll('_', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim()
+        .toUpperCase();
+
+    final numMatch = RegExp(r'\b(\d{1,2})\b').firstMatch(normalized);
+    if (numMatch == null) return normalized;
+
+    final gradeNumber = numMatch.group(1)!;
+    final hasScience = RegExp(r'\bSCIENCE\b').hasMatch(normalized);
+    final hasLiterature = RegExp(r'\bLITERATURE\b').hasMatch(normalized);
+
+    if (hasScience) return 'GRADE $gradeNumber(SCIENCE)';
+    if (hasLiterature) return 'GRADE $gradeNumber(LITERATURE)';
+    return 'GRADE $gradeNumber';
+  }
+
+  bool _isSeniorGradeWithoutTrack(String gradeText) {
+    final canonical = _canonicalGrade(gradeText).toUpperCase();
+    final numMatch = RegExp(r'\b(\d{1,2})\b').firstMatch(canonical);
+    if (numMatch == null) return false;
+    final n = int.tryParse(numMatch.group(1) ?? '');
+    if (n == null || (n != 11 && n != 12)) return false;
+    return !canonical.contains('SCIENCE') && !canonical.contains('LITERATURE');
   }
 
   void _sortMetricsByGrade(List<dynamic> items) {
@@ -175,13 +242,11 @@ class _MasterDashboardState extends State<MasterDashboard> {
         }
       }
 
-      if (count > 0) {
-        points.add(_GradeChartPoint(
-          grade: grade,
-          averageMark: _roundToTwoDecimals(sum / count),
-          order: _extractGradeOrder(grade),
-        ));
-      }
+      points.add(_GradeChartPoint(
+        grade: grade,
+        averageMark: count > 0 ? _roundToTwoDecimals(sum / count) : 0,
+        order: _extractGradeOrder(grade),
+      ));
     }
 
     points.sort((a, b) {
@@ -258,6 +323,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
     if (students.isEmpty) return <dynamic>[];
 
     final Map<String, Map<String, List<double>>> gradeSubjectMarks = {};
+    final Set<String> allGrades = <String>{};
 
     Future<void> processStudent(dynamic student) async {
       final studentId = _extractStudentId(student);
@@ -275,10 +341,19 @@ class _MasterDashboardState extends State<MasterDashboard> {
       final academicData = data['academicData'];
       if (academicData is! Map) return;
 
-      final gradeFromReport = academicData['grade']?.toString().trim();
-      final grade = (gradeFromReport != null && gradeFromReport.isNotEmpty)
-          ? gradeFromReport
-          : _extractStudentGrade(student);
+      final gradeFromReport = academicData['grade']?.toString().trim() ?? '';
+      final gradeFromStudent = _extractStudentGrade(student);
+      final reportCanonical = _canonicalGrade(gradeFromReport);
+      final studentCanonical = _canonicalGrade(gradeFromStudent);
+
+      // Keep Grade 11/12 split by stream using student grade when report grade is generic.
+      final canonicalGrade = (reportCanonical.isNotEmpty &&
+              !_isSeniorGradeWithoutTrack(reportCanonical))
+          ? reportCanonical
+          : studentCanonical;
+      if (canonicalGrade.isNotEmpty) {
+        allGrades.add(canonicalGrade);
+      }
 
       final subjects = academicData['subjects'];
       if (subjects is! Map) return;
@@ -306,7 +381,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
           if (marks == null) continue;
 
           gradeSubjectMarks
-              .putIfAbsent(grade, () => {})
+              .putIfAbsent(canonicalGrade, () => {})
               .putIfAbsent(subjectName, () => [])
               .add(marks);
         }
@@ -316,9 +391,19 @@ class _MasterDashboardState extends State<MasterDashboard> {
     await Future.wait(students.map(processStudent));
 
     final List<dynamic> builtMetrics = [];
-    for (final gradeEntry in gradeSubjectMarks.entries) {
+    final mergedGrades = <String>{...allGrades, ...gradeSubjectMarks.keys};
+    final sortedGrades = mergedGrades.toList()
+      ..sort((a, b) {
+        final aOrder = _extractGradeOrder(a);
+        final bOrder = _extractGradeOrder(b);
+        if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+        return a.compareTo(b);
+      });
+    for (final grade in sortedGrades) {
+      final gradeSubjects =
+          gradeSubjectMarks[grade] ?? <String, List<double>>{};
       final Map<String, dynamic> subjectsAvg = {};
-      for (final subjectEntry in gradeEntry.value.entries) {
+      for (final subjectEntry in gradeSubjects.entries) {
         final values = subjectEntry.value;
         if (values.isEmpty) continue;
         final sum = values.fold<double>(0, (a, b) => a + b);
@@ -327,7 +412,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
       }
 
       builtMetrics.add({
-        "grade": gradeEntry.key,
+        "grade": grade,
         "subjects": subjectsAvg,
       });
     }
@@ -955,7 +1040,9 @@ class _MasterDashboardState extends State<MasterDashboard> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: Directionality.of(context) == TextDirection.rtl
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Text(
                     "schoolPerformanceWindow30Days".tr,
                     style: NotoSansArabicCustomTextStyle.regular.copyWith(
@@ -989,6 +1076,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                       : <dynamic, dynamic>{};
                                   final grade =
                                       metricItem['grade'] ?? 'Unknown';
+                                  final gradeDisplay =
+                                      _shortGradeLabel(grade.toString());
                                   final dynamic subjectsRaw =
                                       metricItem['subjects'];
                                   final Map<String, dynamic> subjects =
@@ -1026,7 +1115,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                                                 fontSize: 15,
                                                                 color: AppColor
                                                                     .black)),
-                                                Text('$grade',
+                                                Text(gradeDisplay,
                                                     style:
                                                         NotoSansArabicCustomTextStyle
                                                             .regular
@@ -1071,7 +1160,22 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                                               e.value);
                                                       return Text(
                                                           "${e.key} - Average Grade : $gradeSymbol");
-                                                    }).toList(),
+                                                    }).toList()
+                                                      ..addAll(subjects.isEmpty
+                                                          ? [
+                                                              Text(
+                                                                "noMarksHistoryYet"
+                                                                    .tr,
+                                                                style: NotoSansArabicCustomTextStyle
+                                                                    .regular
+                                                                    .copyWith(
+                                                                        fontSize:
+                                                                            13,
+                                                                        color: AppColor
+                                                                            .textGrey),
+                                                              )
+                                                            ]
+                                                          : []),
                                                   ),
                                                 ),
                                               ],
@@ -1088,7 +1192,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
               if (chartData.isNotEmpty)
                 Container(
                   width: double.infinity,
-                  height: 240,
+                  height: 260,
                   decoration: BoxDecoration(
                     color: AppColor.white,
                     borderRadius: BorderRadius.circular(8),
@@ -1097,35 +1201,68 @@ class _MasterDashboardState extends State<MasterDashboard> {
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: SfCartesianChart(
+                      plotAreaBorderWidth: 0,
                       title: ChartTitle(
                         text: "performanceByGrade".tr,
                         textStyle: NotoSansArabicCustomTextStyle.semibold
                             .copyWith(
-                                fontSize: fontSizeProvider.fontSize,
+                                fontSize: fontSizeProvider.fontSize + 2,
                                 color: AppColor.black),
                       ),
                       primaryXAxis: CategoryAxis(
                         labelRotation: -35,
+                        labelIntersectAction:
+                            AxisLabelIntersectAction.multipleRows,
+                        edgeLabelPlacement: EdgeLabelPlacement.shift,
                         majorGridLines: const MajorGridLines(width: 0),
+                        axisLine: const AxisLine(width: 0),
+                        majorTickLines: const MajorTickLines(width: 0),
+                        maximumLabelWidth: 90,
+                        labelStyle: NotoSansArabicCustomTextStyle.regular
+                            .copyWith(
+                                fontSize: fontSizeProvider.fontSize - 1,
+                                color: AppColor.black),
                       ),
-                      primaryYAxis: const NumericAxis(
+                      primaryYAxis: NumericAxis(
                         minimum: 0,
                         maximum: 10,
                         interval: 1,
+                        axisLine: const AxisLine(width: 0),
+                        majorTickLines: const MajorTickLines(width: 0),
+                        title: AxisTitle(
+                          text: "marksOutOfTen".tr,
+                          textStyle: NotoSansArabicCustomTextStyle.regular
+                              .copyWith(
+                                  fontSize: fontSizeProvider.fontSize - 1,
+                                  color: AppColor.textGrey),
+                        ),
                       ),
-                      tooltipBehavior: TooltipBehavior(enable: true),
+                      tooltipBehavior: TooltipBehavior(
+                        enable: true,
+                        format: 'point.x : point.y/10',
+                      ),
                       series: <CartesianSeries<_GradeChartPoint, String>>[
                         ColumnSeries<_GradeChartPoint, String>(
                           dataSource: chartData,
                           xValueMapper: (_GradeChartPoint data, _) =>
-                              data.grade,
+                              _compactGradeForChart(data.grade),
                           yValueMapper: (_GradeChartPoint data, _) =>
                               data.averageMark,
+                          pointColorMapper: (_GradeChartPoint data, _) =>
+                              _scoreColor(data.averageMark),
                           dataLabelMapper: (_GradeChartPoint data, _) =>
                               _formatChartValue(data.averageMark),
-                          color: AppColor.buttonGreen,
-                          dataLabelSettings:
-                              const DataLabelSettings(isVisible: true),
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(6)),
+                          width: 0.55,
+                          dataLabelSettings: DataLabelSettings(
+                            isVisible: true,
+                            labelAlignment: ChartDataLabelAlignment.top,
+                            textStyle: NotoSansArabicCustomTextStyle.semibold
+                                .copyWith(
+                                    fontSize: fontSizeProvider.fontSize - 1,
+                                    color: AppColor.black),
+                          ),
                         ),
                       ],
                     ),
@@ -1135,7 +1272,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
               if (chartData.isNotEmpty)
                 Container(
                   width: double.infinity,
-                  height: 300,
+                  height: 350,
                   decoration: BoxDecoration(
                     color: AppColor.white,
                     borderRadius: BorderRadius.circular(8),
@@ -1148,7 +1285,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
                         LayoutBuilder(builder: (context, rowConstraints) {
                           final isNarrow = rowConstraints.maxWidth < 700;
                           final titleText =
-                              "${"subjectsByGrade".tr} (${_selectedGradeForSubjects ?? '-'})";
+                              "${"subjectsByGrade".tr} (${_selectedGradeForSubjects == null ? '-' : _shortGradeLabel(_selectedGradeForSubjects!)})";
 
                           if (isNarrow) {
                             return Column(
@@ -1178,7 +1315,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                       items: gradeOptions
                                           .map((g) => DropdownMenuItem<String>(
                                                 value: g,
-                                                child: Text(g,
+                                                child: Text(_shortGradeLabel(g),
                                                     overflow:
                                                         TextOverflow.ellipsis),
                                               ))
@@ -1223,7 +1360,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                     items: gradeOptions
                                         .map((g) => DropdownMenuItem<String>(
                                               value: g,
-                                              child: Text(g,
+                                              child: Text(_shortGradeLabel(g),
                                                   overflow:
                                                       TextOverflow.ellipsis),
                                             ))
@@ -1250,18 +1387,41 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                   ),
                                 )
                               : SfCartesianChart(
+                                  plotAreaBorderWidth: 0,
                                   primaryXAxis: CategoryAxis(
-                                    labelRotation: -35,
+                                    labelRotation: -30,
+                                    labelIntersectAction:
+                                        AxisLabelIntersectAction.wrap,
+                                    edgeLabelPlacement:
+                                        EdgeLabelPlacement.shift,
+                                    maximumLabelWidth: 90,
                                     majorGridLines:
                                         const MajorGridLines(width: 0),
+                                    axisLine: const AxisLine(width: 0),
+                                    majorTickLines:
+                                        const MajorTickLines(width: 0),
                                   ),
-                                  primaryYAxis: const NumericAxis(
+                                  primaryYAxis: NumericAxis(
                                     minimum: 0,
                                     maximum: 10,
                                     interval: 1,
+                                    axisLine: const AxisLine(width: 0),
+                                    majorTickLines:
+                                        const MajorTickLines(width: 0),
+                                    title: AxisTitle(
+                                      text: "marksOutOfTen".tr,
+                                      textStyle: NotoSansArabicCustomTextStyle
+                                          .regular
+                                          .copyWith(
+                                              fontSize:
+                                                  fontSizeProvider.fontSize - 1,
+                                              color: AppColor.textGrey),
+                                    ),
                                   ),
-                                  tooltipBehavior:
-                                      TooltipBehavior(enable: true),
+                                  tooltipBehavior: TooltipBehavior(
+                                    enable: true,
+                                    format: 'point.x : point.y/10',
+                                  ),
                                   series: <CartesianSeries<_SubjectChartPoint,
                                       String>>[
                                     ColumnSeries<_SubjectChartPoint, String>(
@@ -1272,13 +1432,27 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                       yValueMapper:
                                           (_SubjectChartPoint data, _) =>
                                               data.averageMark,
+                                      pointColorMapper:
+                                          (_SubjectChartPoint data, _) =>
+                                              _scoreColor(data.averageMark),
                                       dataLabelMapper: (_SubjectChartPoint data,
                                               _) =>
                                           _formatChartValue(data.averageMark),
-                                      color: Colors.teal,
-                                      dataLabelSettings:
-                                          const DataLabelSettings(
-                                              isVisible: true),
+                                      borderRadius: const BorderRadius.vertical(
+                                          top: Radius.circular(6)),
+                                      width: 0.55,
+                                      dataLabelSettings: DataLabelSettings(
+                                        isVisible: true,
+                                        labelAlignment:
+                                            ChartDataLabelAlignment.top,
+                                        textStyle: NotoSansArabicCustomTextStyle
+                                            .semibold
+                                            .copyWith(
+                                                fontSize:
+                                                    fontSizeProvider.fontSize -
+                                                        1,
+                                                color: AppColor.black),
+                                      ),
                                     ),
                                   ],
                                 ),
