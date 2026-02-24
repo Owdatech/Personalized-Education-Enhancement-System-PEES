@@ -30,6 +30,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
   int _totalClassAssignments = 0;
   int _loadedClassAssignments = 0;
   String? _teacherReportError;
+  int _activeReportRequestId = 0;
 
   @override
   void initState() {
@@ -135,6 +136,65 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
   String _fmtDate(DateTime date) {
     String p2(int n) => n.toString().padLeft(2, '0');
     return '${p2(date.day)}-${p2(date.month)}-${date.year}';
+  }
+
+  String? _extractTeacherIdFromMap(Map<dynamic, dynamic> map) {
+    const keys = [
+      'teacherId',
+      'teacher_id',
+      'assignedTeacherId',
+      'assigned_teacher_id',
+      'updatedByTeacherId',
+      'updated_by_teacher_id',
+      'createdByTeacherId',
+      'created_by_teacher_id',
+      'userId',
+      'user_id',
+    ];
+    for (final key in keys) {
+      if (!map.containsKey(key)) continue;
+      final text = map[key]?.toString().trim();
+      if (text != null && text.isNotEmpty && text.toLowerCase() != 'null') {
+        return text.toLowerCase();
+      }
+    }
+    return null;
+  }
+
+  String? _extractTeacherNameFromMap(Map<dynamic, dynamic> map) {
+    const keys = [
+      'teacherName',
+      'teacher_name',
+      'updatedBy',
+      'updated_by',
+      'createdBy',
+      'created_by',
+      'name',
+    ];
+    for (final key in keys) {
+      if (!map.containsKey(key)) continue;
+      final text = map[key]?.toString().trim();
+      if (text != null && text.isNotEmpty && text.toLowerCase() != 'null') {
+        return text.toLowerCase();
+      }
+    }
+    return null;
+  }
+
+  bool _isEntryOwnedByTeacher(
+      Map<dynamic, dynamic> item, _TeacherOption teacher) {
+    final entryTeacherId = _extractTeacherIdFromMap(item);
+    if (entryTeacherId != null) {
+      return entryTeacherId == teacher.id.toLowerCase();
+    }
+
+    final entryTeacherName = _extractTeacherNameFromMap(item);
+    if (entryTeacherName != null) {
+      return entryTeacherName == teacher.name.toLowerCase();
+    }
+
+    // Keep backward compatibility when backend does not provide ownership fields.
+    return true;
   }
 
   Map<String, String> _buildAuthHeaders(String? jwtToken, String? token) {
@@ -309,6 +369,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
   }
 
   Future<void> _buildTeacherReports(String teacherId) async {
+    final requestId = ++_activeReportRequestId;
     final selectedTeacher = _teacherOptions
         .where((t) => t.id == teacherId)
         .cast<_TeacherOption?>()
@@ -356,6 +417,10 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
 
       final assignments = _parseTeacherAssignments(selectedTeacher);
       if (mounted) {
+        if (requestId != _activeReportRequestId ||
+            _selectedTeacherId != teacherId) {
+          return;
+        }
         setState(() {
           _totalClassAssignments = assignments.length;
           _loadedClassAssignments = 0;
@@ -478,6 +543,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
             for (final item in history) {
               if (item is! Map) continue;
               final h = item.cast<dynamic, dynamic>();
+              if (!_isEntryOwnedByTeacher(h, selectedTeacher)) continue;
               final date = _extractDateFromMap(h);
               if (date == null ||
                   !_isWithinLastDays(date, _activityWindowDays)) {
@@ -524,6 +590,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
               for (final obsRaw in obsList) {
                 if (obsRaw is! Map) continue;
                 final obs = obsRaw.cast<dynamic, dynamic>();
+                if (!_isEntryOwnedByTeacher(obs, selectedTeacher)) continue;
                 final obsDate = _extractDateFromMap(obs);
                 if (obsDate == null ||
                     !_isWithinLastDays(obsDate, _activityWindowDays)) {
@@ -570,7 +637,11 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
 
         // Stream partial results while more classes are still being processed.
         activities.sort((a, b) => b.date.compareTo(a.date));
-        if (!mounted) return;
+        if (!mounted ||
+            requestId != _activeReportRequestId ||
+            _selectedTeacherId != teacherId) {
+          return;
+        }
         setState(() {
           _classReports = List<_ClassReportItem>.from(reports);
           _teacherActivities = List<_TeacherActivityItem>.from(activities);
@@ -580,6 +651,11 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
 
       activities.sort((a, b) => b.date.compareTo(a.date));
 
+      if (!mounted ||
+          requestId != _activeReportRequestId ||
+          _selectedTeacherId != teacherId) {
+        return;
+      }
       setState(() {
         _classReports = reports;
         _teacherActivities = activities;
@@ -587,6 +663,11 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
         _loadingTeacherReport = false;
       });
     } catch (e) {
+      if (!mounted ||
+          requestId != _activeReportRequestId ||
+          _selectedTeacherId != teacherId) {
+        return;
+      }
       setState(() {
         _teacherReportError = "unableToBuildTeacherReport".tr;
         _loadingTeacherReport = false;
