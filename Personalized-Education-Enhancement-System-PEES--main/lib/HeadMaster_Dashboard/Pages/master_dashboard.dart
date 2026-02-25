@@ -165,11 +165,40 @@ class _MasterDashboardState extends State<MasterDashboard> {
     return const Color(0xFFE53935);
   }
 
+  int? _extractKgOrder(String gradeText) {
+    final normalized = gradeText
+        .toUpperCase()
+        .replaceAll('_', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (RegExp(r'\bKG\s*1\b').hasMatch(normalized) ||
+        RegExp(r'\bKINDERGARTEN\s*1\b').hasMatch(normalized)) {
+      return 1;
+    }
+    if (RegExp(r'\bKG\s*2\b').hasMatch(normalized) ||
+        RegExp(r'\bKINDERGARTEN\s*2\b').hasMatch(normalized)) {
+      return 2;
+    }
+    return null;
+  }
+
   int _extractGradeOrder(String gradeText) {
+    final kgOrder = _extractKgOrder(gradeText);
+    if (kgOrder != null) return kgOrder - 1;
     final normalized = gradeText.toUpperCase().replaceAll('_', ' ');
     final match = RegExp(r'\b(\d{1,2})\b').firstMatch(normalized);
     if (match == null) return 999; // Unknown grades go last.
-    return int.tryParse(match.group(1)!) ?? 999;
+    final gradeNumber = int.tryParse(match.group(1)!);
+    return gradeNumber == null ? 999 : gradeNumber + 1;
+  }
+
+  int _extractTrackOrder(String gradeText) {
+    final normalized = gradeText.toUpperCase();
+    if (normalized.contains('SCIENCE') || normalized.contains('(SC)')) return 0;
+    if (normalized.contains('LITERATURE') || normalized.contains('(LI)')) {
+      return 1;
+    }
+    return 2;
   }
 
   String _shortGradeLabel(String gradeText) {
@@ -183,6 +212,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
 
   String _compactGradeForChart(String gradeText) {
     final canonical = _canonicalGrade(gradeText).toUpperCase();
+    final kgOrder = _extractKgOrder(canonical);
+    if (kgOrder != null) return 'KG$kgOrder';
     final numMatch = RegExp(r'\b(\d{1,2})\b').firstMatch(canonical);
     if (numMatch == null) return _shortGradeLabel(gradeText);
     final n = numMatch.group(1)!;
@@ -201,6 +232,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
         .trim()
         .toUpperCase();
 
+    final kgOrder = _extractKgOrder(normalized);
+    if (kgOrder != null) return 'KG$kgOrder';
     final numMatch = RegExp(r'\b(\d{1,2})\b').firstMatch(normalized);
     if (numMatch == null) return normalized;
 
@@ -233,6 +266,11 @@ class _MasterDashboardState extends State<MasterDashboard> {
       final bOrder = _extractGradeOrder(bGrade);
 
       if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+      final aTrackOrder = _extractTrackOrder(aGrade);
+      final bTrackOrder = _extractTrackOrder(bGrade);
+      if (aTrackOrder != bTrackOrder) {
+        return aTrackOrder.compareTo(bTrackOrder);
+      }
       return aGrade.compareTo(bGrade);
     });
   }
@@ -271,6 +309,11 @@ class _MasterDashboardState extends State<MasterDashboard> {
 
     points.sort((a, b) {
       if (a.order != b.order) return a.order.compareTo(b.order);
+      final aTrackOrder = _extractTrackOrder(a.grade);
+      final bTrackOrder = _extractTrackOrder(b.grade);
+      if (aTrackOrder != bTrackOrder) {
+        return aTrackOrder.compareTo(bTrackOrder);
+      }
       return a.grade.compareTo(b.grade);
     });
     return points;
@@ -286,6 +329,11 @@ class _MasterDashboardState extends State<MasterDashboard> {
       final aOrder = _extractGradeOrder(a);
       final bOrder = _extractGradeOrder(b);
       if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+      final aTrackOrder = _extractTrackOrder(a);
+      final bTrackOrder = _extractTrackOrder(b);
+      if (aTrackOrder != bTrackOrder) {
+        return aTrackOrder.compareTo(bTrackOrder);
+      }
       return a.compareTo(b);
     });
     return grades;
@@ -426,6 +474,11 @@ class _MasterDashboardState extends State<MasterDashboard> {
         final aOrder = _extractGradeOrder(a);
         final bOrder = _extractGradeOrder(b);
         if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+        final aTrackOrder = _extractTrackOrder(a);
+        final bTrackOrder = _extractTrackOrder(b);
+        if (aTrackOrder != bTrackOrder) {
+          return aTrackOrder.compareTo(bTrackOrder);
+        }
         return a.compareTo(b);
       });
     for (final grade in sortedGrades) {

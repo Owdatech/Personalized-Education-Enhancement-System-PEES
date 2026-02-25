@@ -474,11 +474,31 @@ class ParentService extends BaseVM {
     return marks;
   }
 
+  int? _extractKgOrder(String gradeText) {
+    final normalized = gradeText
+        .toUpperCase()
+        .replaceAll('_', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (RegExp(r'\bKG\s*1\b').hasMatch(normalized) ||
+        RegExp(r'\bKINDERGARTEN\s*1\b').hasMatch(normalized)) {
+      return 1;
+    }
+    if (RegExp(r'\bKG\s*2\b').hasMatch(normalized) ||
+        RegExp(r'\bKINDERGARTEN\s*2\b').hasMatch(normalized)) {
+      return 2;
+    }
+    return null;
+  }
+
   int _extractGradeOrder(String gradeText) {
+    final kgOrder = _extractKgOrder(gradeText);
+    if (kgOrder != null) return kgOrder - 1;
     final normalized = gradeText.toUpperCase().replaceAll('_', ' ');
     final match = RegExp(r'\b(\d{1,2})\b').firstMatch(normalized);
     if (match == null) return 999;
-    return int.tryParse(match.group(1)!) ?? 999;
+    final gradeNumber = int.tryParse(match.group(1)!);
+    return gradeNumber == null ? 999 : gradeNumber + 1;
   }
 
   DateTime _safeParseDate(String? raw) {

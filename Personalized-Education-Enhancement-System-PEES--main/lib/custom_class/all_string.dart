@@ -275,6 +275,7 @@ class LocaleString extends Translations {
           'feedbackMessage': "Feedback Message",
           'noFeedbakcs': "No Feedbacks",
           'norecordYet': "No record yet",
+          'loadingPleaseWait': "Loading... Please wait",
           'description': "Description",
           'childInformation': "Child's Information",
           'nostudentsfound': "No students found",
@@ -661,6 +662,7 @@ class LocaleString extends Translations {
           'feedbackMessage': "رسالة التعليق",
           'noFeedbakcs': "لا توجد تعليقات",
           'norecordYet': "لا يوجد سجل بعد",
+          'loadingPleaseWait': "جارٍ التحميل... يرجى الانتظار",
           'description': "الوصف",
           'childInformation': "معلومات الطفل",
           'nostudentsfound': "لم يتم العثور على أي طلاب", //

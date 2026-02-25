@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:pees/Widgets/AppColor.dart';
 
 class LoaderView extends StatelessWidget {
@@ -22,8 +23,8 @@ class LoaderView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            "Loading... Please wait",
+          Text(
+            "loadingPleaseWait".tr,
             style: TextStyle(color: AppColor.white),
           ),
         ],

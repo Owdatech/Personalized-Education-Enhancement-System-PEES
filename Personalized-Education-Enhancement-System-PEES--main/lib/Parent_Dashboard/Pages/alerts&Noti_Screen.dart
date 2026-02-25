@@ -77,11 +77,40 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
 
   String _formatOutOfTen(double value) => value.toStringAsFixed(2);
 
+  int? _extractKgOrder(String gradeText) {
+    final normalized = gradeText
+        .toUpperCase()
+        .replaceAll('_', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (RegExp(r'\bKG\s*1\b').hasMatch(normalized) ||
+        RegExp(r'\bKINDERGARTEN\s*1\b').hasMatch(normalized)) {
+      return 1;
+    }
+    if (RegExp(r'\bKG\s*2\b').hasMatch(normalized) ||
+        RegExp(r'\bKINDERGARTEN\s*2\b').hasMatch(normalized)) {
+      return 2;
+    }
+    return null;
+  }
+
   int _extractGradeOrder(String gradeText) {
+    final kgOrder = _extractKgOrder(gradeText);
+    if (kgOrder != null) return kgOrder - 1;
     final normalized = gradeText.toUpperCase().replaceAll('_', ' ');
     final match = RegExp(r'\b(\d{1,2})\b').firstMatch(normalized);
     if (match == null) return 999;
-    return int.tryParse(match.group(1)!) ?? 999;
+    final gradeNumber = int.tryParse(match.group(1)!);
+    return gradeNumber == null ? 999 : gradeNumber + 1;
+  }
+
+  int _extractTrackOrder(String gradeText) {
+    final normalized = gradeText.toUpperCase();
+    if (normalized.contains('SCIENCE') || normalized.contains('(SC)')) return 0;
+    if (normalized.contains('LITERATURE') || normalized.contains('(LI)')) {
+      return 1;
+    }
+    return 2;
   }
 
   String _canonicalGrade(String gradeText) {
@@ -92,6 +121,8 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim()
         .toUpperCase();
+    final kgOrder = _extractKgOrder(normalized);
+    if (kgOrder != null) return 'KG$kgOrder';
     final match = RegExp(r'\b(\d{1,2})\b').firstMatch(normalized);
     if (match == null) return normalized;
     final n = match.group(1)!;
@@ -105,6 +136,11 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
   String _displayGradeLabel(String gradeValue) {
     if (gradeValue == 'all') return "all".tr;
     final canonical = _canonicalGrade(gradeValue);
+    if (canonical == 'KG1' || canonical == 'KG2') {
+      final isArabic = (Get.locale?.languageCode ?? 'en').startsWith('ar');
+      final kgOrder = canonical == 'KG1' ? 1 : 2;
+      return isArabic ? 'الروضة $kgOrder' : 'KG$kgOrder';
+    }
     final gradeNo = _extractGradeOrder(canonical);
     final isArabic = (Get.locale?.languageCode ?? 'en').startsWith('ar');
 
@@ -118,6 +154,8 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
 
   List<String> _availableGrades() {
     final baseGrades = <String>[
+      'KG1',
+      'KG2',
       ...List<String>.generate(10, (i) => 'GRADE ${i + 1}'),
       'GRADE 11(SCIENCE)',
       'GRADE 11(LITERATURE)',
@@ -135,9 +173,11 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
         final aOrder = _extractGradeOrder(a);
         final bOrder = _extractGradeOrder(b);
         if (aOrder != bOrder) return aOrder.compareTo(bOrder);
-        final aTrack = a.contains('(SCIENCE)') || a.contains('(LITERATURE)');
-        final bTrack = b.contains('(SCIENCE)') || b.contains('(LITERATURE)');
-        if (aTrack != bTrack) return aTrack ? 1 : -1;
+        final aTrackOrder = _extractTrackOrder(a);
+        final bTrackOrder = _extractTrackOrder(b);
+        if (aTrackOrder != bTrackOrder) {
+          return aTrackOrder.compareTo(bTrackOrder);
+        }
         return a.compareTo(b);
       });
     return ['all', ...grades];

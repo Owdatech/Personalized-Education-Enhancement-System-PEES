@@ -216,6 +216,60 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
+  int? _extractKgOrder(String gradeText) {
+    final normalized = gradeText
+        .toUpperCase()
+        .replaceAll('_', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (RegExp(r'\bKG\s*1\b').hasMatch(normalized) ||
+        RegExp(r'\bKINDERGARTEN\s*1\b').hasMatch(normalized)) {
+      return 1;
+    }
+    if (RegExp(r'\bKG\s*2\b').hasMatch(normalized) ||
+        RegExp(r'\bKINDERGARTEN\s*2\b').hasMatch(normalized)) {
+      return 2;
+    }
+    return null;
+  }
+
+  int _extractGradeOrder(String gradeText) {
+    final kgOrder = _extractKgOrder(gradeText);
+    if (kgOrder != null) return kgOrder - 1;
+    final normalized = gradeText.toUpperCase().replaceAll('_', ' ');
+    final match = RegExp(r'\b(\d{1,2})\b').firstMatch(normalized);
+    if (match == null) return 999;
+    final gradeNumber = int.tryParse(match.group(1)!);
+    return gradeNumber == null ? 999 : gradeNumber + 1;
+  }
+
+  int _extractTrackOrder(String gradeText) {
+    final normalized = gradeText.toUpperCase();
+    if (normalized.contains('SCIENCE') || normalized.contains('(SC)')) return 0;
+    if (normalized.contains('LITERATURE') || normalized.contains('(LI)')) {
+      return 1;
+    }
+    return 2;
+  }
+
+  List<dynamic> _sortGradesByCanonicalOrder(List<dynamic> source) {
+    final sorted = List<dynamic>.from(source);
+    sorted.sort((a, b) {
+      final aName = (a is Map ? a['name'] : '').toString().trim();
+      final bName = (b is Map ? b['name'] : '').toString().trim();
+      final aOrder = _extractGradeOrder(aName);
+      final bOrder = _extractGradeOrder(bName);
+      if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+      final aTrackOrder = _extractTrackOrder(aName);
+      final bTrackOrder = _extractTrackOrder(bName);
+      if (aTrackOrder != bTrackOrder) {
+        return aTrackOrder.compareTo(bTrackOrder);
+      }
+      return aName.compareTo(bName);
+    });
+    return sorted;
+  }
+
   Future<void> fetchGradesOnly() async {
     try {
       String url = "${Config.baseURL}api/grades-classes-subjects";
@@ -236,7 +290,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         }
 
         setState(() {
-          grades = fetchedGrades;
+          grades = _sortGradesByCanonicalOrder(fetchedGrades);
         });
       } else {
         print("Failed to fetch grades: ${response.statusCode}");
@@ -1422,11 +1476,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("${"grade".tr} : $gradeName"),
+                                Text("${"grade".tr} : $gradeName",
+                                    style: NotoSansArabicCustomTextStyle.medium
+                                        .copyWith(color: AppColor.text)),
                                 const SizedBox(height: 5),
-                                Text("${"class".tr} : $className"),
+                                Text("${"class".tr} : $className",
+                                    style: NotoSansArabicCustomTextStyle.medium
+                                        .copyWith(color: AppColor.text)),
                                 const SizedBox(height: 5),
-                                Text("${"subject".tr} : $subjectName"),
+                                Text("${"subject".tr} : $subjectName",
+                                    style: NotoSansArabicCustomTextStyle.medium
+                                        .copyWith(color: AppColor.text)),
                               ],
                             ),
                           ),
