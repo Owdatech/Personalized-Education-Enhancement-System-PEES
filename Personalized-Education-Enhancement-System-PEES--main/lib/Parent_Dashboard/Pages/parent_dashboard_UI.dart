@@ -2,21 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pees/Authentication/Page/login_screen.dart';
 import 'package:pees/Authentication/Services/auth_service.dart';
-import 'package:pees/Common_Screen/Pages/notification_screen.dart';
+import 'package:pees/Parent_Dashboard/Pages/alerts&Noti_Screen.dart';
 import 'package:pees/Common_Screen/Pages/settings_screen.dart';
 import 'package:pees/Common_Screen/Pages/themeWidget.dart';
 import 'package:pees/Common_Screen/Services/font_size_provider.dart';
 import 'package:pees/HeadMaster_Dashboard/Services/headMaster_services.dart';
 import 'package:pees/Models/profile_model.dart';
-import 'package:pees/Parent_Dashboard/Models/parent_model.dart';
 import 'package:pees/Parent_Dashboard/Pages/parent_dashboard.dart';
 import 'package:pees/Parent_Dashboard/Services/parent_services.dart';
 import 'package:pees/Widgets/AppColor.dart';
 import 'package:pees/Widgets/AppImage.dart';
-import 'package:pees/Widgets/Loader_view.dart';
 import 'package:pees/Widgets/custom_style.dart';
 import 'package:pees/Widgets/utils.dart';
-import 'package:pees/custom_class/my_appBar.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -28,6 +25,29 @@ class ParentDashboardUI extends StatefulWidget {
 }
 
 class _ParentDashboardUIState extends State<ParentDashboardUI> {
+  static const Color _bgLavender = Color(0xFFD9D6F5);
+  static const Color _panelDark = Color(0xFF11131A);
+  static const Color _panelDarkSoft = Color(0xFF171A22);
+  static const Color _textLight = Color(0xFFF3F2FF);
+  static const Color _textMuted = Color(0xFFB2B6C6);
+  static const Color _accentPrimary = Color(0xFF8E7CFF);
+  static const Color _accentBorder = Color(0xFFB9ABFF);
+
+  BoxDecoration _glassPanelDecoration({double radius = 20}) {
+    return BoxDecoration(
+      color: _panelDark.withValues(alpha: 0.96),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: const Color(0xFF2A2E3A), width: 1),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x44000000),
+          blurRadius: 24,
+          offset: Offset(0, 12),
+        )
+      ],
+    );
+  }
+
   ParentService viewModel = ParentService();
   HeadMasterServices masterViewmodel = HeadMasterServices();
   ProfileModel? model;
@@ -66,10 +86,11 @@ class _ParentDashboardUIState extends State<ParentDashboardUI> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+                backgroundColor: _bgLavender,
                 appBar: isMobile
                     ? AppBar(
                         iconTheme: IconThemeData(color: AppColor.white),
-                        backgroundColor: AppColor.buttonGreen,
+                        backgroundColor: _panelDark,
                         centerTitle: true,
                         title: Text(
                             "${"welcome".tr}, ${model?.user.name ?? ""}!",
@@ -85,9 +106,8 @@ class _ParentDashboardUIState extends State<ParentDashboardUI> {
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) =>
-                                                NotificationScreen(
-                                                    name: model?.user.name ??
-                                                        "")));
+                                                AlertsNotificationScreen(
+                                                    isAlerts: false)));
                                   },
                                   child: Stack(
                                     alignment: Alignment.center,
@@ -130,10 +150,7 @@ class _ParentDashboardUIState extends State<ParentDashboardUI> {
                                         "logOut".tr,
                                         style: PoppinsCustomTextStyle.medium
                                             .copyWith(
-                                                color:
-                                                    themeManager.isHighContrast
-                                                        ? AppColor.white
-                                                        : AppColor.buttonGreen,
+                                                color: _accentPrimary,
                                                 fontSize: 15),
                                       )),
                                 ],
@@ -166,48 +183,189 @@ class _ParentDashboardUIState extends State<ParentDashboardUI> {
                     : null,
                 body: Stack(
                   children: [
-                    Column(
-                      children: [
-                        isMobile
-                            ? const SizedBox()
-                            : MyAppBar(model?.user.name ?? ""),
-                        isMobile
-                            ? Expanded(
-                                child: _pages[viewModel.selectedIndex],
-                              )
-                            : Expanded(
-                                flex: 2,
-                                child: Row(children: [
-                                  Container(
-                                    width: 300,
-                                    decoration:  BoxDecoration(
-                                        color: themeManager.isHighContrast ? AppColor.labelText :  AppColor.whiteBorder),
-                                    child: Column(
-                                      children: [
-                                        listItem(
-                                            "dashboard",
-                                            AppImage.dashboardFill,
-                                            AppImage.dashboardWhite,
-                                            0),
-                                        listItem(
-                                            "settings",
-                                            AppImage.settingsFill,
-                                            AppImage.settingsWhite,
-                                            1),
-                                      ],
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFD9D6F5), Color(0xFFC9C3EE)],
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          isMobile ? const SizedBox() : _buildDesktopHeader(),
+                          if (!isMobile) _buildTopTabs(),
+                          Expanded(
+                            child: isMobile
+                                ? _pages[viewModel.selectedIndex]
+                                : Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        18, 0, 18, 18),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(22),
+                                      child: Container(
+                                        decoration:
+                                            _glassPanelDecoration(radius: 22),
+                                        child: _pages[viewModel.selectedIndex],
+                                      ),
                                     ),
                                   ),
-                                  Expanded(
-                                      flex: 2,
-                                      child: _pages[viewModel.selectedIndex]),
-                                ]))
-                      ],
+                          )
+                        ],
+                      ),
                     ),
                     // masterViewmodel.loading ? LoaderView() : Container()
                   ],
                 ));
           });
         }));
+  }
+
+  Widget _buildTopTabs() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: _glassPanelDecoration(radius: 20),
+        child: Row(
+          children: [
+            Expanded(
+                child: _topTabItem(
+                    title: "dashboard",
+                    iconFill: AppImage.dashboardFill,
+                    iconWhite: AppImage.dashboardWhite,
+                    index: 0)),
+            const SizedBox(width: 10),
+            Expanded(
+                child: _topTabItem(
+                    title: "settings",
+                    iconFill: AppImage.settingsFill,
+                    iconWhite: AppImage.settingsWhite,
+                    index: 1)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _topTabItem({
+    required String title,
+    required String iconFill,
+    required String iconWhite,
+    required int index,
+  }) {
+    final fontSizeProvider = Provider.of<FontSizeProvider>(context);
+    final isSelected = index == viewModel.selectedIndex;
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () {
+        setState(() {
+          viewModel.selectedIndex = index;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 58,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: isSelected ? _accentPrimary : _panelDarkSoft,
+          border: Border.all(
+            color: isSelected ? _accentBorder : const Color(0xFF2A2E3A),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Image.asset(isSelected ? iconWhite : iconFill,
+                width: 20, height: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title.tr,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                  fontSize: fontSizeProvider.fontSize,
+                  color: _textLight,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+      child: Container(
+        height: 78,
+        decoration: _glassPanelDecoration(radius: 20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Row(
+            children: [
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              AlertsNotificationScreen(isAlerts: false)));
+                },
+                child: Stack(
+                  children: [
+                    Image.asset(AppImage.notification, width: 23),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.red,
+                        ),
+                        padding: const EdgeInsets.all(3),
+                        child: const Text("0",
+                            style:
+                                TextStyle(fontSize: 10, color: AppColor.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              PopupMenuButton<String>(
+                onSelected: (_) {},
+                itemBuilder: (BuildContext context) => [
+                  PopupMenuItem(
+                    value: "logout",
+                    onTap: logoutAPI,
+                    child: Text(
+                      "logOut".tr,
+                      style: PoppinsCustomTextStyle.medium
+                          .copyWith(color: _accentPrimary, fontSize: 15),
+                    ),
+                  ),
+                ],
+                offset: const Offset(0, 50),
+                child: Image.asset(AppImage.userProfile, width: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  "${"welcome".tr}, ${model?.user.name ?? ""}!",
+                  textAlign: TextAlign.center,
+                  style: PoppinsCustomTextStyle.bold
+                      .copyWith(fontSize: 26, color: _textLight),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget listItem(
@@ -253,8 +411,8 @@ class _ParentDashboardUIState extends State<ParentDashboardUI> {
                     color: isSelected
                         ? AppColor.white
                         : themeManager.isHighContrast
-                            ? Colors.grey.shade800
-                            : AppColor.textGrey),
+                            ? _textMuted
+                            : _textMuted),
               )
             ],
           ),

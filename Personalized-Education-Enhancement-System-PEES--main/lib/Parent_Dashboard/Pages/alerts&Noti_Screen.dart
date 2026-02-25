@@ -185,6 +185,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               appBar: PreferredSize(
                   preferredSize: const Size(double.infinity, 50),
                   child: isMobile ? MyAppBar("") : const SizedBox()),
@@ -206,10 +207,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                                 ? "recentsAlerts".tr
                                 : "alerts&Noti".tr,
                             style: NotoSansArabicCustomTextStyle.bold.copyWith(
-                                fontSize: 18,
-                                color: themeManager.isHighContrast
-                                    ? AppColor.white
-                                    : AppColor.buttonGreen),
+                                fontSize: 18, color: AppColor.panelDark),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -253,9 +251,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                     padding: const EdgeInsets.only(top: 7),
                     child: Container(
                       decoration: BoxDecoration(
-                          color: themeManager.isHighContrast
-                              ? AppColor.labelText
-                              : AppColor.white,
+                          color: AppColor.panelDarkSoft,
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: const [
                             BoxShadow(
@@ -273,14 +269,14 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                                     style: NotoSansArabicCustomTextStyle.bold
                                         .copyWith(
                                             fontSize: 15,
-                                            color: AppColor.black)),
+                                            color: AppColor.white)),
                                 Text(
                                     formatDate(
                                         "${viewModel.alertsList[index].date}"),
                                     style: NotoSansArabicCustomTextStyle.regular
                                         .copyWith(
                                             fontSize: 14,
-                                            color: AppColor.black))
+                                            color: AppColor.white))
                               ],
                             ),
                             const SizedBox(height: 7),
@@ -291,7 +287,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                                     style: NotoSansArabicCustomTextStyle.bold
                                         .copyWith(
                                             fontSize: 15,
-                                            color: AppColor.black)),
+                                            color: AppColor.white)),
                                 Expanded(
                                   child: Text(
                                       "${viewModel.alertsList[index].aiGeneratedMessage}",
@@ -299,7 +295,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                                           .regular
                                           .copyWith(
                                               fontSize: 14,
-                                              color: AppColor.black)),
+                                              color: AppColor.white)),
                                 ),
                               ],
                             )
@@ -327,9 +323,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                         padding: const EdgeInsets.only(top: 7),
                         child: Container(
                           decoration: BoxDecoration(
-                              color: themeManager.isHighContrast
-                                  ? AppColor.labelText
-                                  : AppColor.white,
+                              color: AppColor.panelDarkSoft,
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: const [
                                 BoxShadow(
@@ -348,7 +342,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                                             .bold
                                             .copyWith(
                                                 fontSize: 15,
-                                                color: AppColor.black)),
+                                                color: AppColor.white)),
                                     Text(
                                         formatDate(
                                             "${viewModel.notificationsList[index].createdAt}"),
@@ -356,7 +350,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                                             .regular
                                             .copyWith(
                                                 fontSize: 14,
-                                                color: AppColor.black))
+                                                color: AppColor.white))
                                   ],
                                 ),
                                 const SizedBox(height: 7),
@@ -368,7 +362,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                                             .bold
                                             .copyWith(
                                                 fontSize: 15,
-                                                color: AppColor.black)),
+                                                color: AppColor.white)),
                                     Expanded(
                                       child: Text(
                                           "${viewModel.notificationsList[index].title}",
@@ -376,7 +370,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                                               .regular
                                               .copyWith(
                                                   fontSize: 14,
-                                                  color: AppColor.black)),
+                                                  color: AppColor.white)),
                                     ),
                                   ],
                                 )
@@ -406,8 +400,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: AppColor.panelDarkSoft,
           borderRadius: BorderRadius.circular(8),
           boxShadow: const [
             BoxShadow(
@@ -421,7 +414,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
             Text(
               "lowMarksAlertsTitle".tr,
               style: NotoSansArabicCustomTextStyle.bold
-                  .copyWith(fontSize: 16, color: AppColor.buttonGreen),
+                  .copyWith(fontSize: 16, color: AppColor.white),
             ),
             const SizedBox(height: 8),
             Row(
@@ -436,8 +429,11 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 10),
                       filled: true,
-                      fillColor: AppColor.white,
+                      fillColor: AppColor.textField,
+                      labelStyle: const TextStyle(color: AppColor.textGrey),
                     ),
+                    dropdownColor: AppColor.panelDark,
+                    style: const TextStyle(color: AppColor.white),
                     items: gradeOptions
                         .map((g) => DropdownMenuItem<String>(
                               value: g,
@@ -467,8 +463,11 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 10),
                       filled: true,
-                      fillColor: AppColor.white,
+                      fillColor: AppColor.textField,
+                      labelStyle: const TextStyle(color: AppColor.textGrey),
                     ),
+                    dropdownColor: AppColor.panelDark,
+                    style: const TextStyle(color: AppColor.white),
                     items: subjectOptions
                         .map((s) => DropdownMenuItem<String>(
                               value: s,
@@ -493,7 +492,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                 ? Text(
                     "noLowMarksAlerts".tr,
                     style: NotoSansArabicCustomTextStyle.regular
-                        .copyWith(fontSize: 14, color: AppColor.black),
+                        .copyWith(fontSize: 14, color: AppColor.white),
                   )
                 : ListView.separated(
                     shrinkWrap: true,
@@ -506,7 +505,7 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: AppColor.lightGrey),
-                          color: AppColor.white,
+                          color: AppColor.panelDarkSoft,
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(8),
@@ -517,35 +516,35 @@ class _AlertsNotificationScreenState extends State<AlertsNotificationScreen> {
                                 item.studentName,
                                 style: NotoSansArabicCustomTextStyle.bold
                                     .copyWith(
-                                        fontSize: 15, color: AppColor.black),
+                                        fontSize: 15, color: AppColor.white),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 "${"email".tr} ${item.studentEmail}",
                                 style: NotoSansArabicCustomTextStyle.regular
                                     .copyWith(
-                                        fontSize: 13, color: AppColor.black),
+                                        fontSize: 13, color: AppColor.white),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 "${"grade".tr} : ${_displayGradeLabel(item.grade)}",
                                 style: NotoSansArabicCustomTextStyle.regular
                                     .copyWith(
-                                        fontSize: 13, color: AppColor.black),
+                                        fontSize: 13, color: AppColor.white),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 "${"subject".tr} : ${item.subject}",
                                 style: NotoSansArabicCustomTextStyle.regular
                                     .copyWith(
-                                        fontSize: 13, color: AppColor.black),
+                                        fontSize: 13, color: AppColor.white),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 "${"assignedteacher".tr} : ${item.teacherName}",
                                 style: NotoSansArabicCustomTextStyle.regular
                                     .copyWith(
-                                        fontSize: 13, color: AppColor.black),
+                                        fontSize: 13, color: AppColor.white),
                               ),
                               const SizedBox(height: 2),
                               Text(

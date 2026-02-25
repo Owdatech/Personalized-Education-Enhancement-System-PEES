@@ -49,6 +49,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               appBar: PreferredSize(
                   preferredSize: const Size(double.infinity, 50),
                   child: isMobile ? MyAppBar("") : const SizedBox()),
@@ -69,11 +70,8 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                               : Alignment.centerRight,
                           child: Text(
                             "resourcesTitle".tr,
-                            style: NotoSansArabicCustomTextStyle.bold.copyWith(
-                                fontSize: 18,
-                                color: themeManager.isHighContrast
-                                    ? AppColor.white
-                                    : AppColor.buttonGreen),
+                            style: NotoSansArabicCustomTextStyle.bold
+                                .copyWith(fontSize: 18, color: AppColor.text),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -91,9 +89,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                               padding: const EdgeInsets.only(top: 8),
                               child: Container(
                                 decoration: BoxDecoration(
-                                    color: themeManager.isHighContrast
-                                        ? AppColor.labelText
-                                        : AppColor.white,
+                                    color: AppColor.panelDarkSoft,
                                     borderRadius: BorderRadius.circular(8),
                                     boxShadow: const [
                                       BoxShadow(
@@ -116,7 +112,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                                                       .copyWith(
                                                           fontSize: 17,
                                                           color:
-                                                              AppColor.black)),
+                                                              AppColor.text)),
                                           Text("$studentName",
                                               style:
                                                   NotoSansArabicCustomTextStyle
@@ -124,7 +120,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                                                       .copyWith(
                                                           fontSize: 17,
                                                           color:
-                                                              AppColor.black)),
+                                                              AppColor.text)),
                                         ],
                                       ),
                                       Row(
@@ -136,7 +132,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                                                       .copyWith(
                                                           fontSize: 15,
                                                           color:
-                                                              AppColor.black)),
+                                                              AppColor.text)),
                                           const SizedBox(width: 7),
                                           Text("$studentGrade",
                                               style:
@@ -145,7 +141,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                                                       .copyWith(
                                                           fontSize: 15,
                                                           color:
-                                                              AppColor.black)),
+                                                              AppColor.text)),
                                         ],
                                       ),
                                       if (subjectData.isNotEmpty)
@@ -164,7 +160,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                                                         .regular
                                                         .copyWith(
                                                             color:
-                                                                AppColor.black,
+                                                                AppColor.text,
                                                             fontSize: 13),
                                               ),
                                             ],
@@ -186,12 +182,33 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                                                         .bold
                                                         .copyWith(
                                                             color:
-                                                                AppColor.black,
+                                                                AppColor.text,
                                                             fontSize: 15),
                                               ),
                                               MarkdownBody(
                                                   data:
-                                                      "${viewModel.recommendations[studentId]['recommendations']}")
+                                                      "${viewModel.recommendations[studentId]['recommendations']}",
+                                                  styleSheet:
+                                                      MarkdownStyleSheet(
+                                                    p: NotoSansArabicCustomTextStyle
+                                                        .regular
+                                                        .copyWith(
+                                                            color:
+                                                                AppColor.text,
+                                                            fontSize: 13),
+                                                    strong:
+                                                        NotoSansArabicCustomTextStyle
+                                                            .semibold
+                                                            .copyWith(
+                                                                color: AppColor
+                                                                    .text),
+                                                    listBullet:
+                                                        NotoSansArabicCustomTextStyle
+                                                            .regular
+                                                            .copyWith(
+                                                                color: AppColor
+                                                                    .text),
+                                                  ))
                                             ],
                                           ),
                                         ),

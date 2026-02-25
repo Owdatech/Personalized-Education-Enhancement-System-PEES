@@ -170,7 +170,8 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
     } else if (roleName == "Parent") {
       final assignedStudents = selectedStudentIds.toList();
       if (assignedStudents.isEmpty) {
-        Utils.snackBar("Please select at least one student for parent.", context);
+        Utils.snackBar(
+            "Please select at least one student for parent.", context);
         return;
       }
 
@@ -529,6 +530,7 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               body: Stack(
                 children: [
                   isMobile ? const SizedBox() : const BackButtonWidget(),
@@ -559,7 +561,7 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
                               width: double.infinity,
                               decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(5),
-                                  color: AppColor.white),
+                                  color: AppColor.panelDarkSoft),
                               child: Padding(
                                 padding: const EdgeInsets.only(
                                     left: 15, right: 15, top: 15),
@@ -775,8 +777,8 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
                                                       decoration: BoxDecoration(
                                                           color: themeManager
                                                                   .isHighContrast
-                                                              ? AppColor.labelText
-                                                              : AppColor.white,
+                                                              ? AppColor.grey
+                                                              : AppColor.panelDark,
                                                           borderRadius: BorderRadius.circular(7),
                                                           boxShadow: const [
                                                             BoxShadow(
@@ -796,15 +798,24 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
                                                                   .start,
                                                           children: [
                                                             Text(
-                                                                "${"grade".tr} : $gradeName"),
+                                                                "${"grade".tr} : $gradeName",
+                                                                style: const TextStyle(
+                                                                    color: AppColor
+                                                                        .white)),
                                                             const SizedBox(
                                                                 height: 5),
                                                             Text(
-                                                                "${"class".tr} : $className"),
+                                                                "${"class".tr} : $className",
+                                                                style: const TextStyle(
+                                                                    color: AppColor
+                                                                        .white)),
                                                             const SizedBox(
                                                                 height: 5),
                                                             Text(
-                                                                "${"subject".tr} : $subjectName"),
+                                                                "${"subject".tr} : $subjectName",
+                                                                style: const TextStyle(
+                                                                    color: AppColor
+                                                                        .white)),
                                                           ],
                                                         ),
                                                       ),
@@ -841,13 +852,13 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
                                                 color: AppColor.buttonGreen),
                                             borderRadius:
                                                 BorderRadius.circular(5),
-                                            color: AppColor.white),
+                                            color: AppColor.panelDark),
                                         child: Center(
                                             child: Text(
                                           "cancel".tr,
                                           style: PoppinsCustomTextStyle.semibold
                                               .copyWith(
-                                                  color: AppColor.buttonGreen,
+                                                  color: AppColor.white,
                                                   fontSize: fontSizeProvider
                                                       .fontSize),
                                         )),
@@ -898,8 +909,7 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
             borderRadius: BorderRadius.circular(2),
             border: Border.all(width: 1.0, color: AppColor.textGrey)),
         child: DropdownButton(
-          dropdownColor:
-              themeManager.isHighContrast ? AppColor.black : AppColor.white,
+          dropdownColor: AppColor.panelDarkSoft,
           hint: Padding(
             padding: const EdgeInsets.only(left: 15, top: 2),
             child: Text("userRole".tr,
@@ -1065,8 +1075,7 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
                 color: isEnabled ? AppColor.textGrey : AppColor.lightGrey),
           ),
           child: DropdownButton<String>(
-            dropdownColor:
-                themeManager.isHighContrast ? AppColor.black : AppColor.white,
+            dropdownColor: AppColor.panelDarkSoft,
             hint: Padding(
               padding: const EdgeInsets.only(left: 15, top: 2),
               child: Text("Class".tr,
@@ -1152,8 +1161,7 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
                 color: isEnabled ? AppColor.textGrey : AppColor.lightGrey),
           ),
           child: DropdownButton<String>(
-            dropdownColor:
-                themeManager.isHighContrast ? AppColor.black : AppColor.white,
+            dropdownColor: AppColor.panelDarkSoft,
             hint: Padding(
               padding: const EdgeInsets.only(left: 15, top: 2),
               child: Text("subject".tr,
@@ -1181,7 +1189,9 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
             value: (selectedSubject != null &&
                     subjects.any((s) => s["id"] == selectedSubject))
                 ? selectedSubject
-                : (subjects.isNotEmpty ? subjects.first["id"]?.toString() : null),
+                : (subjects.isNotEmpty
+                    ? subjects.first["id"]?.toString()
+                    : null),
             underline: const SizedBox.shrink(),
             onChanged: (newValue) {
               setState(() {
@@ -1226,8 +1236,7 @@ class _AddNewUserScreenState extends State<AddNewUserScreen> {
             borderRadius: BorderRadius.circular(2),
             border: Border.all(width: 1.0, color: AppColor.textGrey)),
         child: DropdownButton<String>(
-          dropdownColor:
-              themeManager.isHighContrast ? AppColor.black : AppColor.white,
+          dropdownColor: AppColor.panelDarkSoft,
           hint: Padding(
             padding: const EdgeInsets.only(left: 15, top: 2),
             child: Text("grade".tr,

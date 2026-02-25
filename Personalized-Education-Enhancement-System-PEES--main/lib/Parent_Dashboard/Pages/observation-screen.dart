@@ -284,6 +284,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               body: Stack(
                 children: [
                   isMobile ? SizedBox() : const BackButtonWidget(),
@@ -302,10 +303,10 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                             Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                    color: themeManager.isHighContrast
-                                        ? AppColor.labelText
-                                        : AppColor.white,
+                                    color: AppColor.panelDarkSoft,
                                     borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                        color: AppColor.lightGrey, width: 1),
                                     boxShadow: const [
                                       BoxShadow(
                                           blurRadius: 15,
@@ -372,7 +373,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                                                                 style: NotoSansArabicCustomTextStyle.bold.copyWith(
                                                                     color: themeManager.isHighContrast
                                                                         ? AppColor
-                                                                            .black
+                                                                            .text
                                                                         : AppColor
                                                                             .labelText,
                                                                     fontSize:
@@ -384,7 +385,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                                                                     hintStyle: NotoSansArabicCustomTextStyle.bold.copyWith(
                                                                         color: themeManager.isHighContrast
                                                                             ? AppColor
-                                                                                .black
+                                                                                .text
                                                                             : AppColor
                                                                                 .labelText,
                                                                         fontSize:
@@ -487,7 +488,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
             padding: const EdgeInsets.all(15.0),
             child: Container(
               decoration: BoxDecoration(
-                  color: AppColor.white,
+                  color: AppColor.panelDarkSoft,
                   borderRadius: BorderRadius.circular(5)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,13 +508,13 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                                     style: NotoSansArabicCustomTextStyle.bold
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
+                                            color: AppColor.text)),
                                 const SizedBox(height: 5),
                                 Text("${"subjectTitle".tr} $subjectName",
                                     style: NotoSansArabicCustomTextStyle.bold
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
+                                            color: AppColor.text)),
                                 const SizedBox(height: 5),
                                 AppFillButton3(
                                     onPressed: () {
@@ -533,7 +534,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                                     style: NotoSansArabicCustomTextStyle.bold
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
+                                            color: AppColor.text)),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
@@ -544,7 +545,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                                     style: NotoSansArabicCustomTextStyle.bold
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
+                                            color: AppColor.text)),
                               ),
                               const SizedBox(width: 10),
                               AppFillButton3(
@@ -563,7 +564,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                          color: AppColor.white,
+                          color: AppColor.panelDarkSoft,
                           borderRadius: BorderRadius.circular(5),
                           border: Border.all(
                               width: 1, color: AppColor.buttonGreen)),
@@ -573,7 +574,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                           description ?? "",
                           style: NotoSansArabicCustomTextStyle.bold.copyWith(
                               fontSize: fontSizeProvider.fontSize,
-                              color: AppColor.black),
+                              color: AppColor.text),
                         ),
                       ),
                     ),
@@ -643,22 +644,22 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                   Text(widget.userName ?? "",
                       style: NotoSansArabicCustomTextStyle.bold.copyWith(
                           fontSize: fontSizeProvider.fontSize + 2,
-                          color: AppColor.black)),
+                          color: AppColor.text)),
                   const SizedBox(height: 15),
                   Text("${"email".tr} ${widget.email ?? ""}",
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: NotoSansArabicCustomTextStyle.medium.copyWith(
                           fontSize: fontSizeProvider.fontSize,
-                          color: AppColor.black)),
+                          color: AppColor.text)),
                   const SizedBox(height: 15),
                   Text(widget.className ?? "",
                       style: NotoSansArabicCustomTextStyle.medium
-                          .copyWith(fontSize: 13, color: AppColor.black)),
+                          .copyWith(fontSize: 13, color: AppColor.text)),
                   const SizedBox(height: 15),
                   Text("${"grade".tr} : ${widget.grade ?? ""}",
                       style: NotoSansArabicCustomTextStyle.medium
-                          .copyWith(fontSize: 13, color: AppColor.black)),
+                          .copyWith(fontSize: 13, color: AppColor.text)),
                   const SizedBox(height: 5),
                 ],
               ),
@@ -772,7 +773,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                 // height: 60,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                    color: AppColor.white,
+                    color: AppColor.panelDarkSoft,
                     borderRadius: BorderRadius.circular(5),
                     boxShadow: const [
                       BoxShadow(
@@ -790,14 +791,14 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                           "${"date".tr} ${formatDate(filteredList[i]['date'])}",
                           style: NotoSansArabicCustomTextStyle.medium.copyWith(
                               fontSize: fontSizeProvider.fontSize,
-                              color: AppColor.black)),
+                              color: AppColor.text)),
                       const SizedBox(height: 7),
                       Text(
                         filteredList[i]['observation'] ?? "",
                         softWrap: true,
                         style: NotoSansArabicCustomTextStyle.medium.copyWith(
                             fontSize: fontSizeProvider.fontSize,
-                            color: AppColor.black),
+                            color: AppColor.text),
                       ),
                       const SizedBox(height: 8),
                       if (isMobile)
@@ -806,7 +807,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                           softWrap: true,
                           style: NotoSansArabicCustomTextStyle.medium.copyWith(
                               fontSize: fontSizeProvider.fontSize,
-                              color: AppColor.black),
+                              color: AppColor.text),
                         ),
                       if (isMobile) const SizedBox(height: 8),
                       if (isMobile)
@@ -834,7 +835,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                                 style: NotoSansArabicCustomTextStyle.medium
                                     .copyWith(
                                         fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.black),
+                                        color: AppColor.text),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -879,13 +880,13 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
               Text("Teacher’s Notes :",
                   style: NotoSansArabicCustomTextStyle.semibold.copyWith(
                       fontSize: fontSizeProvider.fontSize,
-                      color: AppColor.black)),
+                      color: AppColor.text)),
               const SizedBox(width: 20),
               Container(
                   height: 200,
                   width: 668,
                   decoration: BoxDecoration(
-                      color: AppColor.white,
+                      color: AppColor.panelDarkSoft,
                       borderRadius: BorderRadius.circular(5)),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -893,7 +894,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                       "List of Notes for student",
                       style: NotoSansArabicCustomTextStyle.regular.copyWith(
                           fontSize: fontSizeProvider.fontSize,
-                          color: AppColor.black),
+                          color: AppColor.text),
                     ),
                   ))
             ],
@@ -906,13 +907,13 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
               Text("Feedback :",
                   style: NotoSansArabicCustomTextStyle.semibold.copyWith(
                       fontSize: fontSizeProvider.fontSize,
-                      color: AppColor.black)),
+                      color: AppColor.text)),
               const SizedBox(width: 75),
               Container(
                   height: 200,
                   width: 668,
                   decoration: BoxDecoration(
-                      color: AppColor.white,
+                      color: AppColor.panelDarkSoft,
                       borderRadius: BorderRadius.circular(5)),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -920,7 +921,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
                       "Provided Feedback",
                       style: NotoSansArabicCustomTextStyle.regular.copyWith(
                           fontSize: fontSizeProvider.fontSize,
-                          color: AppColor.black),
+                          color: AppColor.text),
                     ),
                   )),
             ],

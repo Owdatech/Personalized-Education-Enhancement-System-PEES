@@ -23,7 +23,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
   List<String> examNameList = [];
   String? examName;
   List<String> curriculumList = [];
-  
+
   String? curriculumName;
   DateTime? _selectedDate;
   TextEditingController engMarksController = TextEditingController();
@@ -98,6 +98,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width <= 800;
     return Scaffold(
+      backgroundColor: AppColor.bgLavender,
       body: Stack(
         children: [
           Column(
@@ -157,7 +158,8 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                                                   height: 40,
                                                   width: 150,
                                                   decoration: BoxDecoration(
-                                                      color: AppColor.white,
+                                                      color: AppColor
+                                                          .panelDarkSoft,
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               5),
@@ -224,60 +226,60 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: isMobile ? 320 : 453,
-                      height: 38,
-                      decoration: const BoxDecoration(
-                          color: AppColor.buttonGreen,
-                          borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(5),
-                              topRight: Radius.circular(5))),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("subject".tr,
-                                style: NotoSansArabicCustomTextStyle.bold
-                                    .copyWith(
-                                        fontSize: 13, color: AppColor.white)),
-                            Row(
-                              children: [
-                                Text("marks".tr,
-                                    style: NotoSansArabicCustomTextStyle.bold
-                                        .copyWith(
-                                            fontSize: 13,
-                                            color: AppColor.white)),
-                                const SizedBox(width: 25),
-                                Text("gradee".tr,
-                                    style: NotoSansArabicCustomTextStyle.bold
-                                        .copyWith(
-                                            fontSize: 13,
-                                            color: AppColor.white)),
-                              ],
-                            )
-                          ],
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: isMobile ? 320 : 453,
+                        height: 38,
+                        decoration: const BoxDecoration(
+                            color: AppColor.buttonGreen,
+                            borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(5),
+                                topRight: Radius.circular(5))),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 15),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("subject".tr,
+                                  style: NotoSansArabicCustomTextStyle.bold
+                                      .copyWith(
+                                          fontSize: 13, color: AppColor.white)),
+                              Row(
+                                children: [
+                                  Text("marks".tr,
+                                      style: NotoSansArabicCustomTextStyle.bold
+                                          .copyWith(
+                                              fontSize: 13,
+                                              color: AppColor.white)),
+                                  const SizedBox(width: 25),
+                                  Text("gradee".tr,
+                                      style: NotoSansArabicCustomTextStyle.bold
+                                          .copyWith(
+                                              fontSize: 13,
+                                              color: AppColor.white)),
+                                ],
+                              )
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    subjectTable(isMobile),
-                  ],
-                ),
-                SizedBox(width: isMobile ? 20 : 70),
-                Padding(
-                  padding: const EdgeInsets.only(top: 15),
-                  child: Column(
-                    children: [
-                      attendance(isMobile),
-                      const SizedBox(height: 45),
-                      curriculumRelevance(isMobile)
+                      subjectTable(isMobile),
                     ],
                   ),
-                )
-              ],
+                  SizedBox(width: isMobile ? 20 : 70),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 15),
+                    child: Column(
+                      children: [
+                        attendance(isMobile),
+                        const SizedBox(height: 45),
+                        curriculumRelevance(isMobile)
+                      ],
+                    ),
+                  )
+                ],
               ),
             ),
             Container(
@@ -323,7 +325,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
             height: 155,
             width: isMobile ? 280 : 300,
             decoration: const BoxDecoration(
-                color: AppColor.white,
+                color: AppColor.panelDarkSoft,
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(5),
                     bottomRight: Radius.circular(5))),
@@ -370,7 +372,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
             height: 155,
             width: isMobile ? 280 : 300,
             decoration: const BoxDecoration(
-                color: AppColor.white,
+                color: AppColor.panelDarkSoft,
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(5),
                     bottomRight: Radius.circular(5))),
@@ -437,7 +439,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
           height: 20,
           width: 86,
           decoration: BoxDecoration(
-              color: AppColor.white,
+              color: AppColor.panelDarkSoft,
               borderRadius: BorderRadius.circular(5),
               border: Border.all(width: 1, color: AppColor.textGrey)),
           child: TextField(
@@ -447,7 +449,8 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                 .copyWith(color: AppColor.black, fontSize: 10),
             decoration: const InputDecoration(
                 border: InputBorder.none,
-                contentPadding: EdgeInsetsDirectional.only(start: 5, bottom: 22)),
+                contentPadding:
+                    EdgeInsetsDirectional.only(start: 5, bottom: 22)),
           ),
         ),
       ]),
@@ -457,18 +460,22 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
   Widget subjectTable(bool isMobile) {
     return Column(
       children: [
-        subjectItem("English", engMarksController, engGradeController, isMobile),
-        subjectItem("Math", mathMarksController, mathGradeController, isMobile),
-        subjectItem("Science", sciMarksController, sciGradeController, isMobile),
         subjectItem(
-            "History", historyMarksController, historyGradeController, isMobile),
+            "English", engMarksController, engGradeController, isMobile),
+        subjectItem("Math", mathMarksController, mathGradeController, isMobile),
+        subjectItem(
+            "Science", sciMarksController, sciGradeController, isMobile),
+        subjectItem("History", historyMarksController, historyGradeController,
+            isMobile),
         subjectItem("GK", gkMarksController, gkGradeController, isMobile),
         subjectItem(
             "Computer", compMarksController, compGradeController, isMobile),
-        subjectItem("Drawing", drwaMarksController, drwaGradeController, isMobile),
         subjectItem(
-            "Business Studies", busStuMarksController, busStuGradeController, isMobile),
-        subjectItem("Economics", ecoMarksController, ecoGradeController, isMobile),
+            "Drawing", drwaMarksController, drwaGradeController, isMobile),
+        subjectItem("Business Studies", busStuMarksController,
+            busStuGradeController, isMobile),
+        subjectItem(
+            "Economics", ecoMarksController, ecoGradeController, isMobile),
       ],
     );
   }
@@ -481,7 +488,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
           width: isMobile ? 220 : 314,
           height: 38,
           decoration: BoxDecoration(
-              color: AppColor.white,
+              color: AppColor.panelDarkSoft,
               border: Border.all(width: 1, color: AppColor.buttonGreen)),
           child: Padding(
             padding: const EdgeInsetsDirectional.only(start: 23),
@@ -501,7 +508,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
           height: 36,
           width: isMobile ? 48 : 36,
           decoration: BoxDecoration(
-            color: AppColor.white,
+            color: AppColor.panelDarkSoft,
             borderRadius: BorderRadius.circular(5),
             border: Border.all(color: AppColor.buttonGreen, width: 1),
           ),
@@ -520,7 +527,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
           height: 36,
           width: isMobile ? 48 : 36,
           decoration: BoxDecoration(
-            color: AppColor.white,
+            color: AppColor.panelDarkSoft,
             borderRadius: BorderRadius.circular(5),
             border: Border.all(color: AppColor.buttonGreen, width: 1),
           ),
@@ -620,7 +627,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
       height: 60,
       width: double.infinity,
       decoration: BoxDecoration(
-          color: AppColor.white,
+          color: AppColor.panelDarkSoft,
           borderRadius: BorderRadius.circular(10),
           boxShadow: const [
             BoxShadow(
@@ -636,12 +643,12 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
             child: Padding(
               padding: const EdgeInsetsDirectional.only(start: 15, end: 8),
               child: Text(
-              "searchHint".tr,
-              overflow: TextOverflow.ellipsis,
-              style: NotoSansArabicCustomTextStyle.bold
-                  .copyWith(color: AppColor.labelText, fontSize: 18),
+                "searchHint".tr,
+                overflow: TextOverflow.ellipsis,
+                style: NotoSansArabicCustomTextStyle.bold
+                    .copyWith(color: AppColor.labelText, fontSize: 18),
+              ),
             ),
-          ),
           ),
           Container(
             height: 60,
@@ -677,7 +684,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
             Wrap(
               runSpacing: 10,
               spacing: 20,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              alignment: WrapAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
@@ -704,7 +711,8 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                                 onPressed: () {
                                   _selectDate(context);
                                 },
-                                padding: const EdgeInsetsDirectional.only(start: 15),
+                                padding:
+                                    const EdgeInsetsDirectional.only(start: 15),
                                 icon: Image.asset(
                                   AppImage.calendar,
                                   width: 45,
@@ -741,7 +749,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
               height: 96,
               width: double.infinity,
               decoration: BoxDecoration(
-                  color: AppColor.white,
+                  color: AppColor.panelDarkSoft,
                   borderRadius: BorderRadius.circular(5)),
               child: Align(
                 alignment: Alignment.bottomCenter,
@@ -782,7 +790,7 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
               height: 96,
               width: double.infinity,
               decoration: BoxDecoration(
-                  color: AppColor.white,
+                  color: AppColor.panelDarkSoft,
                   borderRadius: BorderRadius.circular(5)),
               child: Padding(
                 padding: const EdgeInsetsDirectional.only(top: 7, start: 17),
@@ -943,12 +951,9 @@ class _ExamScriptsScreenState extends State<ExamScriptsScreen> {
                       Radius.circular(type == ExamScriptFor.academic ? 0 : 5))),
           child: Center(
             child: Text("$text".tr,
-                style: PoppinsCustomTextStyle.bold
-                    .copyWith(
-                        fontSize: 18,
-                        color: isSelected
-                            ? AppColor.white
-                            : AppColor.buttonGreen)),
+                style: PoppinsCustomTextStyle.bold.copyWith(
+                    fontSize: 18,
+                    color: isSelected ? AppColor.white : AppColor.buttonGreen)),
           ),
         ),
       ),

@@ -56,8 +56,7 @@ class _UpdateStudentDetailsState extends State<UpdateStudentDetails> {
             await masterViewModel.uploadStudentImage(studId, imageData!);
         if (context.mounted) {
           if (imageCode == 200) {
-            Utils.snackBar(
-                "bothSuccess".tr, context);
+            Utils.snackBar("bothSuccess".tr, context);
             print("Returning TRUE to refresh list");
             Navigator.of(context)
               ..pop(true)
@@ -166,6 +165,7 @@ class _UpdateStudentDetailsState extends State<UpdateStudentDetails> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: Colors.transparent,
               body: Stack(
                 children: [
                   isMobile ? const SizedBox() : const BackButtonWidget(),
@@ -237,9 +237,7 @@ class _UpdateStudentDetailsState extends State<UpdateStudentDetails> {
             width: double.infinity,
             height: isMobile ? MediaQuery.of(context).size.height : 580,
             decoration: BoxDecoration(
-                color: themeManager.isHighContrast
-                    ? AppColor.labelText
-                    : AppColor.white,
+                color: AppColor.panelDarkSoft,
                 boxShadow: [
                   const BoxShadow(
                       color: AppColor.greyShadow,

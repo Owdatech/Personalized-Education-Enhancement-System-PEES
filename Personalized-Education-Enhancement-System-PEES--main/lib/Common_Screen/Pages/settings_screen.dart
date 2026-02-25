@@ -182,6 +182,7 @@ class _SettingScreenState extends State<SettingScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: Colors.transparent,
               appBar: PreferredSize(
                   preferredSize: const Size(double.infinity, 50),
                   child: isMobile ? MyAppBar("") : const SizedBox()),
@@ -258,9 +259,7 @@ class _SettingScreenState extends State<SettingScreen> {
             width: double.infinity,
             // height: 100,
             decoration: BoxDecoration(
-              color: themeManager.isHighContrast
-                  ? AppColor.labelText
-                  : AppColor.white,
+              color: AppColor.panelDarkSoft,
               boxShadow: const [
                 BoxShadow(
                     blurRadius: 5,
@@ -430,9 +429,7 @@ class _SettingScreenState extends State<SettingScreen> {
             )),
         Container(
           decoration: BoxDecoration(
-              color: themeManager.isHighContrast
-                  ? AppColor.labelText
-                  : AppColor.white,
+              color: AppColor.panelDarkSoft,
               boxShadow: const [
                 BoxShadow(
                     blurRadius: 5,
@@ -511,9 +508,7 @@ class _SettingScreenState extends State<SettingScreen> {
         Container(
             height: 100,
             decoration: BoxDecoration(
-                color: themeManager.isHighContrast
-                    ? AppColor.labelText
-                    : AppColor.white,
+                color: AppColor.panelDarkSoft,
                 boxShadow: const [
                   BoxShadow(
                       blurRadius: 5,
@@ -569,9 +564,7 @@ class _SettingScreenState extends State<SettingScreen> {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: themeManager.isHighContrast
-                  ? AppColor.labelText
-                  : AppColor.white,
+              color: AppColor.panelDarkSoft,
               boxShadow: const [
                 BoxShadow(
                     blurRadius: 5,
@@ -990,7 +983,7 @@ class _SettingScreenState extends State<SettingScreen> {
         height: 50,
         width: 150,
         decoration: BoxDecoration(
-            color: isSelected ? AppColor.buttonGreen : AppColor.white,
+            color: isSelected ? AppColor.buttonGreen : AppColor.panelDark,
             border: Border.all(color: AppColor.buttonGreen, width: 2),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(isSelected ? 10 : 0),
@@ -1002,7 +995,7 @@ class _SettingScreenState extends State<SettingScreen> {
             child: Text(text.tr,
                 style: NotoSansArabicCustomTextStyle.medium.copyWith(
                     fontSize: fontSizeProvider.fontSize,
-                    color: isSelected ? AppColor.white : AppColor.black))),
+                    color: AppColor.white))),
       ),
     );
   }
@@ -1025,12 +1018,13 @@ class _SettingScreenState extends State<SettingScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.green,
+                  color: AppColor.accentPrimary,
                   width: 2,
                 ),
               ),
               child: isSelected
-                  ? const Icon(Icons.circle, size: 16, color: Colors.green)
+                  ? const Icon(Icons.circle,
+                      size: 16, color: AppColor.accentPrimary)
                   : null,
             ),
             const SizedBox(width: 10),

@@ -22,7 +22,10 @@ class LoaderView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text("Loading... Please wait"),
+          const Text(
+            "Loading... Please wait",
+            style: TextStyle(color: AppColor.white),
+          ),
         ],
       ),
     );

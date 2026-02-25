@@ -173,6 +173,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: Colors.transparent,
               appBar: PreferredSize(
                   preferredSize: const Size(double.infinity, 50),
                   child: isMobile ? MyAppBar("") : const SizedBox()),
@@ -331,10 +332,17 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                                         }
                                                       },
                                                       icon: const Icon(
-                                                          Icons.arrow_back),
+                                                          Icons.arrow_back,
+                                                          color:
+                                                              AppColor.white),
                                                     ),
                                                     Text(
-                                                        "$currentPage/${(searchResults.length / itemsPerPage).ceil()}"),
+                                                        "$currentPage/${(searchResults.length / itemsPerPage).ceil()}",
+                                                        style: NotoSansArabicCustomTextStyle
+                                                            .medium
+                                                            .copyWith(
+                                                                color: AppColor
+                                                                    .white)),
                                                     IconButton(
                                                       onPressed: () {
                                                         if (currentPage <
@@ -348,7 +356,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                                         }
                                                       },
                                                       icon: const Icon(
-                                                          Icons.arrow_forward),
+                                                          Icons.arrow_forward,
+                                                          color:
+                                                              AppColor.white),
                                                     ),
                                                   ],
                                                 )
@@ -387,10 +397,14 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                             });
                                           }
                                         },
-                                        icon: const Icon(Icons.arrow_back),
+                                        icon: const Icon(Icons.arrow_back,
+                                            color: AppColor.white),
                                       ),
                                       Text(
-                                          "$currentPage/${(searchResults.length / itemsPerPage).ceil()}"),
+                                          "$currentPage/${(searchResults.length / itemsPerPage).ceil()}",
+                                          style: NotoSansArabicCustomTextStyle
+                                              .medium
+                                              .copyWith(color: AppColor.white)),
                                       IconButton(
                                         onPressed: () {
                                           if (currentPage <
@@ -402,7 +416,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                             });
                                           }
                                         },
-                                        icon: const Icon(Icons.arrow_forward),
+                                        icon: const Icon(Icons.arrow_forward,
+                                            color: AppColor.white),
                                       ),
                                     ],
                                   )
@@ -534,8 +549,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             borderRadius: BorderRadius.circular(2),
             border: Border.all(width: 1.0, color: AppColor.textGrey)),
         child: DropdownButton(
-          dropdownColor:
-              themeManager.isHighContrast ? AppColor.black : AppColor.white,
+          dropdownColor: AppColor.panelDarkSoft,
           hint: Padding(
             padding: const EdgeInsets.only(left: 15, top: 2),
             child: Text("userRole".tr,
@@ -590,8 +604,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         // height: 65,
         width: double.infinity,
         decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: AppColor.panelDarkSoft,
           boxShadow: const [
             BoxShadow(
                 blurRadius: 15,
@@ -762,8 +775,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       height: 60,
       width: double.infinity,
       decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: AppColor.panelDarkSoft,
           borderRadius: BorderRadius.circular(10),
           boxShadow: const [
             BoxShadow(

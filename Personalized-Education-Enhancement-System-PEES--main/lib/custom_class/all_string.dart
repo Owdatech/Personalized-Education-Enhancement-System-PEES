@@ -17,6 +17,9 @@ class LocaleString extends Translations {
           'arabic': "Arabic",
           'copyrightInformation': "Copyright information",
           'termsandPrivacyPolicy': "Terms and Privacy Policy",
+          'loginHeroSubtitle': "Smart platform for schools",
+          'loginHeroBadge': "Unified admin, teacher and parent experience",
+          'loginFormSubtitle': "Enter your email and password to continue",
           // Forgot password screen
           'forgotPasswordTitle': "Forgot Password ?",
           'forgotPassowordSubTitle':
@@ -221,6 +224,8 @@ class LocaleString extends Translations {
           'lowMarksAlertsTitle': "Students With Marks Below 6/10",
           'noLowMarksAlerts': "No students currently below 6/10.",
           'marksOutOfTen': "Mark (out of 10)",
+          'averageMarks': "Average Marks",
+          'averageGrade': "Average Grade",
           'assList': "List of recent assessments, feedback, or observations.",
           'inApp': "In-app",
 
@@ -396,6 +401,9 @@ class LocaleString extends Translations {
           'arabic': "العربية",
           'copyrightInformation': "معلومات حقوق النشر",
           'termsandPrivacyPolicy': "الشروط وسياسة الخصوصية",
+          'loginHeroSubtitle': "منصة ذكية للمدارس",
+          'loginHeroBadge': "تجربة موحدة للإدارة والمعلمين وأولياء الأمور",
+          'loginFormSubtitle': "أدخل بريدك الإلكتروني وكلمة المرور للمتابعة",
           // Forgot password Screen
           'forgotPasswordTitle': "نسيت كلمة المرور؟",
           'forgotPassowordSubTitle': "لا تقلق، سنرسل لك تعليمات إعادة التعيين.",
@@ -599,6 +607,8 @@ class LocaleString extends Translations {
           'lowMarksAlertsTitle': "الطلاب ذوو الدرجات الأقل من 6/10",
           'noLowMarksAlerts': "لا يوجد طلاب بدرجات أقل من 6/10 حالياً.",
           'marksOutOfTen': "الدرجة (من 10)",
+          'averageMarks': "متوسط الدرجات",
+          'averageGrade': "متوسط التقدير",
           'assList': "قائمة التقييمات أو التعليقات أو الملاحظات الأخيرة.", //
           'inApp': "داخل التطبيق",
 

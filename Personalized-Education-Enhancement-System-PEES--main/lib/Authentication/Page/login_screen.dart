@@ -25,6 +25,11 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  static const Color _bgDark = Color(0xFF0D111B);
+  static const Color _bgDarkSoft = Color(0xFF171A22);
+  static const Color _accent = Color(0xFF8E7CFF);
+  static const Color _textMuted = Color(0xFFB2B6C6);
+
   AuthVM viewModel = AuthVM();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
@@ -86,224 +91,128 @@ class _LoginPageState extends State<LoginPage> {
               bool isMobile = constraints.maxWidth <= 800;
               return Scaffold(
                 resizeToAvoidBottomInset: true,
-                extendBodyBehindAppBar: true,
+                backgroundColor: _bgDark,
                 body: Stack(
                   children: [
-                    Container(
-                        height: MediaQuery.of(context).size.height,
-                        width: MediaQuery.of(context).size.width,
+                    Positioned.fill(
+                      child: Container(
                         decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                tileMode: TileMode.clamp,
-                                colors: [
-                              AppColor.yellowGreen,
-                              AppColor.lightGrren,
-                              AppColor.darkGreen
-                            ])),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [_bgDark, _bgDarkSoft],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: -120,
+                      left: -80,
+                      child: Container(
+                        width: 320,
+                        height: 320,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _accent.withValues(alpha: 0.20),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -160,
+                      right: -100,
+                      child: Container(
+                        width: 380,
+                        height: 380,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _accent.withValues(alpha: 0.14),
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: Opacity(
+                        opacity: 0.08,
                         child: Image.asset(
                           AppImage.loginBackground,
                           fit: BoxFit.cover,
-                        )),
-                    Column(
-                      children: [
-                        const SizedBox(height: 50),
-                        Text(
-                          "appName".tr,
-                          textAlign: TextAlign.center,
-                          style: PoppinsCustomTextStyle.medium.copyWith(
-                              fontSize: isMobile ? 25 : 35,
-                              color: AppColor.white),
                         ),
-                        const SizedBox(height: 30),
-                        Align(
-                          alignment: Alignment.center,
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: isMobile ? 20 : 0),
+                      ),
+                    ),
+                    SafeArea(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.fromLTRB(isMobile ? 20 : 28,
+                              isMobile ? 16 : 20, isMobile ? 20 : 28, 18),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1020),
                             child: Container(
-                              width: 450,
                               decoration: BoxDecoration(
-                                  color: AppColor.whiteBorder,
-                                  borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(
-                                      width: 2, color: AppColor.whiteBorder)),
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 25, right: 25, top: 65, bottom: 65),
-                                child: Form(
-                                  key: _loginkey,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text("emailAddressTitle".tr,
-                                          style: PoppinsCustomTextStyle.medium
-                                              .copyWith(
-                                                  fontSize: 16,
-                                                  color: AppColor.white)),
-                                      const SizedBox(height: 5),
-                                      AppTextField(
-                                          textController: emailController,
-                                          hintText: "emailHint".tr,
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'emailEmpty'.tr;
-                                            } else if (!RegExp(
-                                                    r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$')
-                                                .hasMatch(value)) {
-                                              return 'validEmail'.tr;
-                                            }
-                                            return null;
-                                          },
-                                          icon: null),
-                                      const SizedBox(height: 30),
-                                      Text("passwordTitle".tr,
-                                          style: PoppinsCustomTextStyle.medium
-                                              .copyWith(
-                                                  fontSize: 16,
-                                                  color: AppColor.white)),
-                                      const SizedBox(height: 5),
-                                      AppTextField(
-                                        textController: passwordController,
-                                        isObscure: !_passwordVisible,
-                                        hintText: "passwordHint".tr,
-                                        icon: null,
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'passwordEmpty'.tr;
-                                          }
-                                          return null;
-                                        },
-                                        suffixIcon: IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                _passwordVisible =
-                                                    !_passwordVisible;
-                                              });
-                                            },
-                                            icon: Icon(
-                                              _passwordVisible
-                                                  ? Icons.visibility
-                                                  : Icons.visibility_off,
-                                              color: AppColor.labelText,
-                                            )),
-                                      ),
-                                      const SizedBox(height: 13),
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 25),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Checkbox(
-                                                    value: isRememberMe,
-                                                    onChanged: (value) {
-                                                      setState(() {
-                                                        isRememberMe =
-                                                            !isRememberMe;
-                                                      });
-                                                    },
-                                                    activeColor:
-                                                        AppColor.darkGreen,
-                                                    checkColor: AppColor.white,
-                                                    side: const BorderSide(
-                                                        color: AppColor.white,
-                                                        width: 2)),
-                                                Text(
-                                                  "rememberMe".tr,
-                                                  style: UrbanistCustomTextStyle
-                                                      .semibold
-                                                      .copyWith(
-                                                          color: AppColor.white,
-                                                          fontSize: 13),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 7),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 8),
-                                              child: InkWell(
-                                                onTap: () {
-                                                  forgotPwAction();
-                                                },
-                                                child: Text(
-                                                  "forgotPassword".tr,
-                                                  style: UrbanistCustomTextStyle
-                                                      .semibold
-                                                      .copyWith(
-                                                          color: AppColor.black,
-                                                          fontSize: 13),
-                                                ),
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 35),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                              child: AppFillButton(
-                                                  onPressed: () {
-                                                    loginAction();
-                                                  },
-                                                  text: "login")),
-                                        ],
-                                      )
-                                    ],
-                                  ),
-                                ),
+                                color:
+                                    AppColor.panelDark.withValues(alpha: 0.84),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                    color: AppColor.lightGrey, width: 1),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x55000000),
+                                    blurRadius: 28,
+                                    offset: Offset(0, 16),
+                                  )
+                                ],
                               ),
+                              padding: EdgeInsets.all(isMobile ? 18 : 26),
+                              child: isMobile
+                                  ? _buildLoginForm(
+                                      isMobile: true, showBranding: true)
+                                  : Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildBrandingPanel(),
+                                        ),
+                                        const SizedBox(width: 26),
+                                        SizedBox(
+                                          width: 430,
+                                          child: _buildLoginForm(
+                                              isMobile: false,
+                                              showBranding: false),
+                                        )
+                                      ],
+                                    ),
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Padding(
-                          // padding: const EdgeInsets.only(bottom: 10),
-                          padding: EdgeInsets.only(
-                            bottom:
-                                MediaQuery.of(context).viewInsets.bottom + 10,
-                          ),
-                          child: Text.rich(
-                              textAlign: TextAlign.center,
-                              TextSpan(children: [
-                                TextSpan(
-                                  text: "copyrightInformation".tr,
-                                  style: PoppinsCustomTextStyle.regular
-                                      .copyWith(
-                                          fontSize: 16,
-                                          color: AppColor.lightPink),
-                                ),
-                                TextSpan(
-                                  text: ' / ',
-                                  style: PoppinsCustomTextStyle.regular
-                                      .copyWith(
-                                          fontSize: 16,
-                                          color: AppColor.lightPink),
-                                ),
-                                TextSpan(
-                                    text: "termsandPrivacyPolicy".tr,
-                                    style: PoppinsCustomTextStyle.regular
-                                        .copyWith(
-                                            fontSize: 16,
-                                            color: AppColor.lightPink))
-                              ]))),
+                      ),
                     ),
                     const Padding(
                       padding: EdgeInsets.only(top: 15, right: 15),
                       child: LanguageSelectButton(),
+                    ),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                            bottom:
+                                MediaQuery.of(context).viewInsets.bottom + 10),
+                        child: Text.rich(
+                          textAlign: TextAlign.center,
+                          TextSpan(children: [
+                            TextSpan(
+                              text: "copyrightInformation".tr,
+                              style: PoppinsCustomTextStyle.regular
+                                  .copyWith(fontSize: 13, color: _textMuted),
+                            ),
+                            TextSpan(
+                              text: ' / ',
+                              style: PoppinsCustomTextStyle.regular
+                                  .copyWith(fontSize: 13, color: _textMuted),
+                            ),
+                            TextSpan(
+                                text: "termsandPrivacyPolicy".tr,
+                                style: PoppinsCustomTextStyle.regular
+                                    .copyWith(fontSize: 13, color: _textMuted))
+                          ]),
+                        ),
+                      ),
                     ),
                     viewModel.loading ? const LoaderView() : Container()
                   ],
@@ -312,5 +221,167 @@ class _LoginPageState extends State<LoginPage> {
             },
           );
         }));
+  }
+
+  Widget _buildBrandingPanel() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "appName".tr,
+            style: PoppinsCustomTextStyle.bold
+                .copyWith(fontSize: 40, color: AppColor.white),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            "loginHeroSubtitle".tr,
+            style: PoppinsCustomTextStyle.regular
+                .copyWith(fontSize: 17, color: _textMuted),
+          ),
+          const SizedBox(height: 28),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColor.panelDarkSoft.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColor.lightGrey, width: 1),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.auto_graph_rounded, size: 18, color: _accent),
+                const SizedBox(width: 10),
+                Text(
+                  "loginHeroBadge".tr,
+                  style: PoppinsCustomTextStyle.medium
+                      .copyWith(fontSize: 14, color: AppColor.text),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoginForm({required bool isMobile, required bool showBranding}) {
+    return Form(
+      key: _loginkey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (showBranding) ...[
+            Text(
+              "appName".tr,
+              style: PoppinsCustomTextStyle.bold
+                  .copyWith(fontSize: 30, color: AppColor.white),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Text(
+            "login".tr,
+            style: PoppinsCustomTextStyle.bold
+                .copyWith(fontSize: 30, color: AppColor.white),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "loginFormSubtitle".tr,
+            style: PoppinsCustomTextStyle.regular
+                .copyWith(fontSize: 14, color: _textMuted),
+          ),
+          const SizedBox(height: 24),
+          Text("emailAddressTitle".tr,
+              style: PoppinsCustomTextStyle.medium
+                  .copyWith(fontSize: 15, color: AppColor.white)),
+          const SizedBox(height: 6),
+          AppTextField(
+              textController: emailController,
+              hintText: "emailHint".tr,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'emailEmpty'.tr;
+                } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$')
+                    .hasMatch(value)) {
+                  return 'validEmail'.tr;
+                }
+                return null;
+              },
+              icon: Icons.alternate_email_rounded),
+          const SizedBox(height: 18),
+          Text("passwordTitle".tr,
+              style: PoppinsCustomTextStyle.medium
+                  .copyWith(fontSize: 15, color: AppColor.white)),
+          const SizedBox(height: 6),
+          AppTextField(
+            textController: passwordController,
+            isObscure: !_passwordVisible,
+            hintText: "passwordHint".tr,
+            icon: Icons.lock_outline_rounded,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'passwordEmpty'.tr;
+              }
+              return null;
+            },
+            suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _passwordVisible = !_passwordVisible;
+                  });
+                },
+                icon: Icon(
+                  _passwordVisible ? Icons.visibility : Icons.visibility_off,
+                  color: AppColor.labelText,
+                )),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Transform.scale(
+                scale: 0.92,
+                child: Checkbox(
+                    value: isRememberMe,
+                    onChanged: (value) {
+                      setState(() {
+                        isRememberMe = !isRememberMe;
+                      });
+                    },
+                    activeColor: _accent,
+                    checkColor: AppColor.white,
+                    side:
+                        const BorderSide(color: AppColor.lightGrey, width: 1)),
+              ),
+              Text(
+                "rememberMe".tr,
+                style: UrbanistCustomTextStyle.semibold
+                    .copyWith(color: AppColor.white, fontSize: 13),
+              ),
+              const Spacer(),
+              InkWell(
+                onTap: forgotPwAction,
+                child: Text(
+                  "forgotPassword".tr,
+                  style: UrbanistCustomTextStyle.semibold
+                      .copyWith(color: _accent, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: AppFillButton(
+              onPressed: loginAction,
+              text: "login",
+            ),
+          ),
+          if (isMobile) const SizedBox(height: 14),
+        ],
+      ),
+    );
   }
 }

@@ -86,6 +86,7 @@ class _ShowHistoryScreenState extends State<ShowHistoryScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               body: SafeArea(
                   child: Stack(
                 children: [
@@ -143,9 +144,7 @@ class _ShowHistoryScreenState extends State<ShowHistoryScreen> {
                                           const EdgeInsets.only(bottom: 10),
                                       child: Container(
                                         decoration: BoxDecoration(
-                                            color: themeManager.isHighContrast
-                                                ? AppColor.labelText
-                                                : AppColor.white,
+                                            color: AppColor.panelDarkSoft,
                                             boxShadow: const [
                                               BoxShadow(
                                                   color: AppColor.greyShadow,
@@ -255,7 +254,9 @@ class _ShowHistoryScreenState extends State<ShowHistoryScreen> {
                                                                               14,
                                                                           color:
                                                                               AppColor.black)),
-                                                              Text(exams[index].date,
+                                                              Text(
+                                                                  exams[index]
+                                                                      .date,
                                                                   style: NotoSansArabicCustomTextStyle
                                                                       .medium
                                                                       .copyWith(
@@ -355,7 +356,9 @@ class _ShowHistoryScreenState extends State<ShowHistoryScreen> {
                                                                               14,
                                                                           color:
                                                                               AppColor.black)),
-                                                              Text(exams[index].date,
+                                                              Text(
+                                                                  exams[index]
+                                                                      .date,
                                                                   style: NotoSansArabicCustomTextStyle
                                                                       .medium
                                                                       .copyWith(

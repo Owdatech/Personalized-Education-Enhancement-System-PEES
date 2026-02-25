@@ -47,6 +47,7 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               appBar: PreferredSize(
                   preferredSize: const Size(double.infinity, 50),
                   child: isMobile ? MyAppBar("") : const SizedBox()),
@@ -66,16 +67,16 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                           child: Text(
                             "Recent Updates".tr,
                             style: NotoSansArabicCustomTextStyle.bold.copyWith(
-                                fontSize: 18,
-                                color: themeManager.isHighContrast
-                                    ? AppColor.white
-                                    : AppColor.buttonGreen),
+                                fontSize: 18, color: AppColor.accentPrimary),
                           ),
                         ),
                         const SizedBox(height: 10),
                         Expanded(
                             child: viewModel.recentUpdatesList.isEmpty
-                                ? Center(child: Text("norecordYet".tr))
+                                ? Center(
+                                    child: Text("norecordYet".tr,
+                                        style: const TextStyle(
+                                            color: AppColor.text)))
                                 : ListView.builder(
                                     itemCount:
                                         viewModel.recentUpdatesList.length,
@@ -85,9 +86,7 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                                         padding: const EdgeInsets.only(top: 8),
                                         child: Container(
                                           decoration: BoxDecoration(
-                                              color: themeManager.isHighContrast
-                                                  ? AppColor.labelText
-                                                  : AppColor.white,
+                                              color: AppColor.panelDarkSoft,
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                               boxShadow: const [
@@ -112,7 +111,7 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                                                                       fontSize:
                                                                           15,
                                                                       color: AppColor
-                                                                          .black)),
+                                                                          .text)),
                                                           Text(
                                                               "${viewModel.recentUpdatesList[index].date}",
                                                               style: NotoSansArabicCustomTextStyle
@@ -121,7 +120,7 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                                                                       fontSize:
                                                                           14,
                                                                       color: AppColor
-                                                                          .black))
+                                                                          .text))
                                                         ],
                                                       )
                                                     : const SizedBox(),
@@ -146,7 +145,7 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                                                                       fontSize:
                                                                           15,
                                                                       color: AppColor
-                                                                          .black),
+                                                                          .text),
                                                             ),
                                                             TextSpan(
                                                               text:
@@ -157,7 +156,7 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                                                                       fontSize:
                                                                           14,
                                                                       color: AppColor
-                                                                          .black),
+                                                                          .text),
                                                             ),
                                                           ],
                                                         ),
@@ -178,7 +177,7 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                                                                       fontSize:
                                                                           15,
                                                                       color: AppColor
-                                                                          .black),
+                                                                          .text),
                                                             ),
                                                           )
                                                   ],
@@ -196,7 +195,7 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                                                             .copyWith(
                                                                 fontSize: 15,
                                                                 color: AppColor
-                                                                    .black),
+                                                                    .text),
                                                       ),
                                                       TextSpan(
                                                         text:
@@ -206,7 +205,7 @@ class _RecentUpdateScreenState extends State<RecentUpdateScreen> {
                                                             .copyWith(
                                                                 fontSize: 14,
                                                                 color: AppColor
-                                                                    .black),
+                                                                    .text),
                                                       ),
                                                     ],
                                                   ),

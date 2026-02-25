@@ -402,6 +402,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               body: Stack(
                 children: [
                   isMobile ? const SizedBox() : const BackButtonWidget(),
@@ -449,9 +450,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             width: double.infinity,
                             // height: 570,
                             decoration: BoxDecoration(
-                                color: themeManager.isHighContrast
-                                    ? AppColor.labelText
-                                    : AppColor.white,
+                                color: AppColor.panelDarkSoft,
                                 boxShadow: const [
                                   BoxShadow(
                                       color: AppColor.greyShadow,
@@ -512,7 +511,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                                     width: 130,
                                                     height: 40,
                                                     decoration: BoxDecoration(
-                                                      color: AppColor.white,
+                                                      color: AppColor.panelDark,
                                                       border: Border.all(
                                                           width: 1.5,
                                                           color: Colors.red),
@@ -587,7 +586,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                                     width: 140,
                                                     height: 40,
                                                     decoration: BoxDecoration(
-                                                      color: AppColor.white,
+                                                      color: AppColor.panelDark,
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               5),
@@ -677,7 +676,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                                   width: 150,
                                                   height: 40,
                                                   decoration: BoxDecoration(
-                                                    color: AppColor.white,
+                                                    color: AppColor.panelDark,
                                                     border: Border.all(
                                                         width: 1.5,
                                                         color: Colors.red),
@@ -750,7 +749,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                                   width: 170,
                                                   height: 40,
                                                   decoration: BoxDecoration(
-                                                    color: AppColor.white,
+                                                    color: AppColor.panelDark,
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                             5),
@@ -851,7 +850,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 return Card(
                   color: themeManager.isHighContrast
                       ? AppColor.grey
-                      : AppColor.white,
+                      : AppColor.panelDark,
                   margin:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 5),
                   elevation: 3,
@@ -1095,6 +1094,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           height: 30,
           width: 300,
           child: TextField(
+            style: const TextStyle(color: AppColor.white),
             controller: searchStudentController,
             onChanged: (query) {
               setState(() {
@@ -1117,7 +1117,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             },
             decoration: InputDecoration(
               hintText: 'Search by name, grade or class',
+              hintStyle: const TextStyle(color: AppColor.textGrey),
               contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+              filled: true,
+              fillColor: AppColor.panelDarkSoft,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(5),
                 borderSide: const BorderSide(color: AppColor.textGrey),
@@ -1178,7 +1181,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppColor.white,
+              color: AppColor.panelDark,
               borderRadius: BorderRadius.circular(7),
               boxShadow: const [
                 BoxShadow(
@@ -1211,7 +1214,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColor.white,
+                  color: AppColor.panelDark,
                   borderRadius: BorderRadius.circular(7),
                   boxShadow: const [
                     BoxShadow(
@@ -1250,7 +1253,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       Text(
                         student.name ?? "",
                         style: NotoSansArabicCustomTextStyle.bold
-                            .copyWith(fontSize: 16, color: AppColor.black),
+                            .copyWith(fontSize: 16, color: AppColor.white),
                       ),
                     ],
                   ),
@@ -1406,9 +1409,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             const EdgeInsets.only(top: 8, right: 25, left: 5),
                         child: Container(
                           decoration: BoxDecoration(
-                              color: themeManager.isHighContrast
-                                  ? AppColor.labelText
-                                  : AppColor.white,
+                              color: AppColor.panelDarkSoft,
                               borderRadius: BorderRadius.circular(7),
                               boxShadow: const [
                                 BoxShadow(
@@ -1536,9 +1537,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     padding: const EdgeInsets.only(top: 8, right: 25, left: 5),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: themeManager.isHighContrast
-                            ? AppColor.labelText
-                            : AppColor.white,
+                        color: AppColor.panelDarkSoft,
                         borderRadius: BorderRadius.circular(7),
                         boxShadow: const [
                           BoxShadow(
@@ -1586,7 +1585,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   addButton() {
     return Container(
       decoration: BoxDecoration(
-          color: AppColor.white,
+          color: AppColor.panelDarkSoft,
           borderRadius: BorderRadius.circular(7),
           border: Border.all(width: 0.3, color: AppColor.text),
           boxShadow: const [
@@ -1621,8 +1620,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             borderRadius: BorderRadius.circular(2),
             border: Border.all(width: 1.0, color: AppColor.textGrey)),
         child: DropdownButton(
-          dropdownColor:
-              themeManager.isHighContrast ? AppColor.black : AppColor.white,
+          dropdownColor: AppColor.panelDarkSoft,
           hint: Padding(
             padding: const EdgeInsets.only(left: 15, top: 2),
             child: Text("userRole".tr,
@@ -1692,8 +1690,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 color: isEnabled ? AppColor.textGrey : AppColor.lightGrey),
           ),
           child: DropdownButton<String>(
-            dropdownColor:
-                themeManager.isHighContrast ? AppColor.black : AppColor.white,
+            dropdownColor: AppColor.panelDarkSoft,
             hint: Padding(
               padding: const EdgeInsets.only(left: 15, top: 2),
               child: Text("Class".tr,
@@ -1779,8 +1776,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 color: isEnabled ? AppColor.textGrey : AppColor.lightGrey),
           ),
           child: DropdownButton<String>(
-            dropdownColor:
-                themeManager.isHighContrast ? AppColor.black : AppColor.white,
+            dropdownColor: AppColor.panelDarkSoft,
             hint: Padding(
               padding: const EdgeInsets.only(left: 15, top: 2),
               child: Text("Class".tr,
@@ -1865,8 +1861,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 color: isEnabled ? AppColor.textGrey : AppColor.lightGrey),
           ),
           child: DropdownButton<String>(
-            dropdownColor:
-                themeManager.isHighContrast ? AppColor.black : AppColor.white,
+            dropdownColor: AppColor.panelDarkSoft,
             hint: Padding(
               padding: const EdgeInsets.only(left: 15, top: 2),
               child: Text("subject".tr,
@@ -1894,7 +1889,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             value: (selectedSubject != null &&
                     subjects.any((s) => s["id"] == selectedSubject))
                 ? selectedSubject
-                : (subjects.isNotEmpty ? subjects.first["id"]?.toString() : null),
+                : (subjects.isNotEmpty
+                    ? subjects.first["id"]?.toString()
+                    : null),
             underline: const SizedBox.shrink(),
             onChanged: (newValue) {
               setState(() {
@@ -1938,8 +1935,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             borderRadius: BorderRadius.circular(2),
             border: Border.all(width: 1.0, color: AppColor.textGrey)),
         child: DropdownButton<String>(
-          dropdownColor:
-              themeManager.isHighContrast ? AppColor.black : AppColor.white,
+          dropdownColor: AppColor.panelDarkSoft,
           hint: Padding(
             padding: const EdgeInsets.only(left: 15, top: 2),
             child: Text("grade".tr,

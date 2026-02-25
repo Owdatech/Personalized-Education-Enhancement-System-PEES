@@ -328,6 +328,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               body: Stack(
                 children: [
                   isMobile ? const SizedBox() : const BackButtonWidget(),
@@ -346,9 +347,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                             Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                    color: themeManager.isHighContrast
-                                        ? AppColor.labelText
-                                        : AppColor.white,
+                                    color: AppColor.panelDarkSoft,
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: const [
                                       BoxShadow(
@@ -413,7 +412,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 ? Center(
                     child: Padding(
                     padding: const EdgeInsets.all(15.0),
-                    child: Text("noImprovement".tr),
+                    child: Text("noImprovement".tr,
+                        style: NotoSansArabicCustomTextStyle.medium
+                            .copyWith(color: AppColor.text)),
                   ))
                 : Container(
                     width: MediaQuery.of(context).size.width / 1.4,
@@ -424,11 +425,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         // Text(
                         //   "areasforImprovement".tr,
                         //   style: NotoSansArabicCustomTextStyle.medium
-                        //       .copyWith(fontSize: 15, color: AppColor.black),
+                        //       .copyWith(fontSize: 15, color: AppColor.text),
                         // ),
                         const SizedBox(height: 10),
                         ...areasForImprovement
-                            .map((area) => Text(area))
+                            .map((area) => Text(
+                                  area,
+                                  style: NotoSansArabicCustomTextStyle.medium
+                                      .copyWith(color: AppColor.text),
+                                ))
                             .toList(),
                         const SizedBox(height: 20),
                       ],
@@ -442,14 +447,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   Widget subjectDropDown() {
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
-    Color bgColor =
-        themeManager.isHighContrast ? Colors.black54 : Colors.grey[100]!;
-    Color textColor = themeManager.isHighContrast ? Colors.white : Colors.black;
-    Color borderColor =
-        themeManager.isHighContrast ? Colors.yellow : Colors.grey;
+    Color bgColor = themeManager.isHighContrast
+        ? AppColor.panelDark
+        : AppColor.panelDarkSoft;
+    Color textColor = AppColor.white;
+    Color borderColor = themeManager.isHighContrast
+        ? AppColor.accentBorder
+        : AppColor.lightGrey;
     if (fetchSelectSubject != null &&
         !filterSubject.contains(fetchSelectSubject)) {
-      fetchSelectSubject = filterSubject.isNotEmpty ? filterSubject.first : null;
+      fetchSelectSubject =
+          filterSubject.isNotEmpty ? filterSubject.first : null;
     }
 
     return SizedBox(
@@ -669,7 +677,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   Text(studentName.toString(),
                       style: NotoSansArabicCustomTextStyle.bold.copyWith(
                           fontSize: fontSizeProvider.fontSize + 2,
-                          color: AppColor.black)),
+                          color: AppColor.text)),
 
                   const SizedBox(height: 15),
 
@@ -679,25 +687,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: NotoSansArabicCustomTextStyle.medium.copyWith(
                           fontSize: fontSizeProvider.fontSize,
-                          color: AppColor.black)),
+                          color: AppColor.text)),
 
                   const SizedBox(height: 15),
 
                   // Class Section
                   Text("${"className".tr} : $classSection",
                       style: NotoSansArabicCustomTextStyle.medium
-                          .copyWith(fontSize: 13, color: AppColor.black)),
+                          .copyWith(fontSize: 13, color: AppColor.text)),
 
                   const SizedBox(height: 15),
 
                   // Grade
                   Text("${"grade".tr} : $grade",
                       style: NotoSansArabicCustomTextStyle.medium
-                          .copyWith(fontSize: 13, color: AppColor.black)),
+                          .copyWith(fontSize: 13, color: AppColor.text)),
                   // const SizedBox(height: 15),
                   // isFromTeacher? SizedBox.shrink():  Text("${"assignedteacher".tr} : $assignedteacher",
                   //     style: NotoSansArabicCustomTextStyle.medium
-                  //         .copyWith(fontSize: 13, color: AppColor.black)),
+                  //         .copyWith(fontSize: 13, color: AppColor.text)),
                   const SizedBox(height: 15),
                   const SizedBox(height: 5),
                 ],
@@ -729,7 +737,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return Container(
       // height: 200,
       decoration: BoxDecoration(
-          color: AppColor.white,
+          color: AppColor.panelDark,
           boxShadow: const [
             BoxShadow(
                 color: AppColor.greyShadow,
@@ -761,7 +769,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           Container(
             width: 500,
             decoration: const BoxDecoration(
-                color: AppColor.white,
+                color: AppColor.panelDarkSoft,
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(5),
                     bottomRight: Radius.circular(5))),
@@ -781,7 +789,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     dataLabelSettings: DataLabelSettings(
                         isVisible: true,
                         textStyle: PoppinsCustomTextStyle.regular
-                            .copyWith(fontSize: 12, color: AppColor.black)),
+                            .copyWith(fontSize: 12, color: AppColor.text)),
                   ),
                 ],
               ),
@@ -895,7 +903,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColor.white,
+        color: AppColor.panelDark,
         boxShadow: const [
           BoxShadow(
             color: AppColor.greyShadow,
@@ -945,11 +953,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 labelRotation: -45,
                 majorGridLines: const MajorGridLines(width: 0),
                 interval: 1,
+                labelStyle: const TextStyle(color: AppColor.white),
               ),
               primaryYAxis: const NumericAxis(
                 minimum: 0,
                 maximum: 100,
                 interval: 20,
+                labelStyle: TextStyle(color: AppColor.white),
               ),
               series: chartSeries,
             ),
@@ -989,7 +999,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    Text(subject),
+                    Text(subject,
+                        style: const TextStyle(color: AppColor.white)),
                   ],
                 );
               }).toList(),
@@ -1039,7 +1050,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColor.white,
+        color: AppColor.panelDark,
         boxShadow: const [
           BoxShadow(
             color: AppColor.greyShadow,
@@ -1080,7 +1091,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           Container(
             width: MediaQuery.of(context).size.width / 1.4,
             decoration: const BoxDecoration(
-              color: AppColor.white,
+              color: AppColor.panelDarkSoft,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(5),
                 bottomRight: Radius.circular(5),
@@ -1092,11 +1103,14 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 SizedBox(
                   height: 400,
                   child: SfCartesianChart(
-                    primaryXAxis: const CategoryAxis(),
+                    primaryXAxis: const CategoryAxis(
+                      labelStyle: TextStyle(color: AppColor.white),
+                    ),
                     primaryYAxis: const NumericAxis(
                       minimum: 0,
                       maximum: 100,
                       interval: 20,
+                      labelStyle: TextStyle(color: AppColor.white),
                     ),
                     series: <CartesianSeries>[
                       ColumnSeries<SubjectPercentage, String>(
@@ -1115,7 +1129,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         spacing: visibleSubjects.length == 1 ? 0.5 : 0.2,
                         dataLabelSettings: const DataLabelSettings(
                           isVisible: true,
-                          textStyle: TextStyle(fontSize: 10),
+                          textStyle:
+                              TextStyle(fontSize: 10, color: AppColor.white),
                         ),
                       ),
                     ],
@@ -1159,7 +1174,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         ),
                         Text(
                           sp.subject,
-                          style: TextStyle(color: displayColor),
+                          style: const TextStyle(color: AppColor.white),
                         ),
                       ],
                     );
@@ -1188,10 +1203,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
         "date": shortDate,
       });
       return rows.add(DataRow(cells: [
-        DataCell(Text(entry.subject)),
-        DataCell(Text(entry.marks.toString())),
-        DataCell(Text(entry.totalMarks.toString())),
-        DataCell(Text(shortDate)),
+        DataCell(
+            Text(entry.subject, style: const TextStyle(color: AppColor.text))),
+        DataCell(Text(entry.marks.toString(),
+            style: const TextStyle(color: AppColor.text))),
+        DataCell(Text(entry.totalMarks.toString(),
+            style: const TextStyle(color: AppColor.text))),
+        DataCell(Text(shortDate, style: const TextStyle(color: AppColor.text))),
       ]));
     }).toList();
     return LayoutBuilder(builder: (context, constraints) {
@@ -1208,7 +1226,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColor.white,
+                          color: AppColor.panelDarkSoft,
                           borderRadius: BorderRadius.circular(8),
                           border:
                               Border.all(width: 0.8, color: AppColor.lightGrey),
@@ -1216,12 +1234,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("${"subject".tr}: ${item["subject"]}"),
+                            Text("${"subject".tr}: ${item["subject"]}",
+                                style: const TextStyle(color: AppColor.text)),
                             const SizedBox(height: 4),
                             Text(
-                                "${"marks".tr}: ${item["marks"]} / ${item["totalMarks"]}"),
+                                "${"marks".tr}: ${item["marks"]} / ${item["totalMarks"]}",
+                                style: const TextStyle(color: AppColor.text)),
                             const SizedBox(height: 4),
-                            Text("${"dateTitle".tr}: ${item["date"]}"),
+                            Text("${"dateTitle".tr}: ${item["date"]}",
+                                style: const TextStyle(color: AppColor.text)),
                           ],
                         ),
                       ))
@@ -1234,31 +1255,32 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 headingRowColor: WidgetStateColor.resolveWith(
                     (states) => AppColor.buttonGreen),
                 decoration: BoxDecoration(
-                  border: Border.all(width: 0.8, color: AppColor.black),
+                  border: Border.all(width: 0.8, color: AppColor.text),
                 ),
                 columnSpacing: 16,
                 columns: [
                   DataColumn(
                       label: Text("subject".tr,
-                          style: NotoSansArabicCustomTextStyle.bold.copyWith(
-                              fontSize: 15, color: AppColor.white))),
+                          style: NotoSansArabicCustomTextStyle.bold
+                              .copyWith(fontSize: 15, color: AppColor.white))),
                   DataColumn(
                       label: Text("marks".tr,
-                          style: NotoSansArabicCustomTextStyle.bold.copyWith(
-                              fontSize: 15, color: AppColor.white))),
+                          style: NotoSansArabicCustomTextStyle.bold
+                              .copyWith(fontSize: 15, color: AppColor.white))),
                   DataColumn(
                       label: Text("totalMarks".tr,
-                          style: NotoSansArabicCustomTextStyle.bold.copyWith(
-                              fontSize: 15, color: AppColor.white))),
+                          style: NotoSansArabicCustomTextStyle.bold
+                              .copyWith(fontSize: 15, color: AppColor.white))),
                   DataColumn(
                       label: Text("dateTitle".tr,
-                          style: NotoSansArabicCustomTextStyle.bold.copyWith(
-                              fontSize: 15, color: AppColor.white))),
+                          style: NotoSansArabicCustomTextStyle.bold
+                              .copyWith(fontSize: 15, color: AppColor.white))),
                 ],
                 rows: isShowall ? rows : rows.take(5).toList(),
               ),
             ),
-          if (viewModel.fullDataTableEntries.length > 5) const SizedBox(height: 10),
+          if (viewModel.fullDataTableEntries.length > 5)
+            const SizedBox(height: 10),
           if (viewModel.fullDataTableEntries.length > 5)
             Align(
               alignment: AlignmentDirectional.centerStart,
@@ -1285,7 +1307,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       // height: 175,
       width: MediaQuery.of(context).size.width / 1.4,
       decoration: BoxDecoration(
-          color: AppColor.white,
+          color: AppColor.panelDark,
           boxShadow: const [
             BoxShadow(
                 color: AppColor.greyShadow,
@@ -1317,7 +1339,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           Container(
             width: MediaQuery.of(context).size.width / 1.4,
             decoration: const BoxDecoration(
-                color: AppColor.white,
+                color: AppColor.panelDarkSoft,
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(5),
                     bottomRight: Radius.circular(5))),
@@ -1331,7 +1353,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     Text("fromDate".tr,
                         style: PoppinsCustomTextStyle.medium.copyWith(
                             fontSize: fontSizeProvider.fontSize,
-                            color: AppColor.black)),
+                            color: AppColor.text)),
                     const SizedBox(height: 5),
                     SizedBox(
                         height: 25,
@@ -1354,7 +1376,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     Text("toDate".tr,
                         style: PoppinsCustomTextStyle.medium.copyWith(
                             fontSize: fontSizeProvider.fontSize,
-                            color: AppColor.black)),
+                            color: AppColor.text)),
                     SizedBox(
                         height: 25,
                         width: 250,

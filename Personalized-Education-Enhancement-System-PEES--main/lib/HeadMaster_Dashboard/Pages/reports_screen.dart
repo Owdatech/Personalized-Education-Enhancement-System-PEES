@@ -682,6 +682,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
     return LayoutBuilder(builder: (context, constraints) {
       bool isMobile = constraints.maxWidth <= 800;
       return Scaffold(
+        backgroundColor: AppColor.bgLavender,
         appBar: PreferredSize(
             preferredSize: const Size(double.infinity, 50),
             child: isMobile ? MyAppBar("") : const SizedBox()),
@@ -727,8 +728,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: AppColor.panelDarkSoft,
           borderRadius: BorderRadius.circular(8),
           boxShadow: const [
             BoxShadow(
@@ -742,22 +742,35 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
             Text(
               "teacherClassReportTitle".tr,
               style: NotoSansArabicCustomTextStyle.semibold
-                  .copyWith(fontSize: 16, color: AppColor.black),
+                  .copyWith(fontSize: 16, color: AppColor.white),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               value: _selectedTeacherId,
               isExpanded: true,
+              dropdownColor: AppColor.panelDark,
+              style: const TextStyle(color: AppColor.white),
               decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppColor.lightGrey)),
+                enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppColor.lightGrey)),
+                focusedBorder: OutlineInputBorder(
+                    borderSide:
+                        BorderSide(color: AppColor.accentPrimary, width: 1.5)),
                 contentPadding:
                     EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                filled: true,
+                fillColor: AppColor.textField,
               ),
-              hint: Text("selectTeacherHint".tr),
+              hint: Text("selectTeacherHint".tr,
+                  style: const TextStyle(color: AppColor.textGrey)),
               items: _teacherOptions
                   .map((t) => DropdownMenuItem<String>(
                         value: t.id,
-                        child: Text(t.name, overflow: TextOverflow.ellipsis),
+                        child: Text(t.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: AppColor.white)),
                       ))
                   .toList(),
               onChanged: _loadingTeachers
@@ -867,14 +880,14 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
             Text(
               "teacherClassReportTitle".tr,
               style: NotoSansArabicCustomTextStyle.semibold
-                  .copyWith(fontSize: 15, color: AppColor.black),
+                  .copyWith(fontSize: 15, color: AppColor.white),
             ),
             const SizedBox(height: 6),
             if (_classReports.isEmpty && !_loadingTeacherReport)
               Text(
                 "noClassReportDataForSelectedTeacher".tr,
                 style: NotoSansArabicCustomTextStyle.regular
-                    .copyWith(color: AppColor.black),
+                    .copyWith(color: AppColor.white),
               )
             else
               ListView.separated(
@@ -897,19 +910,19 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
                           Text(
                             "${c.grade} - ${c.className}",
                             style: NotoSansArabicCustomTextStyle.semibold
-                                .copyWith(fontSize: 15, color: AppColor.black),
+                                .copyWith(fontSize: 15, color: AppColor.white),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             "${"averageMarkLabel".tr} ${c.averageOutOfTen == null ? "-" : c.averageOutOfTen!.toStringAsFixed(2)} / 10",
                             style: NotoSansArabicCustomTextStyle.regular
-                                .copyWith(fontSize: 13, color: AppColor.black),
+                                .copyWith(fontSize: 13, color: AppColor.white),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             "studentsBelowSixLastEntry".tr,
                             style: NotoSansArabicCustomTextStyle.semibold
-                                .copyWith(fontSize: 13, color: AppColor.black),
+                                .copyWith(fontSize: 13, color: AppColor.white),
                           ),
                           const SizedBox(height: 4),
                           c.lowStudents.isEmpty
@@ -933,7 +946,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
                                                 .regular
                                                 .copyWith(
                                                     fontSize: 12,
-                                                    color: AppColor.black),
+                                                    color: AppColor.white),
                                           ),
                                         ),
                                       )
@@ -965,7 +978,7 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
             Text(
               "teacherActivitiesLast7DaysTitle".tr,
               style: NotoSansArabicCustomTextStyle.semibold
-                  .copyWith(fontSize: 15, color: AppColor.black),
+                  .copyWith(fontSize: 15, color: AppColor.white),
             ),
             const SizedBox(height: 6),
             if (_teacherActivities.isEmpty && !_loadingTeacherReport)
@@ -998,23 +1011,23 @@ class _ReposrtsScreenState extends State<ReposrtsScreen> {
                           Text(
                             "${a.dateLabel} • $typeLabel",
                             style: NotoSansArabicCustomTextStyle.semibold
-                                .copyWith(fontSize: 13, color: AppColor.black),
+                                .copyWith(fontSize: 13, color: AppColor.white),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             "${"nameTitle".tr}: ${a.studentName}",
                             style: NotoSansArabicCustomTextStyle.regular
-                                .copyWith(fontSize: 12, color: AppColor.black),
+                                .copyWith(fontSize: 12, color: AppColor.white),
                           ),
                           Text(
                             "${"grade".tr}: ${a.grade} | ${"className".tr}: ${a.className}",
                             style: NotoSansArabicCustomTextStyle.regular
-                                .copyWith(fontSize: 12, color: AppColor.black),
+                                .copyWith(fontSize: 12, color: AppColor.white),
                           ),
                           Text(
                             "${"subject".tr}: ${a.subject}",
                             style: NotoSansArabicCustomTextStyle.regular
-                                .copyWith(fontSize: 12, color: AppColor.black),
+                                .copyWith(fontSize: 12, color: AppColor.white),
                           ),
                           const SizedBox(height: 2),
                           Text(

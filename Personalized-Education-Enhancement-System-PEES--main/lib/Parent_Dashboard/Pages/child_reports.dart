@@ -80,6 +80,7 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               appBar: PreferredSize(
                   preferredSize: const Size(double.infinity, 50),
                   child: isMobile ? MyAppBar("") : const SizedBox()),
@@ -93,10 +94,10 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
                         top: 30),
                     child: Container(
                       decoration: BoxDecoration(
-                          color: themeManager.isHighContrast
-                              ? AppColor.labelText
-                              : AppColor.white,
-                          borderRadius: BorderRadius.circular(7)),
+                          color: AppColor.panelDarkSoft,
+                          borderRadius: BorderRadius.circular(7),
+                          border:
+                              Border.all(color: AppColor.lightGrey, width: 1)),
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
@@ -139,7 +140,7 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
   headView() {
     return Container(
       decoration: BoxDecoration(
-          color: AppColor.white,
+          color: AppColor.panelDarkSoft,
           borderRadius: BorderRadius.circular(8),
           boxShadow: const [
             BoxShadow(
@@ -162,7 +163,7 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
                 Text(
                   widget.userName,
                   style: NotoSansArabicCustomTextStyle.semibold
-                      .copyWith(fontSize: 16, color: AppColor.black),
+                      .copyWith(fontSize: 16, color: AppColor.text),
                 )
               ],
             ),
@@ -171,10 +172,10 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
               children: [
                 Text("${"email".tr} ",
                     style: NotoSansArabicCustomTextStyle.semibold
-                        .copyWith(fontSize: 15, color: AppColor.black)),
+                        .copyWith(fontSize: 15, color: AppColor.text)),
                 Text(widget.email,
                     style: NotoSansArabicCustomTextStyle.medium
-                        .copyWith(color: AppColor.black, fontSize: 14))
+                        .copyWith(color: AppColor.text, fontSize: 14))
               ],
             ),
             const SizedBox(height: 7),
@@ -182,10 +183,10 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
               children: [
                 Text("${"class".tr} : ",
                     style: NotoSansArabicCustomTextStyle.semibold
-                        .copyWith(fontSize: 15, color: AppColor.black)),
+                        .copyWith(fontSize: 15, color: AppColor.text)),
                 Text(widget.className,
                     style: NotoSansArabicCustomTextStyle.medium
-                        .copyWith(color: AppColor.black, fontSize: 14))
+                        .copyWith(color: AppColor.text, fontSize: 14))
               ],
             ),
             const SizedBox(height: 7),
@@ -193,10 +194,10 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
               children: [
                 Text("${"grade".tr} : ",
                     style: NotoSansArabicCustomTextStyle.semibold
-                        .copyWith(fontSize: 15, color: AppColor.black)),
+                        .copyWith(fontSize: 15, color: AppColor.text)),
                 Text(widget.grade,
                     style: NotoSansArabicCustomTextStyle.medium
-                        .copyWith(color: AppColor.black, fontSize: 14))
+                        .copyWith(color: AppColor.text, fontSize: 14))
               ],
             ),
             const SizedBox(height: 7),
@@ -204,10 +205,10 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
               children: [
                 Text("${"assignedTeacherName".tr} : ",
                     style: NotoSansArabicCustomTextStyle.semibold
-                        .copyWith(fontSize: 15, color: AppColor.black)),
+                        .copyWith(fontSize: 15, color: AppColor.text)),
                 Text(widget.teacherName,
                     style: NotoSansArabicCustomTextStyle.medium
-                        .copyWith(color: AppColor.black, fontSize: 14))
+                        .copyWith(color: AppColor.text, fontSize: 14))
               ],
             ),
             const SizedBox(height: 7),
@@ -235,7 +236,7 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
     return Container(
       // height: 200,
       decoration: BoxDecoration(
-          color: AppColor.white,
+          color: AppColor.panelDarkSoft,
           boxShadow: const [
             BoxShadow(
                 color: AppColor.greyShadow,
@@ -267,7 +268,7 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
           Container(
             width: 500,
             decoration: const BoxDecoration(
-                color: AppColor.white,
+                color: AppColor.panelDarkSoft,
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(5),
                     bottomRight: Radius.circular(5))),
@@ -310,7 +311,7 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
     return Container(
       // height: 200,
       decoration: BoxDecoration(
-          color: AppColor.white,
+          color: AppColor.panelDarkSoft,
           boxShadow: const [
             BoxShadow(
                 color: AppColor.greyShadow,
@@ -342,7 +343,7 @@ class _ChildsReportScreenState extends State<ChildsReportScreen> {
           Container(
             width: 500,
             decoration: const BoxDecoration(
-                color: AppColor.white,
+                color: AppColor.panelDarkSoft,
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(5),
                     bottomRight: Radius.circular(5))),

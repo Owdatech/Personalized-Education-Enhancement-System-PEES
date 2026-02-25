@@ -276,6 +276,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: Colors.transparent,
               body: Stack(
                 children: [
                   isMobile ? const SizedBox() : const BackButtonWidget(),
@@ -296,9 +297,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                             child: Container(
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                  color: themeManager.isHighContrast
-                                      ? AppColor.labelText
-                                      : AppColor.white,
+                                  color: AppColor.panelDarkSoft,
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: const [
                                     BoxShadow(
@@ -474,44 +473,51 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
     return Padding(
       padding: const EdgeInsets.only(top: 10),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DataTable(
-              headingRowColor: WidgetStateColor.resolveWith(
-                  (states) => AppColor.buttonGreen), // Header row color
-              decoration: BoxDecoration(
-                border: Border.all(width: 0.8, color: AppColor.black),
+            SizedBox(
+              width: double.infinity,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: DataTable(
+                  headingRowColor: WidgetStateColor.resolveWith(
+                      (states) => AppColor.buttonGreen), // Header row color
+                  dataTextStyle: const TextStyle(color: AppColor.white),
+                  decoration: BoxDecoration(
+                    border: Border.all(width: 0.8, color: AppColor.black),
+                  ),
+                  columns: [
+                    DataColumn(
+                        label: Text("subject".tr,
+                            style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                                fontSize: 15, color: AppColor.white))),
+                    DataColumn(
+                        label: Text("curriculum".tr,
+                            style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                                fontSize: 15, color: AppColor.white))),
+                    DataColumn(
+                        label: Text("obtainedMarks".tr,
+                            style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                                fontSize: 15, color: AppColor.white))),
+                    DataColumn(
+                        label: Text("totalMarks".tr,
+                            style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                                fontSize: 15, color: AppColor.white))),
+                    DataColumn(
+                        label: Text("gradee".tr,
+                            style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                                fontSize: 15, color: AppColor.white))),
+                    DataColumn(
+                        label: Text("dateTitle".tr,
+                            style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                                fontSize: 15, color: AppColor.white))),
+                  ],
+                  rows: showAll ? rows : rows.take(5).toList(),
+                ),
               ),
-              columns: [
-                DataColumn(
-                    label: Text("subject".tr,
-                        style: NotoSansArabicCustomTextStyle.bold
-                            .copyWith(fontSize: 15, color: AppColor.white))),
-                DataColumn(
-                    label: Text("curriculum".tr,
-                        style: NotoSansArabicCustomTextStyle.bold
-                            .copyWith(fontSize: 15, color: AppColor.white))),
-                DataColumn(
-                    label: Text("obtainedMarks".tr,
-                        style: NotoSansArabicCustomTextStyle.bold
-                            .copyWith(fontSize: 15, color: AppColor.white))),
-                DataColumn(
-                    label: Text("totalMarks".tr,
-                        style: NotoSansArabicCustomTextStyle.bold
-                            .copyWith(fontSize: 15, color: AppColor.white))),
-                DataColumn(
-                    label: Text("gradee".tr,
-                        style: NotoSansArabicCustomTextStyle.bold
-                            .copyWith(fontSize: 15, color: AppColor.white))),
-                DataColumn(
-                    label: Text("dateTitle".tr,
-                        style: NotoSansArabicCustomTextStyle.bold
-                            .copyWith(fontSize: 15, color: AppColor.white))),
-              ],
-              rows: showAll ? rows : rows.take(5).toList(),
             ),
             const SizedBox(height: 10),
             Align(
@@ -641,7 +647,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     return Container(
       // height: 175,
       decoration: BoxDecoration(
-          color: AppColor.white,
+          color: AppColor.panelDarkSoft,
           boxShadow: const [
             BoxShadow(
                 color: AppColor.greyShadow,
@@ -673,7 +679,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           Container(
             width: 300,
             decoration: const BoxDecoration(
-                color: AppColor.white,
+                color: AppColor.panelDarkSoft,
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(5),
                     bottomRight: Radius.circular(5))),
@@ -830,9 +836,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
             padding: const EdgeInsets.all(15.0),
             child: Container(
               decoration: BoxDecoration(
-                  color: themeManager.isHighContrast
-                      ? AppColor.labelText
-                      : AppColor.white,
+                  color: AppColor.panelDarkSoft,
                   borderRadius: BorderRadius.circular(5)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -901,25 +905,29 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                       width: double.infinity,
                       height: 344,
                       decoration: BoxDecoration(
-                          color: AppColor.white,
+                          color: AppColor.panelDarkSoft,
                           borderRadius: BorderRadius.circular(5),
                           border: Border.all(
                               width: 1, color: AppColor.buttonGreen)),
-                      child: TextField(
-                        readOnly: true,
-                        style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.only(
+                            top: 12,
+                            bottom: 12,
+                            left: selectedLanguage == 'en' ? 15 : 8,
+                            right: selectedLanguage == 'en' ? 8 : 15),
+                        child: SelectableText(
+                          (description ?? "").toString().trim().isEmpty
+                              ? "-"
+                              : (description ?? "").toString(),
+                          textAlign: selectedLanguage == 'en'
+                              ? TextAlign.left
+                              : TextAlign.right,
+                          style: NotoSansArabicCustomTextStyle.bold.copyWith(
                             fontSize: fontSizeProvider.fontSize,
-                            color: AppColor.black),
-                        decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: description ?? "",
-                            hintStyle: NotoSansArabicCustomTextStyle.bold
-                                .copyWith(
-                                    fontSize: fontSizeProvider.fontSize,
-                                    color: AppColor.black),
-                            contentPadding: EdgeInsets.only(
-                                left: selectedLanguage == 'en' ? 15 : 0,
-                                right: selectedLanguage == 'en' ? 0 : 15)),
+                            color: AppColor.white,
+                            height: 1.45,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -941,7 +949,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
     return Container(
         decoration: const BoxDecoration(
-            color: AppColor.extralightGrey,
+            color: AppColor.panelDarkSoft,
             borderRadius: BorderRadius.only(
                 bottomRight: Radius.circular(5),
                 bottomLeft: Radius.circular(5))),
@@ -951,7 +959,8 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                 ? const Center(
                     child: Padding(
                     padding: EdgeInsets.all(20),
-                    child: Text("No Observation"),
+                    child: Text("No Observation",
+                        style: TextStyle(color: AppColor.white)),
                   ))
                 : Padding(
                     padding: EdgeInsets.only(
@@ -980,8 +989,8 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                             width: double.infinity,
                             decoration: BoxDecoration(
                                 color: themeManager.isHighContrast
-                                    ? AppColor.lightGrey
-                                    : AppColor.white,
+                                    ? AppColor.panelDark
+                                    : AppColor.panelDarkSoft,
                                 borderRadius: BorderRadius.circular(5),
                                 boxShadow: const [
                                   BoxShadow(
@@ -1002,7 +1011,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                                           .copyWith(
                                               fontSize:
                                                   fontSizeProvider.fontSize,
-                                              color: AppColor.black)),
+                                              color: AppColor.white)),
                                   const SizedBox(height: 7),
                                   Text(
                                     (sortedList[index]['observation'] ?? "")
@@ -1011,7 +1020,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                                     style: NotoSansArabicCustomTextStyle.medium
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black),
+                                            color: AppColor.white),
                                   ),
                                   const SizedBox(height: 7),
                                   if (isMobile)
@@ -1023,7 +1032,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                                           .copyWith(
                                               fontSize:
                                                   fontSizeProvider.fontSize,
-                                              color: AppColor.black),
+                                              color: AppColor.white),
                                     ),
                                   if (isMobile) const SizedBox(height: 8),
                                   isMobile
@@ -1058,7 +1067,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                                                                 fontSizeProvider
                                                                     .fontSize,
                                                             color:
-                                                                AppColor.black),
+                                                                AppColor.white),
                                               ),
                                             ),
                                             const SizedBox(width: 10),
@@ -1100,7 +1109,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         height: 40,
         width: 150,
         decoration: BoxDecoration(
-            color: AppColor.white,
+            color: AppColor.panelDarkSoft,
             borderRadius: BorderRadius.circular(5),
             border: Border.all(color: AppColor.buttonGreen, width: 1)),
         child: Center(
@@ -1569,8 +1578,8 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     return Container(
       decoration: BoxDecoration(
           color: themeManager.isHighContrast
-              ? AppColor.grey
-              : AppColor.extralightGrey,
+              ? AppColor.panelDark
+              : AppColor.panelDarkSoft,
           borderRadius: const BorderRadius.only(
               bottomRight: Radius.circular(5), bottomLeft: Radius.circular(5))),
       child: Column(
@@ -1791,10 +1800,14 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     List<DataRow> rows = [];
     masterViewModel.fullDataTableEntries.map((entry) {
       return rows.add(DataRow(cells: [
-        DataCell(Text(entry.subject)),
-        DataCell(Text(entry.marks.toString())),
-        DataCell(Text(entry.totalMarks.toString())),
-        DataCell(Text(_formatTableDate(entry.timestamp.toString()))),
+        DataCell(
+            Text(entry.subject, style: const TextStyle(color: AppColor.white))),
+        DataCell(Text(entry.marks.toString(),
+            style: const TextStyle(color: AppColor.white))),
+        DataCell(Text(entry.totalMarks.toString(),
+            style: const TextStyle(color: AppColor.white))),
+        DataCell(Text(_formatTableDate(entry.timestamp.toString()),
+            style: const TextStyle(color: AppColor.white))),
       ]));
     }).toList();
     return Column(
@@ -1803,11 +1816,13 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
             ? SizedBox()
             : SizedBox(
                 width: MediaQuery.of(context).size.width / 1.4,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
                   child: DataTable(
                     headingRowColor: WidgetStateColor.resolveWith(
                         (states) => AppColor.buttonGreen), // Header row color
+                    dataTextStyle: const TextStyle(color: AppColor.white),
                     decoration: BoxDecoration(
                       border: Border.all(width: 0.8, color: AppColor.black),
                     ),
@@ -1875,7 +1890,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColor.white,
+        color: AppColor.panelDark,
         boxShadow: const [
           BoxShadow(
             color: AppColor.greyShadow,
@@ -1916,7 +1931,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           Container(
             width: MediaQuery.of(context).size.width / 1.4,
             decoration: const BoxDecoration(
-              color: AppColor.white,
+              color: AppColor.panelDarkSoft,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(5),
                 bottomRight: Radius.circular(5),
@@ -1928,11 +1943,15 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                 SizedBox(
                   height: 400,
                   child: SfCartesianChart(
-                    primaryXAxis: const CategoryAxis(),
+                    backgroundColor: Colors.transparent,
+                    primaryXAxis: const CategoryAxis(
+                      labelStyle: TextStyle(color: AppColor.white),
+                    ),
                     primaryYAxis: const NumericAxis(
                       minimum: 0,
                       maximum: 100,
                       interval: 20,
+                      labelStyle: TextStyle(color: AppColor.white),
                     ),
                     series: <CartesianSeries>[
                       ColumnSeries<SubjectPercentage, String>(
@@ -1996,10 +2015,8 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        Text(
-                          sp.subject,
-                          style: TextStyle(color: displayColor),
-                        ),
+                        Text(sp.subject,
+                            style: const TextStyle(color: AppColor.white)),
                       ],
                     );
                   }).toList(),
@@ -2037,7 +2054,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         Container(
           width: MediaQuery.of(context).size.width / 1.4,
           decoration: const BoxDecoration(
-              color: AppColor.white,
+              color: AppColor.panelDarkSoft,
               borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(5),
                   bottomRight: Radius.circular(5))),
@@ -2054,7 +2071,8 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                   ? Center(
                       child: Padding(
                       padding: const EdgeInsets.all(15.0),
-                      child: Text("noImprovement".tr),
+                      child: Text("noImprovement".tr,
+                          style: const TextStyle(color: AppColor.white)),
                     ))
                   : Container(
                       padding: const EdgeInsets.all(16.0),
@@ -2068,7 +2086,9 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                           // ),
                           const SizedBox(height: 10),
                           ...areasForImprovement
-                              .map((area) => Text(area))
+                              .map((area) => Text(area,
+                                  style:
+                                      const TextStyle(color: AppColor.white)))
                               .toList(),
                           const SizedBox(height: 20),
                         ],
@@ -2084,11 +2104,13 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
 
   Widget subjectDropDown() {
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
-    Color bgColor =
-        themeManager.isHighContrast ? Colors.black54 : Colors.grey[100]!;
-    Color textColor = themeManager.isHighContrast ? Colors.white : Colors.black;
-    Color borderColor =
-        themeManager.isHighContrast ? Colors.yellow : Colors.grey;
+    Color bgColor = themeManager.isHighContrast
+        ? AppColor.panelDark
+        : AppColor.panelDarkSoft;
+    Color textColor = AppColor.white;
+    Color borderColor = themeManager.isHighContrast
+        ? AppColor.accentBorder
+        : AppColor.lightGrey;
     if (fetchSelectSubject != null &&
         !filterSubject.contains(fetchSelectSubject)) {
       fetchSelectSubject =
@@ -2099,6 +2121,9 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
       height: 50,
       width: 250,
       child: DropdownButtonFormField<String>(
+        dropdownColor: AppColor.panelDarkSoft,
+        iconEnabledColor: textColor,
+        style: TextStyle(color: textColor, fontSize: 14),
         decoration: InputDecoration(
           hintText: "Select a subject",
           hintStyle: TextStyle(color: textColor),
@@ -2109,7 +2134,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           enabledBorder:
               OutlineInputBorder(borderSide: BorderSide(color: borderColor)),
           focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.green, width: 2)),
+              borderSide: BorderSide(color: AppColor.accentPrimary, width: 2)),
           errorBorder: const OutlineInputBorder(
               borderSide: BorderSide(color: Colors.red, width: 2)),
         ),
@@ -2238,7 +2263,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColor.white,
+        color: AppColor.panelDark,
         boxShadow: const [
           BoxShadow(
             color: AppColor.greyShadow,
@@ -2279,6 +2304,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
             width: MediaQuery.of(context).size.width / 1.4,
             height: 370,
             child: SfCartesianChart(
+              backgroundColor: Colors.transparent,
               tooltipBehavior: TooltipBehavior(enable: true),
               onTooltipRender: (tooltipArgs) => {
                 if (tooltipArgs.locationY != null)
@@ -2288,11 +2314,13 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                 labelRotation: -45,
                 majorGridLines: const MajorGridLines(width: 0),
                 interval: 1,
+                labelStyle: const TextStyle(color: AppColor.white),
               ),
               primaryYAxis: const NumericAxis(
                 minimum: 0,
                 maximum: 100,
                 interval: 20,
+                labelStyle: TextStyle(color: AppColor.white),
               ),
               series: chartSeries,
             ),
@@ -2332,7 +2360,8 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    Text(subject),
+                    Text(subject,
+                        style: const TextStyle(color: AppColor.white)),
                   ],
                 );
               }).toList(),
@@ -2378,7 +2407,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                 primary: AppColor.buttonGreen,
                 onPrimary: Colors.white,
                 surface: AppColor.lightYellow,
-                onSurface: Colors.black,
+                onSurface: AppColor.white,
               ),
               dialogBackgroundColor: Colors.white,
               textButtonTheme: TextButtonThemeData(
@@ -2419,7 +2448,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                 primary: AppColor.buttonGreen,
                 onPrimary: Colors.white,
                 surface: AppColor.lightYellow,
-                onSurface: Colors.black,
+                onSurface: AppColor.white,
               ),
               dialogBackgroundColor: Colors.white,
               textButtonTheme: TextButtonThemeData(

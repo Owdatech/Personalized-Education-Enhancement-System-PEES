@@ -68,7 +68,7 @@ class AppTextField extends StatelessWidget {
             ? TextCapitalization.none
             : textCapitalization!,
         style: PoppinsCustomTextStyle.regular.copyWith(
-            fontSize: fontSizeProvider.fontSize, color: AppColor.black),
+            fontSize: fontSizeProvider.fontSize, color: AppColor.white),
         focusNode: focusNode,
         textAlign: textAlignment,
         keyboardType: inputType,
@@ -76,7 +76,7 @@ class AppTextField extends StatelessWidget {
         onChanged: onChange,
         onTap: onTapped,
         decoration: InputDecoration(
-            fillColor: AppColor.white,
+            fillColor: AppColor.textField,
             filled: true,
             counter: const Offstage(),
             suffixIcon: suffixIcon,
@@ -88,27 +88,28 @@ class AppTextField extends StatelessWidget {
                 color: AppColor.labelText,
                 fontSize: fontSizeProvider.fontSize), //AppColor.textHintColor
             // prefixIcon
-            prefixIcon: icon != null ? Icon(icon, color: Colors.grey) : null,
+            prefixIcon:
+                icon != null ? Icon(icon, color: AppColor.textGrey) : null,
             // focusedBorder
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide:
-                    const BorderSide(width: 2.0, color: AppColor.white)),
+                borderSide: const BorderSide(
+                    width: 1.5, color: AppColor.accentPrimary)),
             //enabled Border
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide:
-                    const BorderSide(width: 2.0, color: AppColor.white)),
+                    const BorderSide(width: 1.0, color: AppColor.lightGrey)),
             disabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide:
-                    const BorderSide(width: 2.0, color: AppColor.white)),
+                    const BorderSide(width: 1.0, color: AppColor.lightGrey)),
 
             // border
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide:
-                    const BorderSide(width: 2.0, color: AppColor.white))),
+                    const BorderSide(width: 1.0, color: AppColor.lightGrey))),
       ),
     );
   }

@@ -323,8 +323,8 @@ class _ObservationScreenState extends State<ObservationScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Delete Observation"),
-        content: const Text(
-            "Are you sure you want to delete this observation?"),
+        content:
+            const Text("Are you sure you want to delete this observation?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -348,7 +348,8 @@ class _ObservationScreenState extends State<ObservationScreen> {
       Utils.snackBar("Observation deleted successfully", context);
       fetchObservation();
     } else if (code == 404) {
-      Utils.snackBar("Delete endpoint not found or ID missing on server", context);
+      Utils.snackBar(
+          "Delete endpoint not found or ID missing on server", context);
     } else {
       Utils.snackBar("Failed to delete observation", context);
     }
@@ -426,7 +427,8 @@ class _ObservationScreenState extends State<ObservationScreen> {
       Utils.snackBar("Observation updated successfully", context);
       fetchObservation();
     } else if (code == 404) {
-      Utils.snackBar("Update endpoint not found or ID missing on server", context);
+      Utils.snackBar(
+          "Update endpoint not found or ID missing on server", context);
     } else {
       Utils.snackBar("Failed to update observation", context);
     }
@@ -449,6 +451,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               body: Stack(
                 children: [
                   isMobile ? SizedBox() : const BackButtonWidget(),
@@ -467,9 +470,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                             Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                    color: themeManager.isHighContrast
-                                        ? AppColor.labelText
-                                        : AppColor.white,
+                                    color: AppColor.panelDarkSoft,
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: const [
                                       BoxShadow(
@@ -493,10 +494,11 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                                 children: [
                                                   Padding(
                                                     padding: const EdgeInsets
-                                                        .fromLTRB(17, 14, 17, 4),
+                                                        .fromLTRB(
+                                                        17, 14, 17, 4),
                                                     child: Align(
-                                                      alignment: Alignment
-                                                          .centerLeft,
+                                                      alignment:
+                                                          Alignment.centerLeft,
                                                       child: InkWell(
                                                         onTap: () {
                                                           setState(() {
@@ -516,8 +518,8 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                                                   vertical: 10),
                                                           decoration:
                                                               BoxDecoration(
-                                                            color:
-                                                                AppColor.white,
+                                                            color: AppColor
+                                                                .panelDarkSoft,
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
@@ -597,7 +599,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
             padding: const EdgeInsets.all(15.0),
             child: Container(
               decoration: BoxDecoration(
-                  color: AppColor.white,
+                  color: AppColor.panelDarkSoft,
                   borderRadius: BorderRadius.circular(5)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -616,7 +618,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                     style: NotoSansArabicCustomTextStyle.bold
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
+                                            color: AppColor.text)),
                                 const SizedBox(height: 5),
                                 AppFillButton3(
                                     onPressed: () {
@@ -634,7 +636,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                   style: NotoSansArabicCustomTextStyle.bold
                                       .copyWith(
                                           fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black)),
+                                          color: AppColor.text)),
                               AppFillButton3(
                                   onPressed: () {
                                     setState(() {
@@ -651,7 +653,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                          color: AppColor.white,
+                          color: AppColor.panelDark,
                           borderRadius: BorderRadius.circular(5),
                           border: Border.all(
                               width: 1, color: AppColor.buttonGreen)),
@@ -661,7 +663,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                           description ?? "",
                           style: NotoSansArabicCustomTextStyle.bold.copyWith(
                               fontSize: fontSizeProvider.fontSize,
-                              color: AppColor.black),
+                              color: AppColor.text),
                         ),
                       ),
                     ),
@@ -731,22 +733,22 @@ class _ObservationScreenState extends State<ObservationScreen> {
                   Text(widget.model?.studentName ?? "",
                       style: NotoSansArabicCustomTextStyle.bold.copyWith(
                           fontSize: fontSizeProvider.fontSize + 2,
-                          color: AppColor.black)),
+                          color: AppColor.text)),
                   const SizedBox(height: 15),
                   Text("${"email".tr} ${widget.model?.email ?? ""}",
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: NotoSansArabicCustomTextStyle.medium.copyWith(
                           fontSize: fontSizeProvider.fontSize,
-                          color: AppColor.black)),
+                          color: AppColor.text)),
                   const SizedBox(height: 15),
                   Text(widget.model?.classSection ?? "",
                       style: NotoSansArabicCustomTextStyle.medium
-                          .copyWith(fontSize: 13, color: AppColor.black)),
+                          .copyWith(fontSize: 13, color: AppColor.text)),
                   const SizedBox(height: 15),
                   Text("${"grade".tr} : ${widget.model?.grade ?? ""}",
                       style: NotoSansArabicCustomTextStyle.medium
-                          .copyWith(fontSize: 13, color: AppColor.black)),
+                          .copyWith(fontSize: 13, color: AppColor.text)),
                   const SizedBox(height: 5),
                 ],
               ),
@@ -854,7 +856,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                 // height: 60,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                    color: AppColor.white,
+                    color: AppColor.panelDarkSoft,
                     borderRadius: BorderRadius.circular(5),
                     boxShadow: const [
                       BoxShadow(
@@ -874,13 +876,14 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                 style: NotoSansArabicCustomTextStyle.medium
                                     .copyWith(
                                         fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.black)),
+                                        color: AppColor.text)),
                             const SizedBox(height: 7),
-                            Text("${"subject".tr} : ${sortedList[i]['subject']}",
+                            Text(
+                                "${"subject".tr} : ${sortedList[i]['subject']}",
                                 style: NotoSansArabicCustomTextStyle.medium
                                     .copyWith(
                                         fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.black)),
+                                        color: AppColor.text)),
                             const SizedBox(height: 5),
                             AppFillButton3(
                                 onPressed: () {
@@ -909,9 +912,8 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                     overflow: TextOverflow.ellipsis,
                                     style: NotoSansArabicCustomTextStyle.medium
                                         .copyWith(
-                                            fontSize:
-                                                fontSizeProvider.fontSize,
-                                            color: AppColor.black),
+                                            fontSize: fontSizeProvider.fontSize,
+                                            color: AppColor.text),
                                   ),
                                 ],
                               ),
@@ -932,14 +934,15 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                           .copyWith(
                                               fontSize:
                                                   fontSizeProvider.fontSize,
-                                              color: AppColor.black)),
+                                              color: AppColor.text)),
                                   const SizedBox(height: 8),
                                   AppFillButton3(
                                       onPressed: () {
                                         setState(() {
                                           isViewDetails = true;
                                           date = sortedList[i]['date'];
-                                          subjectName = sortedList[i]['subject'];
+                                          subjectName =
+                                              sortedList[i]['subject'];
                                           description =
                                               sortedList[i]['observation'];
                                           imageUrl =
@@ -976,13 +979,13 @@ class _ObservationScreenState extends State<ObservationScreen> {
               Text("Teacher’s Notes :",
                   style: NotoSansArabicCustomTextStyle.semibold.copyWith(
                       fontSize: fontSizeProvider.fontSize,
-                      color: AppColor.black)),
+                      color: AppColor.text)),
               const SizedBox(width: 20),
               Container(
                   height: 200,
                   width: 668,
                   decoration: BoxDecoration(
-                      color: AppColor.white,
+                      color: AppColor.panelDark,
                       borderRadius: BorderRadius.circular(5)),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -990,7 +993,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                       "List of Notes for student",
                       style: NotoSansArabicCustomTextStyle.regular.copyWith(
                           fontSize: fontSizeProvider.fontSize,
-                          color: AppColor.black),
+                          color: AppColor.text),
                     ),
                   ))
             ],
@@ -1003,13 +1006,13 @@ class _ObservationScreenState extends State<ObservationScreen> {
               Text("Feedback :",
                   style: NotoSansArabicCustomTextStyle.semibold.copyWith(
                       fontSize: fontSizeProvider.fontSize,
-                      color: AppColor.black)),
+                      color: AppColor.text)),
               const SizedBox(width: 75),
               Container(
                   height: 200,
                   width: 668,
                   decoration: BoxDecoration(
-                      color: AppColor.white,
+                      color: AppColor.panelDarkSoft,
                       borderRadius: BorderRadius.circular(5)),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -1017,7 +1020,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                       "Provided Feedback",
                       style: NotoSansArabicCustomTextStyle.regular.copyWith(
                           fontSize: fontSizeProvider.fontSize,
-                          color: AppColor.black),
+                          color: AppColor.text),
                     ),
                   )),
             ],
@@ -1068,7 +1071,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
               // height: 300,
               width: double.infinity,
               decoration: const BoxDecoration(
-                  color: AppColor.white,
+                  color: AppColor.panelDark,
                   boxShadow: [
                     BoxShadow(
                         color: AppColor.greyShadow,
@@ -1105,7 +1108,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                     style: NotoSansArabicCustomTextStyle.medium
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
+                                            color: AppColor.text)),
                                 const SizedBox(height: 5),
                                 SizedBox(
                                     height: 25,
@@ -1131,7 +1134,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                   style: NotoSansArabicCustomTextStyle.medium
                                       .copyWith(
                                           fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black),
+                                          color: AppColor.text),
                                 ),
                                 const SizedBox(height: 5),
                                 obsSelectSubject(),
@@ -1144,7 +1147,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                     style: NotoSansArabicCustomTextStyle.medium
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
+                                            color: AppColor.text)),
                                 const SizedBox(width: 25),
                                 SizedBox(
                                     height: 25,
@@ -1173,7 +1176,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                     style: NotoSansArabicCustomTextStyle.medium
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black),
+                                            color: AppColor.text),
                                   ),
                                   const SizedBox(width: 25),
                                   obsSelectSubject(),
@@ -1211,7 +1214,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                             style: NotoSansArabicCustomTextStyle.medium
                                 .copyWith(
                                     fontSize: fontSizeProvider.fontSize,
-                                    color: AppColor.black),
+                                    color: AppColor.text),
                           ),
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1232,7 +1235,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                 style: NotoSansArabicCustomTextStyle.medium
                                     .copyWith(
                                         fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.black),
+                                        color: AppColor.text),
                               ),
                             ],
                           ),
@@ -1255,7 +1258,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                 style: NotoSansArabicCustomTextStyle.medium
                                     .copyWith(
                                         fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.black),
+                                        color: AppColor.text),
                               ),
                             ],
                           ),
@@ -1282,7 +1285,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                   style: NotoSansArabicCustomTextStyle.medium
                                       .copyWith(
                                           fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black),
+                                          color: AppColor.text),
                                 ),
                               ),
                               const SizedBox(
@@ -1299,7 +1302,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                     style: PoppinsCustomTextStyle.regular
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black),
+                                            color: AppColor.text),
                                     decoration: const InputDecoration(
                                         border: InputBorder.none,
                                         contentPadding:
@@ -1324,7 +1327,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                   style: NotoSansArabicCustomTextStyle.medium
                                       .copyWith(
                                           fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black),
+                                          color: AppColor.text),
                                 ),
                               ),
                               const SizedBox(width: 25),
@@ -1371,7 +1374,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                     width: 100,
                                     height: 40,
                                     decoration: BoxDecoration(
-                                      color: AppColor.white,
+                                      color: AppColor.panelDarkSoft,
                                       borderRadius: BorderRadius.circular(5),
                                       border: Border.all(
                                           width: 1,

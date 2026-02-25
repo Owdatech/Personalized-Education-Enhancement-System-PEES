@@ -24,7 +24,8 @@ class _UpcomingActionScreenState extends State<UpcomingActionScreen> {
   fetchUpcomingData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? teacherId = prefs.getString('userId');
-    int? code = await viewModel.fetchUpcomingActions(teacherId ?? "", selectedLanguage);
+    int? code =
+        await viewModel.fetchUpcomingActions(teacherId ?? "", selectedLanguage);
     if (code == 200) {
       print("Successfully fetch upcoming details");
     } else {
@@ -47,6 +48,7 @@ class _UpcomingActionScreenState extends State<UpcomingActionScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               appBar: PreferredSize(
                   preferredSize: const Size(double.infinity, 50),
                   child: isMobile ? MyAppBar("") : const SizedBox()),
@@ -82,9 +84,7 @@ class _UpcomingActionScreenState extends State<UpcomingActionScreen> {
                                 padding: const EdgeInsets.only(top: 10),
                                 child: Container(
                                   decoration: BoxDecoration(
-                                      color: themeManager.isHighContrast
-                                          ? AppColor.labelText
-                                          : AppColor.white,
+                                      color: AppColor.panelDarkSoft,
                                       borderRadius: BorderRadius.circular(8),
                                       boxShadow: const [
                                         BoxShadow(

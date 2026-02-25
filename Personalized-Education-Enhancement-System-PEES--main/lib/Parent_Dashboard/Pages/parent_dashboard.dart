@@ -58,7 +58,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
               // ignore: deprecated_member_use
-              backgroundColor: Colors.grey.withOpacity(0.2),
+              backgroundColor: AppColor.panelDark,
               resizeToAvoidBottomInset: false,
               body: Stack(
                 children: [
@@ -113,10 +113,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                                         Container(
                                             height: 300,
                                             decoration: BoxDecoration(
-                                                color:
-                                                    themeManager.isHighContrast
-                                                        ? AppColor.labelText
-                                                        : AppColor.white,
+                                                color: AppColor.panelDarkSoft,
                                                 borderRadius:
                                                     const BorderRadius.only(
                                                         bottomLeft:
@@ -149,8 +146,9 @@ class _ParentDashboardState extends State<ParentDashboard> {
                                                                     .infinity,
                                                                 decoration: BoxDecoration(
                                                                     color: AppColor
-                                                                        .white,
+                                                                        .panelDark,
                                                                     borderRadius: BorderRadius.circular(7),
+                                                                    border: Border.all(color: AppColor.lightGrey, width: 0.8),
                                                                     boxShadow: const [
                                                                       BoxShadow(
                                                                           color: AppColor
@@ -180,7 +178,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                                                                                 const SizedBox(width: 10),
                                                                                 Text(
                                                                                   viewModel.studentsList[index].name ?? "",
-                                                                                  style: NotoSansArabicCustomTextStyle.bold.copyWith(fontSize: 16, color: AppColor.black),
+                                                                                  style: NotoSansArabicCustomTextStyle.bold.copyWith(fontSize: 16, color: AppColor.text),
                                                                                 )
                                                                               ],
                                                                             ),
@@ -216,7 +214,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                                                                                 const SizedBox(width: 10),
                                                                                 Text(
                                                                                   viewModel.studentsList[index].name ?? "",
-                                                                                  style: NotoSansArabicCustomTextStyle.bold.copyWith(fontSize: 16, color: AppColor.black),
+                                                                                  style: NotoSansArabicCustomTextStyle.bold.copyWith(fontSize: 16, color: AppColor.text),
                                                                                 )
                                                                               ],
                                                                             ),
@@ -421,7 +419,6 @@ class _ParentDashboardState extends State<ParentDashboard> {
   }
 
   Widget recentActivity(String title, Function() onTap) {
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
     return InkWell(
       onTap: () {
@@ -437,14 +434,12 @@ class _ParentDashboardState extends State<ParentDashboard> {
                   blurRadius: 5,
                   offset: Offset(0, 5))
             ],
-            color: themeManager.isHighContrast
-                ? AppColor.labelText
-                : AppColor.white),
+            color: AppColor.panelDarkSoft),
         child: Center(
             child: Text(
           title.tr,
           style: NotoSansArabicCustomTextStyle.medium.copyWith(
-              fontSize: fontSizeProvider.fontSize, color: AppColor.black),
+              fontSize: fontSizeProvider.fontSize, color: AppColor.text),
         )),
       ),
     );
@@ -533,8 +528,9 @@ class _ParentDashboardState extends State<ParentDashboard> {
       // width: 330,
       height: 280,
       decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: themeManager.isHighContrast
+              ? AppColor.panelDarkSoft
+              : AppColor.bgLavender,
           borderRadius: BorderRadius.circular(5),
           boxShadow: const [
             BoxShadow(
@@ -573,7 +569,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
             child: Text(
               "assList".tr,
               style: PoppinsCustomTextStyle.medium.copyWith(
-                  fontSize: fontSizeProvider.fontSize, color: AppColor.black),
+                  fontSize: fontSizeProvider.fontSize, color: AppColor.text),
             ),
           )
         ],
@@ -588,8 +584,9 @@ class _ParentDashboardState extends State<ParentDashboard> {
       // width: 330,
       height: 280,
       decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: themeManager.isHighContrast
+              ? AppColor.panelDarkSoft
+              : AppColor.bgLavender,
           borderRadius: BorderRadius.circular(5),
           boxShadow: const [
             BoxShadow(
@@ -629,7 +626,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
             child: Text(
               "alertsSub".tr,
               style: PoppinsCustomTextStyle.medium.copyWith(
-                  fontSize: fontSizeProvider.fontSize, color: AppColor.black),
+                  fontSize: fontSizeProvider.fontSize, color: AppColor.text),
             ),
           )
         ],
@@ -644,8 +641,9 @@ class _ParentDashboardState extends State<ParentDashboard> {
       // width: 330,
       height: 280,
       decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: themeManager.isHighContrast
+              ? AppColor.panelDarkSoft
+              : AppColor.bgLavender,
           borderRadius: BorderRadius.circular(5),
           boxShadow: const [
             BoxShadow(
@@ -685,7 +683,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
             child: Text(
               "resounceList".tr,
               style: PoppinsCustomTextStyle.medium.copyWith(
-                  fontSize: fontSizeProvider.fontSize, color: AppColor.black),
+                  fontSize: fontSizeProvider.fontSize, color: AppColor.text),
             ),
           )
         ],
@@ -726,9 +724,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
           height: 300,
           width: double.infinity,
           decoration: BoxDecoration(
-              color: themeManager.isHighContrast
-                  ? AppColor.labelText
-                  : AppColor.white,
+              color: AppColor.panelDarkSoft,
               borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(5),
                   bottomRight: Radius.circular(5)),
@@ -746,7 +742,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
             child: Text(
               "parentsub".tr,
               style: PoppinsCustomTextStyle.medium.copyWith(
-                  fontSize: fontSizeProvider.fontSize, color: AppColor.black),
+                  fontSize: fontSizeProvider.fontSize, color: AppColor.text),
             ),
           ),
         )
@@ -809,7 +805,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                         fontSize: fontSizeProvider.fontSize,
                         color: isSelected == true
                             ? AppColor.white
-                            : AppColor.black))
+                            : AppColor.text))
               ],
             ),
           ),

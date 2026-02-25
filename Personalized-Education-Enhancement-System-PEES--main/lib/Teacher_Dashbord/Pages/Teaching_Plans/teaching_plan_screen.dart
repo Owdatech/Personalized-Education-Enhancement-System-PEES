@@ -309,6 +309,7 @@ class _TeachingPlanScreenState extends State<TeachingPlanScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               body: Stack(
                 children: [
                   isMobile ? const SizedBox() : const BackButtonWidget(),
@@ -328,9 +329,7 @@ class _TeachingPlanScreenState extends State<TeachingPlanScreen> {
                             width: double.infinity,
                             decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
-                                color: themeManager.isHighContrast
-                                    ? AppColor.labelText
-                                    : AppColor.white,
+                                color: AppColor.panelDarkSoft,
                                 boxShadow: const [
                                   BoxShadow(
                                       blurRadius: 15,
@@ -381,7 +380,7 @@ class _TeachingPlanScreenState extends State<TeachingPlanScreen> {
         //       height: 38,
         //       width: 714,
         //       decoration: BoxDecoration(
-        //           color: AppColor.white,
+        //           color: AppColor.panelDarkSoft,
         //           borderRadius: BorderRadius.circular(10)),
         //       child: TextField(
         //         controller: subjectController,
@@ -412,7 +411,7 @@ class _TeachingPlanScreenState extends State<TeachingPlanScreen> {
               height: 200,
               width: 714,
               decoration: BoxDecoration(
-                  color: AppColor.white,
+                  color: AppColor.panelDarkSoft,
                   borderRadius: BorderRadius.circular(10)),
               child: TextField(
                 controller: feedBackController,
@@ -908,11 +907,13 @@ class _TeachingPlanScreenState extends State<TeachingPlanScreen> {
 
   Widget subjectDropDown(bool isMobile) {
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
-    Color bgColor =
-        themeManager.isHighContrast ? Colors.black54 : Colors.grey[100]!;
-    Color textColor = themeManager.isHighContrast ? Colors.white : Colors.black;
-    Color borderColor =
-        themeManager.isHighContrast ? Colors.yellow : Colors.grey;
+    Color bgColor = themeManager.isHighContrast
+        ? AppColor.panelDark
+        : AppColor.panelDarkSoft;
+    Color textColor = AppColor.white;
+    Color borderColor = themeManager.isHighContrast
+        ? AppColor.accentBorder
+        : AppColor.lightGrey;
     if (selectedSubject != null && !filterSubject.contains(selectedSubject)) {
       selectedSubject = filterSubject.isNotEmpty ? filterSubject.first : null;
       isSubjectSelect = selectedSubject != null;
@@ -964,7 +965,7 @@ class _TeachingPlanScreenState extends State<TeachingPlanScreen> {
       height: 60,
       width: double.infinity,
       decoration: BoxDecoration(
-          color: AppColor.white,
+          color: AppColor.panelDarkSoft,
           borderRadius: BorderRadius.circular(10),
           boxShadow: const [
             BoxShadow(

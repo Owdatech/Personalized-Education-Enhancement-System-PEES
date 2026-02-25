@@ -66,6 +66,7 @@ class _ViewTeachingPlanScreenState extends State<ViewTeachingPlanScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               body: SafeArea(
                 child: Stack(
                   children: [
@@ -110,10 +111,7 @@ class _ViewTeachingPlanScreenState extends State<ViewTeachingPlanScreen> {
                                           child: Container(
                                             width: double.infinity,
                                             decoration: BoxDecoration(
-                                                color:
-                                                    themeManager.isHighContrast
-                                                        ? AppColor.labelText
-                                                        : AppColor.white,
+                                                color: AppColor.panelDarkSoft,
                                                 boxShadow: const [
                                                   BoxShadow(
                                                     blurRadius: 5,
@@ -317,7 +315,8 @@ class _ViewTeachingPlanScreenState extends State<ViewTeachingPlanScreen> {
                                                                         .all(
                                                                         8.0),
                                                                 child: Text(
-                                                                  "sendFeedback".tr,
+                                                                  "sendFeedback"
+                                                                      .tr,
                                                                   style: NotoSansArabicCustomTextStyle
                                                                       .medium
                                                                       .copyWith(
@@ -850,7 +849,7 @@ class _ViewTeachingPlanScreenState extends State<ViewTeachingPlanScreen> {
             Container(
               height: 60,
               decoration: BoxDecoration(
-                  color: AppColor.white,
+                  color: AppColor.panelDarkSoft,
                   borderRadius: BorderRadius.circular(10)),
               child: TextField(
                 controller: feedBackController,

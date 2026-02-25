@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pees/Authentication/Page/login_screen.dart';
 import 'package:pees/Authentication/Services/auth_service.dart';
-import 'package:pees/Common_Screen/Pages/notification_screen.dart';
 import 'package:pees/Common_Screen/Pages/themeWidget.dart';
 import 'package:pees/Common_Screen/Services/font_size_provider.dart';
 import 'package:pees/HeadMaster_Dashboard/Pages/master_dashboard.dart';
@@ -11,12 +10,12 @@ import 'package:pees/HeadMaster_Dashboard/Pages/students_list_screen.dart';
 import 'package:pees/HeadMaster_Dashboard/Pages/userManagement.dart';
 import 'package:pees/HeadMaster_Dashboard/Services/headMaster_services.dart';
 import 'package:pees/Models/profile_model.dart';
+import 'package:pees/Parent_Dashboard/Pages/alerts&Noti_Screen.dart';
 import 'package:pees/Widgets/AppColor.dart';
 import 'package:pees/Widgets/AppImage.dart';
 import 'package:pees/Widgets/Loader_view.dart';
 import 'package:pees/Widgets/custom_style.dart';
 import 'package:pees/Widgets/utils.dart';
-import 'package:pees/custom_class/my_appBar.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,12 +28,18 @@ class HeadMasterDashboardUI extends StatefulWidget {
 }
 
 class _HeadMasterDashboardUIState extends State<HeadMasterDashboardUI> {
+  static const Color _bgLavender = Color(0xFFD9D6F5);
+  static const Color _panelDark = Color(0xFF11131A);
+  static const Color _panelDarkSoft = Color(0xFF171A22);
+  static const Color _textLight = Color(0xFFF3F2FF);
+  static const Color _accentPrimary = Color(0xFF8E7CFF);
+  static const Color _accentBorder = Color(0xFFB9ABFF);
   HeadMasterServices viewModel = HeadMasterServices();
   AuthVM authViewmodel = AuthVM();
   ProfileModel? model;
   String? userName;
   final List<Widget> _pages = [
-     MasterDashboard(),
+    MasterDashboard(),
     const StudentListScreen(),
     const UserManagementScreen(),
     const SettingScreen(),
@@ -67,10 +72,11 @@ class _HeadMasterDashboardUIState extends State<HeadMasterDashboardUI> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+                backgroundColor: _bgLavender,
                 appBar: isMobile
                     ? AppBar(
                         iconTheme: IconThemeData(color: AppColor.white),
-                        backgroundColor: AppColor.buttonGreen,
+                        backgroundColor: _panelDark,
                         centerTitle: true,
                         title: Text(
                             "${"welcome".tr}, ${model?.user.name ?? ""}!",
@@ -86,9 +92,8 @@ class _HeadMasterDashboardUIState extends State<HeadMasterDashboardUI> {
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) =>
-                                                NotificationScreen(
-                                                    name: model?.user.name ??
-                                                        "")));
+                                                AlertsNotificationScreen(
+                                                    isAlerts: false)));
                                   },
                                   child: Stack(
                                     alignment: Alignment.center,
@@ -134,7 +139,7 @@ class _HeadMasterDashboardUIState extends State<HeadMasterDashboardUI> {
                                                 color:
                                                     themeManager.isHighContrast
                                                         ? AppColor.white
-                                                        : AppColor.buttonGreen,
+                                                        : _accentPrimary,
                                                 fontSize: 15),
                                       )),
                                 ],
@@ -167,59 +172,255 @@ class _HeadMasterDashboardUIState extends State<HeadMasterDashboardUI> {
                     : null,
                 body: Stack(
                   children: [
-                    Column(
-                      children: [
-                        isMobile
-                            ? const SizedBox()
-                            : MyAppBar(model?.user.name ?? ""),
-                        isMobile
-                            ? Expanded(
-                                child: _pages[viewModel.selectedIndex],
-                              )
-                            : Expanded(
-                                child: Row(children: [
-                                Container(
-                                  width: 300,
-                                  decoration: BoxDecoration(
-                                      color: themeManager.isHighContrast
-                                          ? AppColor.labelText
-                                          : AppColor.whiteBorder),
-                                  child: Column(
-                                    children: [
-                                      listItem(
-                                          "dashboard",
-                                          AppImage.dashboardFill,
-                                          AppImage.dashboardWhite,
-                                          0),
-                                      listItem(
-                                          "students",
-                                          AppImage.studentsFill,
-                                          AppImage.studentsWhite,
-                                          1),
-                                      listItem(
-                                          "userManagement",
-                                          AppImage.userManagementFill,
-                                          AppImage.userManagementWhite,
-                                          2),
-                                      listItem(
-                                          "settings",
-                                          AppImage.settingsFill,
-                                          AppImage.settingsWhite,
-                                          3),
-                                    ],
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFD9D6F5), Color(0xFFC9C3EE)],
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          isMobile ? const SizedBox() : _buildDesktopHeader(),
+                          if (!isMobile) _buildTopTabs(),
+                          Expanded(
+                            child: isMobile
+                                ? _pages[viewModel.selectedIndex]
+                                : Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        18, 0, 18, 18),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(22),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: _panelDark,
+                                          borderRadius:
+                                              BorderRadius.circular(22),
+                                          border: Border.all(
+                                              color: const Color(0xFF2A2E3A),
+                                              width: 1),
+                                        ),
+                                        child: _pages[viewModel.selectedIndex],
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                    flex: 2,
-                                    child: _pages[viewModel.selectedIndex]),
-                              ]))
-                      ],
+                          )
+                        ],
+                      ),
                     ),
                     value.loading ? const LoaderView() : Container(),
                   ],
                 ));
           });
         }));
+  }
+
+  Widget _buildTopTabs() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: _panelDark,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF2A2E3A), width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x2A000000),
+              blurRadius: 16,
+              offset: Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _topTabItem(
+                title: "dashboard",
+                iconFill: AppImage.dashboardFill,
+                iconWhite: AppImage.dashboardWhite,
+                index: 0,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _topTabItem(
+                title: "students",
+                iconFill: AppImage.studentsFill,
+                iconWhite: AppImage.studentsWhite,
+                index: 1,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _topTabItem(
+                title: "userManagement",
+                iconFill: AppImage.userManagementFill,
+                iconWhite: AppImage.userManagementWhite,
+                index: 2,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _topTabItem(
+                title: "settings",
+                iconFill: AppImage.settingsFill,
+                iconWhite: AppImage.settingsWhite,
+                index: 3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _topTabItem({
+    required String title,
+    required String iconFill,
+    required String iconWhite,
+    required int index,
+  }) {
+    final fontSizeProvider = Provider.of<FontSizeProvider>(context);
+    final isSelected = index == viewModel.selectedIndex;
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () {
+        setState(() {
+          viewModel.selectedIndex = index;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        height: 58,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: isSelected ? _accentPrimary : _panelDarkSoft,
+          border: Border.all(
+            color: isSelected ? _accentBorder : const Color(0xFF2A2E3A),
+            width: 1,
+          ),
+          boxShadow: isSelected
+              ? const [
+                  BoxShadow(
+                    color: Color(0x44000000),
+                    blurRadius: 14,
+                    offset: Offset(0, 8),
+                  )
+                ]
+              : const [],
+        ),
+        child: Row(
+          children: [
+            Image.asset(
+              isSelected ? iconWhite : iconFill,
+              width: 20,
+              height: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title.tr,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                  fontSize: fontSizeProvider.fontSize,
+                  color: isSelected ? AppColor.white : _textLight,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+      child: Container(
+        height: 78,
+        decoration: BoxDecoration(
+          color: _panelDark,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF2A2E3A), width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x2A000000),
+              blurRadius: 16,
+              offset: Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Row(
+            children: [
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              AlertsNotificationScreen(isAlerts: false)));
+                },
+                child: Stack(
+                  children: [
+                    Image.asset(AppImage.notification, width: 23),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.red,
+                        ),
+                        padding: const EdgeInsets.all(3),
+                        child: const Text(
+                          "0",
+                          style: TextStyle(fontSize: 10, color: AppColor.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              PopupMenuButton<String>(
+                onSelected: (_) {},
+                itemBuilder: (BuildContext context) => [
+                  PopupMenuItem(
+                    value: "logout",
+                    onTap: () {
+                      logoutAPI();
+                    },
+                    child: Text(
+                      "logOut".tr,
+                      style: PoppinsCustomTextStyle.medium
+                          .copyWith(color: _accentPrimary, fontSize: 15),
+                    ),
+                  ),
+                ],
+                offset: const Offset(0, 50),
+                child: Image.asset(AppImage.userProfile, width: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  "${"welcome".tr}, ${model?.user.name ?? ""}!",
+                  textAlign: TextAlign.center,
+                  style: PoppinsCustomTextStyle.bold
+                      .copyWith(fontSize: 26, color: _textLight),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget listItem(
@@ -240,7 +441,7 @@ class _HeadMasterDashboardUIState extends State<HeadMasterDashboardUI> {
           height: 73,
           width: 269,
           decoration: BoxDecoration(
-              color: isSelected ? AppColor.buttonGreen : Colors.transparent,
+              color: isSelected ? _accentPrimary : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
@@ -319,7 +520,7 @@ class _HeadMasterDashboardUIState extends State<HeadMasterDashboardUI> {
           height: 73,
           width: 269,
           decoration: BoxDecoration(
-              color: isSelected ? AppColor.buttonGreen : Colors.transparent,
+              color: isSelected ? _accentPrimary : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(

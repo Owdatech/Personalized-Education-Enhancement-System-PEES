@@ -517,7 +517,8 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     }
   }
 
-  Future<void> _showDeleteMarkDialog(String subjectName, History history) async {
+  Future<void> _showDeleteMarkDialog(
+      String subjectName, History history) async {
     if (history.id == null || history.id!.isEmpty) {
       Utils.snackBar("markEntryDeleteIdMissing".tr, context);
       return;
@@ -728,6 +729,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               body: Stack(
                 children: [
                   isMobile ? const SizedBox() : const BackButtonWidget(),
@@ -750,9 +752,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                             Container(
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                  color: themeManager.isHighContrast
-                                      ? AppColor.labelText
-                                      : AppColor.white,
+                                  color: AppColor.panelDarkSoft,
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: const [
                                     BoxShadow(
@@ -769,11 +769,10 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                     studentInformation(),
                                     const SizedBox(height: 10),
                                     AppSection(
-                                      title:
-                                          viewModel.selectedExamTab ==
-                                                  ExamScriptFor.academic
-                                              ? "academicData".tr
-                                              : "examScript".tr,
+                                      title: viewModel.selectedExamTab ==
+                                              ExamScriptFor.academic
+                                          ? "academicData".tr
+                                          : "examScript".tr,
                                       child: Padding(
                                         padding: const EdgeInsets.fromLTRB(
                                             0, 10, 0, 10),
@@ -927,11 +926,13 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
 
   Widget subjectDropDown() {
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
-    Color bgColor =
-        themeManager.isHighContrast ? Colors.black54 : Colors.grey[100]!;
-    Color textColor = themeManager.isHighContrast ? Colors.white : Colors.black;
-    Color borderColor =
-        themeManager.isHighContrast ? Colors.yellow : Colors.grey;
+    Color bgColor = themeManager.isHighContrast
+        ? AppColor.panelDark
+        : AppColor.panelDarkSoft;
+    Color textColor = AppColor.white;
+    Color borderColor = themeManager.isHighContrast
+        ? AppColor.accentBorder
+        : AppColor.lightGrey;
     return SizedBox(
       height: 50,
       width: 250,
@@ -977,20 +978,40 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
 
   Widget crriculumDropDown() {
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
-    Color bgColor =
-        themeManager.isHighContrast ? Colors.black54 : Colors.grey[100]!;
-    Color textColor = themeManager.isHighContrast ? Colors.white : Colors.black;
-    Color borderColor =
-        themeManager.isHighContrast ? Colors.yellow : Colors.grey;
+    Color bgColor = themeManager.isHighContrast
+        ? AppColor.panelDark
+        : AppColor.panelDarkSoft;
+    Color textColor = AppColor.white;
+    Color borderColor = themeManager.isHighContrast
+        ? AppColor.accentBorder
+        : AppColor.lightGrey;
 
     return SizedBox(
       width: 250,
       height: 50,
       child: DropdownButtonFormField<Curriculum>(
         isExpanded: true,
+        dropdownColor: AppColor.panelDark,
+        style: TextStyle(color: textColor, fontSize: 15),
+        iconEnabledColor: textColor,
+        iconDisabledColor: AppColor.labelText,
+        hint: const Text(
+          "Select Curriculum",
+          style: TextStyle(color: AppColor.white, fontSize: 15),
+          overflow: TextOverflow.ellipsis,
+        ),
+        selectedItemBuilder: (context) {
+          final source =
+              isSubjectSelcet ? filteredCurriculumList : <Curriculum>[];
+          return source
+              .map((curriculum) => Text(
+                    curriculum.curriculumName,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppColor.white),
+                  ))
+              .toList();
+        },
         decoration: InputDecoration(
-          hintText: "Select Curriculum",
-          hintStyle: TextStyle(color: textColor),
           filled: true,
           fillColor: bgColor,
           border:
@@ -1060,22 +1081,21 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
         });
         rows.add(DataRow(cells: [
           DataCell(Text(subjectName,
-              style: const TextStyle(color: AppColor.black))), // Subject
+              style: const TextStyle(color: AppColor.text))), // Subject
           DataCell(Text(history.curriculumName,
-              style:
-                  const TextStyle(color: AppColor.black))), // Curriculum Name
+              style: const TextStyle(color: AppColor.text))), // Curriculum Name
           DataCell(Center(
               child: Text(history.marks.toString(),
-                  style: const TextStyle(color: AppColor.black)))), // Marks
+                  style: const TextStyle(color: AppColor.text)))), // Marks
           DataCell(Center(
               child: Text(history.totalMark?.toString() ?? "",
                   style:
-                      const TextStyle(color: AppColor.black)))), // Total Marks
+                      const TextStyle(color: AppColor.text)))), // Total Marks
           DataCell(Center(
               child: Text(_displayGrade(history.grade),
-                  style: const TextStyle(color: AppColor.black)))), // Grade
+                  style: const TextStyle(color: AppColor.text)))), // Grade
           DataCell(Text(formattedDate,
-              style: const TextStyle(color: AppColor.black))), // Date
+              style: const TextStyle(color: AppColor.text))), // Date
         ]));
       }
     });
@@ -1168,7 +1188,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColor.white,
+                                color: AppColor.panelDarkSoft,
                                 border: Border.all(
                                     width: 0.8, color: AppColor.buttonGreen),
                                 borderRadius: BorderRadius.circular(8),
@@ -1179,7 +1199,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                   Text(fetchSelectSubject ?? "",
                                       style: NotoSansArabicCustomTextStyle.bold
                                           .copyWith(
-                                              color: AppColor.black,
+                                              color: AppColor.text,
                                               fontSize:
                                                   fontSizeProvider.fontSize)),
                                   const SizedBox(height: 10),
@@ -1202,7 +1222,8 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                       icon: null),
                                   const SizedBox(height: 10),
                                   AppTextField(
-                                      textController: subjectTotalMarkController,
+                                      textController:
+                                          subjectTotalMarkController,
                                       inputType: TextInputType.number,
                                       validator: (value) {
                                         if (value == null ||
@@ -1221,7 +1242,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                   (states) => AppColor.buttonGreen),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                    width: 0.8, color: AppColor.black),
+                                    width: 0.8, color: AppColor.text),
                               ),
                               columnSpacing: 16,
                               columns: [
@@ -1263,7 +1284,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                           .regular
                                           .copyWith(
                                               fontSize: 15,
-                                              color: AppColor.black),
+                                              color: AppColor.text),
                                     ),
                                   ),
                                   DataCell(
@@ -1285,7 +1306,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                         },
                                         style: PoppinsCustomTextStyle.regular
                                             .copyWith(
-                                                color: AppColor.black,
+                                                color: AppColor.text,
                                                 fontSize: 13),
                                         decoration: const InputDecoration(
                                             isDense: true,
@@ -1301,7 +1322,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                         controller: gradeeController,
                                         style: PoppinsCustomTextStyle.regular
                                             .copyWith(
-                                                color: AppColor.black,
+                                                color: AppColor.text,
                                                 fontSize: 13),
                                         decoration: const InputDecoration(
                                             isDense: true,
@@ -1328,7 +1349,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                         },
                                         style: PoppinsCustomTextStyle.regular
                                             .copyWith(
-                                                color: AppColor.black,
+                                                color: AppColor.text,
                                                 fontSize: 13),
                                         decoration: const InputDecoration(
                                             isDense: true,
@@ -1372,7 +1393,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                 margin: const EdgeInsets.only(bottom: 10),
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppColor.white,
+                                  color: AppColor.panelDarkSoft,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                       width: 0.8, color: AppColor.lightGrey),
@@ -1380,19 +1401,57 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("${"subject".tr}: ${item["subject"]}"),
+                                    Text(
+                                      "${"subject".tr}: ${item["subject"]}",
+                                      style: NotoSansArabicCustomTextStyle
+                                          .medium
+                                          .copyWith(
+                                              color: AppColor.text,
+                                              fontSize:
+                                                  fontSizeProvider.fontSize),
+                                    ),
                                     const SizedBox(height: 4),
                                     Text(
-                                        "${"curriculum".tr}: ${item["curriculum"]}"),
+                                      "${"curriculum".tr}: ${item["curriculum"]}",
+                                      style: NotoSansArabicCustomTextStyle
+                                          .medium
+                                          .copyWith(
+                                              color: AppColor.text,
+                                              fontSize:
+                                                  fontSizeProvider.fontSize),
+                                    ),
                                     const SizedBox(height: 4),
                                     Text(
-                                        "${"marks".tr}: ${item["marks"]} / ${item["totalMarks"]}"),
+                                      "${"marks".tr}: ${item["marks"]} / ${item["totalMarks"]}",
+                                      style: NotoSansArabicCustomTextStyle
+                                          .medium
+                                          .copyWith(
+                                              color: AppColor.text,
+                                              fontSize:
+                                                  fontSizeProvider.fontSize),
+                                    ),
                                     const SizedBox(height: 4),
                                     if ((item["grade"] ?? "").isNotEmpty)
-                                      Text("${"gradee".tr}: ${item["grade"]}"),
+                                      Text(
+                                        "${"gradee".tr}: ${item["grade"]}",
+                                        style: NotoSansArabicCustomTextStyle
+                                            .medium
+                                            .copyWith(
+                                                color: AppColor.text,
+                                                fontSize:
+                                                    fontSizeProvider.fontSize),
+                                      ),
                                     if ((item["grade"] ?? "").isNotEmpty)
                                       const SizedBox(height: 4),
-                                    Text("${"dateTitle".tr}: ${item["date"]}"),
+                                    Text(
+                                      "${"dateTitle".tr}: ${item["date"]}",
+                                      style: NotoSansArabicCustomTextStyle
+                                          .medium
+                                          .copyWith(
+                                              color: AppColor.text,
+                                              fontSize:
+                                                  fontSizeProvider.fontSize),
+                                    ),
                                   ],
                                 ),
                               ))
@@ -1403,7 +1462,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                       headingRowColor: WidgetStateColor.resolveWith(
                           (states) => AppColor.buttonGreen),
                       decoration: BoxDecoration(
-                        border: Border.all(width: 0.8, color: AppColor.black),
+                        border: Border.all(width: 0.8, color: AppColor.text),
                       ),
                       columnSpacing: 16,
                       columns: [
@@ -1449,8 +1508,8 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                           });
                         },
                         child: Text(showAll ? "showLess".tr : "showMore".tr,
-                            style:
-                                NotoSansArabicCustomTextStyle.medium.copyWith(
+                            style: NotoSansArabicCustomTextStyle.medium
+                                .copyWith(
                                     fontSize: 15,
                                     color: AppColor.buttonGreen))),
                   const SizedBox(height: 30),
@@ -1487,7 +1546,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                             style: NotoSansArabicCustomTextStyle.medium
                                 .copyWith(
                                     fontSize: fontSizeProvider.fontSize,
-                                    color: AppColor.black)),
+                                    color: AppColor.text)),
                         const SizedBox(height: 5),
                         SizedBox(
                           height: 39,
@@ -1501,7 +1560,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                             style: NotoSansArabicCustomTextStyle.medium
                                 .copyWith(
                                     fontSize: fontSizeProvider.fontSize,
-                                    color: AppColor.black)),
+                                    color: AppColor.text)),
                         const SizedBox(height: 5),
                         SizedBox(
                             height: 39,
@@ -1524,7 +1583,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                             style: NotoSansArabicCustomTextStyle.medium
                                 .copyWith(
                                     fontSize: fontSizeProvider.fontSize,
-                                    color: AppColor.black)),
+                                    color: AppColor.text)),
                         const SizedBox(height: 5),
                         subjectDropDownExam(isMobile),
                         const SizedBox(height: 5),
@@ -1532,7 +1591,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                             style: NotoSansArabicCustomTextStyle.medium
                                 .copyWith(
                                     fontSize: fontSizeProvider.fontSize,
-                                    color: AppColor.black)),
+                                    color: AppColor.text)),
                         const SizedBox(height: 5),
                         crriculumTextFieldExam(isMobile),
                         const SizedBox(height: 5),
@@ -1540,7 +1599,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                             style: NotoSansArabicCustomTextStyle.medium
                                 .copyWith(
                                     fontSize: fontSizeProvider.fontSize,
-                                    color: AppColor.black)),
+                                    color: AppColor.text)),
                         const SizedBox(height: 5),
                         SizedBox(
                             height: 39,
@@ -1563,7 +1622,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                     style: NotoSansArabicCustomTextStyle.medium
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
+                                            color: AppColor.text)),
                                 const SizedBox(width: 10),
                                 SizedBox(
                                   height: 39,
@@ -1584,7 +1643,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                     style: NotoSansArabicCustomTextStyle.medium
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
+                                            color: AppColor.text)),
                                 const SizedBox(width: 10),
                                 SizedBox(
                                     height: 39,
@@ -1618,7 +1677,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                     style: NotoSansArabicCustomTextStyle.medium
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
+                                            color: AppColor.text)),
                                 const SizedBox(width: 10),
                                 subjectDropDownExam(isMobile)
                               ],
@@ -1629,7 +1688,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                     style: NotoSansArabicCustomTextStyle.medium
                                         .copyWith(
                                             fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.black)),
+                                            color: AppColor.text)),
                                 const SizedBox(width: 10),
                                 crriculumTextFieldExam(isMobile)
                               ],
@@ -1643,7 +1702,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                 style: NotoSansArabicCustomTextStyle.medium
                                     .copyWith(
                                         fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.black)),
+                                        color: AppColor.text)),
                             const SizedBox(width: 10),
                             SizedBox(
                                 height: 39,
@@ -1661,7 +1720,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
               //     height: 100,
               //     width: double.infinity,
               //     decoration: BoxDecoration(
-              //         color: AppColor.white,
+              //         color: AppColor.panelDarkSoft,
               //         borderRadius: BorderRadius.circular(5)),
               //     child: Column(
               //       mainAxisAlignment: MainAxisAlignment.center,
@@ -1685,7 +1744,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
               //             child: Text("supportedFileTypesPDF,JPG".tr,
               //                 style: PoppinsCustomTextStyle.regular.copyWith(
               //                     fontSize: fontSizeProvider.fontSize,
-              //                     color: AppColor.black)),
+              //                     color: AppColor.text)),
               //           ),
               //         ]
               //       ],
@@ -1694,7 +1753,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                 height: 100,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                    color: AppColor.white,
+                    color: AppColor.panelDarkSoft,
                     borderRadius: BorderRadius.circular(5)),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1747,7 +1806,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                         child: Text("supportedFileTypesPDF,JPG".tr,
                             style: PoppinsCustomTextStyle.regular.copyWith(
                                 fontSize: fontSizeProvider.fontSize,
-                                color: AppColor.black)),
+                                color: AppColor.text)),
                       ),
                     ],
                   ],
@@ -1768,12 +1827,12 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                 height: 96,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                    color: AppColor.white,
+                    color: AppColor.panelDarkSoft,
                     borderRadius: BorderRadius.circular(5)),
                 child: TextField(
                   controller: notesController,
                   style: PoppinsCustomTextStyle.medium
-                      .copyWith(fontSize: 13, color: AppColor.black),
+                      .copyWith(fontSize: 13, color: AppColor.text),
                   decoration: InputDecoration(
                       border: InputBorder.none,
                       hintText: "notesHint".tr,
@@ -1829,19 +1888,42 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
   Widget crriculumTextFieldExam(bool isMobile) {
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
-    Color bgColor =
-        themeManager.isHighContrast ? Colors.black54 : Colors.grey[100]!;
-    Color textColor = themeManager.isHighContrast ? Colors.white : Colors.black;
-    Color borderColor =
-        themeManager.isHighContrast ? Colors.yellow : Colors.grey;
+    Color bgColor = themeManager.isHighContrast
+        ? AppColor.panelDark
+        : AppColor.panelDarkSoft;
+    Color textColor = AppColor.white;
+    Color borderColor = themeManager.isHighContrast
+        ? AppColor.accentBorder
+        : AppColor.lightGrey;
     return SizedBox(
       width: 250,
       height: 50,
       child: DropdownButtonFormField<Curriculum>(
         isExpanded: true,
+        dropdownColor: AppColor.panelDark,
+        style: TextStyle(color: textColor, fontSize: fontSizeProvider.fontSize),
+        iconEnabledColor: textColor,
+        iconDisabledColor: AppColor.labelText,
+        hint: Text(
+          "selectCurriculumn".tr,
+          style: TextStyle(
+              color: AppColor.white, fontSize: fontSizeProvider.fontSize),
+          overflow: TextOverflow.ellipsis,
+        ),
+        selectedItemBuilder: (context) {
+          final source =
+              isSubjectSelectedExam ? filteredCurriculumList : <Curriculum>[];
+          return source
+              .map((curriculum) => Text(
+                    curriculum.curriculumName,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        color: AppColor.white,
+                        fontSize: fontSizeProvider.fontSize),
+                  ))
+              .toList();
+        },
         decoration: InputDecoration(
-          hintText: "selectCurriculumn".tr,
-          hintStyle: TextStyle(color: textColor),
           filled: true,
           fillColor: bgColor,
           border:
@@ -1858,7 +1940,10 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
             ? filteredCurriculumList.map((curriculum) {
                 return DropdownMenuItem<Curriculum>(
                   value: curriculum,
-                  child: Text(curriculum.curriculumName),
+                  child: Text(curriculum.curriculumName,
+                      style: TextStyle(
+                          color: textColor,
+                          fontSize: fontSizeProvider.fontSize)),
                 );
               }).toList()
             : [],
@@ -1892,11 +1977,13 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
 
   Widget subjectDropDownExam(bool isMobile) {
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
-    Color bgColor =
-        themeManager.isHighContrast ? Colors.black54 : Colors.grey[100]!;
-    Color textColor = themeManager.isHighContrast ? Colors.white : Colors.black;
-    Color borderColor =
-        themeManager.isHighContrast ? Colors.yellow : Colors.grey;
+    Color bgColor = themeManager.isHighContrast
+        ? AppColor.panelDark
+        : AppColor.panelDarkSoft;
+    Color textColor = AppColor.white;
+    Color borderColor = themeManager.isHighContrast
+        ? AppColor.accentBorder
+        : AppColor.lightGrey;
 
     if (fetchSelectSubjectExam != null &&
         !filterSubject.contains(fetchSelectSubjectExam)) {
@@ -1907,9 +1994,23 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
       height: 50,
       width: 250,
       child: DropdownButtonFormField<String>(
+        dropdownColor: AppColor.panelDark,
+        style: TextStyle(color: textColor, fontSize: 15),
+        iconEnabledColor: textColor,
+        iconDisabledColor: AppColor.labelText,
+        hint: Text(
+          "selectSubject".tr,
+          style: TextStyle(color: AppColor.white, fontSize: 15),
+          overflow: TextOverflow.ellipsis,
+        ),
+        selectedItemBuilder: (context) => filterSubject
+            .map((subject) => Text(
+                  subject,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppColor.white),
+                ))
+            .toList(),
         decoration: InputDecoration(
-          hintText: "selectSubject".tr,
-          hintStyle: TextStyle(color: textColor),
           filled: true,
           fillColor: bgColor,
           border:
@@ -1925,7 +2026,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
         items: filterSubject.map((subject) {
           return DropdownMenuItem<String>(
             value: subject,
-            child: Text(subject),
+            child: Text(subject, style: TextStyle(color: textColor)),
           );
         }).toList(),
         onChanged: (String? newSubject) {
@@ -2001,9 +2102,8 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
               child: Text("$text".tr,
                   style: PoppinsCustomTextStyle.bold.copyWith(
                       fontSize: fontSizeProvider.fontSize + 1,
-                      color: isSelected
-                          ? AppColor.white
-                          : AppColor.buttonGreen)),
+                      color:
+                          isSelected ? AppColor.white : AppColor.buttonGreen)),
             ),
           ),
         ),
@@ -2045,22 +2145,22 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                   Text(widget.model?.studentName ?? "",
                       style: NotoSansArabicCustomTextStyle.bold.copyWith(
                           fontSize: fontSizeProvider.fontSize + 2,
-                          color: AppColor.black)),
+                          color: AppColor.text)),
                   const SizedBox(height: 15),
                   Text("${"email".tr} ${widget.model?.email ?? ""}",
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: NotoSansArabicCustomTextStyle.medium.copyWith(
                           fontSize: fontSizeProvider.fontSize,
-                          color: AppColor.black)),
+                          color: AppColor.text)),
                   const SizedBox(height: 15),
                   Text(widget.model?.classSection ?? "",
                       style: NotoSansArabicCustomTextStyle.medium
-                          .copyWith(fontSize: 13, color: AppColor.black)),
+                          .copyWith(fontSize: 13, color: AppColor.text)),
                   const SizedBox(height: 15),
                   Text("${"grade".tr} : ${widget.model?.grade ?? ""}",
                       style: NotoSansArabicCustomTextStyle.medium
-                          .copyWith(fontSize: 13, color: AppColor.black)),
+                          .copyWith(fontSize: 13, color: AppColor.text)),
                   const SizedBox(height: 5),
                 ],
               ),

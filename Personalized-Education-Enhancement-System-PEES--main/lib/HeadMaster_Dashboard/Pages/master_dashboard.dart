@@ -15,7 +15,6 @@ import 'package:pees/Models/user_model.dart';
 import 'package:pees/Parent_Dashboard/Pages/alerts&Noti_Screen.dart';
 import 'package:pees/Widgets/AppColor.dart';
 import 'package:pees/Widgets/Loader_view.dart';
-import 'package:pees/Widgets/AppSection.dart';
 import 'package:pees/Widgets/custom_style.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -37,6 +36,27 @@ class _MasterDashboardState extends State<MasterDashboard> {
   List<dynamic> metrics = [];
   bool _loadingMetrics = false;
   String? _metricsError;
+
+  static const Color _bgLavender = Color(0xFFD9D6F5);
+  static const Color _panelDark = Color(0xFF11131A);
+  static const Color _panelDarkSoft = Color(0xFF171A22);
+  static const Color _textLight = Color(0xFFF3F2FF);
+  static const Color _textMuted = Color(0xFFB2B6C6);
+
+  BoxDecoration _glassPanelDecoration({double radius = 20}) {
+    return BoxDecoration(
+      color: _panelDark.withOpacity(0.96),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: const Color(0xFF2A2E3A), width: 1),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x44000000),
+          blurRadius: 24,
+          offset: Offset(0, 12),
+        )
+      ],
+    );
+  }
 
   String? _extractStudentId(dynamic student) {
     if (student is! Map) return null;
@@ -139,8 +159,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
   }
 
   Color _scoreColor(double value) {
-    if (value >= 8.0) return const Color(0xFF0B7A2D);
-    if (value >= 6.0) return const Color(0xFF1A9A73);
+    if (value >= 8.0) return const Color(0xFF8E7CFF);
+    if (value >= 6.0) return const Color(0xFF5C8DFF);
     if (value >= 4.0) return const Color(0xFFF59E0B);
     return const Color(0xFFE53935);
   }
@@ -300,6 +320,15 @@ class _MasterDashboardState extends State<MasterDashboard> {
     return points;
   }
 
+  String? _firstGradeWithSubjectData(List<String> gradeOptions) {
+    for (final grade in gradeOptions) {
+      if (_buildSubjectChartDataForGrade(grade).isNotEmpty) {
+        return grade;
+      }
+    }
+    return gradeOptions.isNotEmpty ? gradeOptions.first : null;
+  }
+
   Future<List<dynamic>> _fetchStudentsList() async {
     final response = await http.get(
       Uri.parse("${Config.baseURL}students/list"),
@@ -433,7 +462,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
         final grades = _availableGradesFromMetrics();
         if (_selectedGradeForSubjects == null ||
             !grades.contains(_selectedGradeForSubjects)) {
-          _selectedGradeForSubjects = grades.isNotEmpty ? grades.first : null;
+          _selectedGradeForSubjects = _firstGradeWithSubjectData(grades);
         }
         _metricsError = null;
       });
@@ -624,121 +653,125 @@ class _MasterDashboardState extends State<MasterDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final fontSizeProvider = Provider.of<FontSizeProvider>(context);
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     return ChangeNotifierProvider<HeadMasterServices>(
         create: (BuildContext context) => viewModel,
         child: Consumer<HeadMasterServices>(builder: (context, value, _) {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: _bgLavender,
               body: Stack(
                 children: [
-                  Column(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height,
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                  left: isMobile ? 12 : 20,
-                                  right: isMobile ? 12 : 20,
-                                  top: isMobile ? 12 : 20),
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    isMobile
-                                        ? Column(
-                                            children: [
-                                              ConstrainedBox(
-                                                constraints:
-                                                    const BoxConstraints(
-                                                        maxWidth: 520),
-                                                child: recentActivity(
-                                                  "reports",
-                                                  () {
-                                                    Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                const ReposrtsScreen()));
-                                                  },
-                                                ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFD9D6F5), Color(0xFFC9C3EE)],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1650),
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                            left: isMobile ? 12 : 18,
+                            right: isMobile ? 12 : 18,
+                            top: isMobile ? 12 : 18),
+                        child: Container(
+                          decoration: _glassPanelDecoration(radius: 26),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: isMobile ? 12 : 16, vertical: 16),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  isMobile
+                                      ? Column(
+                                          children: [
+                                            ConstrainedBox(
+                                              constraints: const BoxConstraints(
+                                                  maxWidth: 520),
+                                              child: recentActivity(
+                                                "reports",
+                                                () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              const ReposrtsScreen()));
+                                                },
                                               ),
-                                              // reports(),
-                                              const SizedBox(height: 10),
-                                              // alertsAndNotification(),
-                                              ConstrainedBox(
-                                                constraints:
-                                                    const BoxConstraints(
-                                                        maxWidth: 520),
-                                                child: recentActivity(
-                                                  "alerts&Noti",
-                                                  () {
-                                                    Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                AlertsNotificationScreen(
-                                                                    isAlerts:
-                                                                        false)));
-                                                  },
-                                                ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            ConstrainedBox(
+                                              constraints: const BoxConstraints(
+                                                  maxWidth: 520),
+                                              child: recentActivity(
+                                                "alerts&Noti",
+                                                () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              AlertsNotificationScreen(
+                                                                  isAlerts:
+                                                                      false)));
+                                                },
                                               ),
-                                              const SizedBox(height: 10),
-                                              schoolPerformance(isMobile),
-                                              const SizedBox(height: 70),
-                                            ],
-                                          )
-                                        : Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              SizedBox(
-                                                width: 360,
-                                                child: recentActivity(
-                                                  "reports",
-                                                  () {
-                                                    Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                const ReposrtsScreen()));
-                                                  },
-                                                ),
+                                            ),
+                                            const SizedBox(height: 14),
+                                          ],
+                                        )
+                                      : Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            SizedBox(
+                                              width: 360,
+                                              child: recentActivity(
+                                                "reports",
+                                                () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              const ReposrtsScreen()));
+                                                },
                                               ),
-                                              const SizedBox(width: 15),
-                                              SizedBox(
-                                                width: 360,
-                                                child: recentActivity(
-                                                  "alerts&Noti",
-                                                  () {
-                                                    Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                AlertsNotificationScreen(
-                                                                    isAlerts:
-                                                                        false)));
-                                                  },
-                                                ),
+                                            ),
+                                            const SizedBox(width: 15),
+                                            SizedBox(
+                                              width: 360,
+                                              child: recentActivity(
+                                                "alerts&Noti",
+                                                () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              AlertsNotificationScreen(
+                                                                  isAlerts:
+                                                                      false)));
+                                                },
                                               ),
-                                            ],
-                                          ),
-                                    const SizedBox(height: 20),
-                                    schoolPerformance(isMobile),
-                                    const SizedBox(height: 30),
-                                  ],
-                                ),
+                                            ),
+                                          ],
+                                        ),
+                                  schoolPerformance(isMobile),
+                                  const SizedBox(height: 6),
+                                ],
                               ),
                             ),
                           ),
                         ),
-                      )
-                    ],
+                      ),
+                    ),
                   ),
                   value.loading ? LoaderView() : Container()
                 ],
@@ -749,73 +782,99 @@ class _MasterDashboardState extends State<MasterDashboard> {
   }
 
   Widget recentActivity(String title, VoidCallback onPressed) {
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
     return InkWell(
-      onTap: () {
-        onPressed();
-      },
-      child: Container(
-        height: 100,
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: const [
-              BoxShadow(
-                  color: AppColor.greyShadow,
-                  blurRadius: 5,
-                  offset: Offset(0, 5))
-            ],
-            color: themeManager.isHighContrast
-                ? AppColor.labelText
-                : AppColor.white),
-        child: Center(
-            child: Text(
-          title.tr,
-          style: NotoSansArabicCustomTextStyle.medium.copyWith(
-              fontSize: fontSizeProvider.fontSize, color: AppColor.black),
-        )),
-      ),
-    );
+        onTap: () {
+          onPressed();
+        },
+        child: Container(
+          height: 100,
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFF2D3241), width: 1),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF1A1D27), Color(0xFF12141C)],
+              ),
+              boxShadow: const [
+                BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 16,
+                    offset: Offset(0, 8))
+              ]),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF262A36),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(
+                    title == "reports"
+                        ? Icons.auto_graph
+                        : Icons.notification_add,
+                    color: _textLight,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title.tr,
+                    style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                        fontSize: fontSizeProvider.fontSize + 1,
+                        color: _textLight),
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios, size: 14, color: _textMuted)
+              ],
+            ),
+          ),
+        ));
   }
 
   Widget userManagement(bool isMobile) {
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
     return InkWell(
-      onTap: () {
-        final headMasterServices =
-            Provider.of<HeadMasterServices>(context, listen: false);
-        headMasterServices.selectedIndex = 2; // Set index for User Management
-        headMasterServices.notifyListeners();
-      },
-      child: Container(
-        // width: 330,
-        height: 100,
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: const [
-              BoxShadow(
-                  color: AppColor.greyShadow,
-                  blurRadius: 5,
-                  offset: Offset(0, 5))
+        onTap: () {
+          final headMasterServices =
+              Provider.of<HeadMasterServices>(context, listen: false);
+          headMasterServices.selectedIndex = 2; // Set index for User Management
+          headMasterServices.notifyListeners();
+        },
+        child: Container(
+          // width: 330,
+          height: 100,
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                    color: AppColor.greyShadow,
+                    blurRadius: 5,
+                    offset: Offset(0, 5))
+              ],
+              color: themeManager.isHighContrast
+                  ? AppColor.labelText
+                  : AppColor.white),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "userManagement".tr,
+                textAlign: TextAlign.center,
+                style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                    fontSize: fontSizeProvider.fontSize, color: AppColor.black),
+              ),
             ],
-            color: themeManager.isHighContrast
-                ? AppColor.labelText
-                : AppColor.white),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "userManagement".tr,
-              textAlign: TextAlign.center,
-              style: NotoSansArabicCustomTextStyle.medium.copyWith(
-                  fontSize: fontSizeProvider.fontSize, color: AppColor.black),
-            ),
-          ],
-        ),
-      ),
-    );
+          ),
+        ));
   }
 
   // Widget userManagement(bool isMobile) {
@@ -826,7 +885,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
   //     height: 280,
   //     decoration: BoxDecoration(
   //         color:
-  //             themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+  //             themeManager.isHighContrast ? AppColor.panelDarkSoft : AppColor.bgLavender,
   //         borderRadius: BorderRadius.circular(5),
   //         boxShadow: const [
   //           BoxShadow(
@@ -910,8 +969,9 @@ class _MasterDashboardState extends State<MasterDashboard> {
       // width: 330,
       height: 280,
       decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: themeManager.isHighContrast
+              ? AppColor.panelDarkSoft
+              : AppColor.bgLavender,
           borderRadius: BorderRadius.circular(5),
           boxShadow: const [
             BoxShadow(
@@ -952,7 +1012,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
               style: PoppinsCustomTextStyle.medium.copyWith(
                   fontSize: fontSizeProvider.fontSize, color: AppColor.black),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -965,8 +1025,9 @@ class _MasterDashboardState extends State<MasterDashboard> {
       // width: 330,
       height: 280,
       decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: themeManager.isHighContrast
+              ? AppColor.panelDarkSoft
+              : AppColor.bgLavender,
           borderRadius: BorderRadius.circular(5),
           boxShadow: const [
             BoxShadow(
@@ -1007,353 +1068,354 @@ class _MasterDashboardState extends State<MasterDashboard> {
               style: PoppinsCustomTextStyle.medium.copyWith(
                   fontSize: fontSizeProvider.fontSize, color: AppColor.black),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
   Widget schoolPerformance(bool isMobile) {
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
+    final smallDropdownFont =
+        (fontSizeProvider.fontSize - 2).clamp(11.0, 14.0).toDouble();
     final chartData = _buildGradeChartData();
     final gradeOptions = _availableGradesFromMetrics();
     if (_selectedGradeForSubjects == null && gradeOptions.isNotEmpty) {
-      _selectedGradeForSubjects = gradeOptions.first;
+      _selectedGradeForSubjects = _firstGradeWithSubjectData(gradeOptions);
     }
     final subjectChartData = _selectedGradeForSubjects == null
         ? <_SubjectChartPoint>[]
         : _buildSubjectChartDataForGrade(_selectedGradeForSubjects!);
-    return AppSection(
-      title: "schoolperfo".tr,
-      child: Container(
-        height: 980,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Align(
-                  alignment: Directionality.of(context) == TextDirection.rtl
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Text(
-                    "schoolPerformanceWindow30Days".tr,
-                    style: NotoSansArabicCustomTextStyle.regular.copyWith(
-                        fontSize: fontSizeProvider.fontSize - 1,
-                        color: AppColor.textGrey),
+    return Container(
+      width: double.infinity,
+      decoration: _glassPanelDecoration(radius: 20),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCC8FF),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-              ),
-              Expanded(
-                child: _loadingMetrics
-                    ? const Center(child: CircularProgressIndicator())
-                    : _metricsError != null
-                        ? Center(
-                            child: Text(_metricsError!,
-                                style: NotoSansArabicCustomTextStyle.medium
-                                    .copyWith(color: AppColor.black)),
-                          )
-                        : metrics.isEmpty
-                            ? Center(
-                                child: Text(
-                                    "noSchoolPerformanceDataLast30Days".tr,
-                                    style: NotoSansArabicCustomTextStyle.medium
-                                        .copyWith(color: AppColor.black)),
-                              )
-                            : ListView.builder(
-                                itemCount: metrics.length,
-                                itemBuilder: (context, index) {
-                                  final item = metrics[index];
-                                  final metricItem = item is Map
-                                      ? item.cast<dynamic, dynamic>()
-                                      : <dynamic, dynamic>{};
-                                  final grade =
-                                      metricItem['grade'] ?? 'Unknown';
-                                  final gradeDisplay =
-                                      _shortGradeLabel(grade.toString());
-                                  final dynamic subjectsRaw =
-                                      metricItem['subjects'];
-                                  final Map<String, dynamic> subjects =
-                                      subjectsRaw is Map
-                                          ? subjectsRaw.map((k, v) =>
-                                              MapEntry(k.toString(), v))
-                                          : <String, dynamic>{};
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 10),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                          color: AppColor.white,
-                                          borderRadius:
-                                              BorderRadius.circular(7),
-                                          boxShadow: const [
-                                            BoxShadow(
-                                                blurRadius: 5,
-                                                color: AppColor.greyShadow,
-                                                offset: Offset(0, 5))
-                                          ]),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const SizedBox(height: 5),
-                                            Row(
-                                              children: [
-                                                Text('${"grade".tr} : ',
-                                                    style:
-                                                        NotoSansArabicCustomTextStyle
-                                                            .semibold
-                                                            .copyWith(
-                                                                fontSize: 15,
-                                                                color: AppColor
-                                                                    .black)),
-                                                Text(gradeDisplay,
-                                                    style:
-                                                        NotoSansArabicCustomTextStyle
-                                                            .regular
-                                                            .copyWith(
-                                                                fontSize: 15,
-                                                                color: AppColor
-                                                                    .black)),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 5),
-                                            Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text('${"subject".tr} : ',
-                                                    style:
-                                                        NotoSansArabicCustomTextStyle
-                                                            .semibold
-                                                            .copyWith(
-                                                                fontSize: 15,
-                                                                color: AppColor
-                                                                    .black)),
-                                                const SizedBox(width: 5),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: subjects.entries
-                                                        .map((e) {
-                                                      final mark =
-                                                          _resolveSubjectAverageMark(
-                                                              metricItem,
-                                                              e.key,
-                                                              e.value);
-                                                      if (mark != "-") {
-                                                        return Text(
-                                                            "${e.key} - Average Marks : $mark");
-                                                      }
-                                                      final gradeSymbol =
-                                                          _extractGradeSymbol(
-                                                              e.value);
-                                                      return Text(
-                                                          "${e.key} - Average Grade : $gradeSymbol");
-                                                    }).toList()
-                                                      ..addAll(subjects.isEmpty
-                                                          ? [
-                                                              Text(
-                                                                "noMarksHistoryYet"
-                                                                    .tr,
-                                                                style: NotoSansArabicCustomTextStyle
-                                                                    .regular
-                                                                    .copyWith(
-                                                                        fontSize:
-                                                                            13,
-                                                                        color: AppColor
-                                                                            .textGrey),
-                                                              )
-                                                            ]
-                                                          : []),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-              ),
-              if (chartData.isNotEmpty) const SizedBox(height: 12),
-              if (chartData.isNotEmpty)
-                Container(
-                  width: double.infinity,
-                  height: 260,
-                  decoration: BoxDecoration(
-                    color: AppColor.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColor.lightGrey, width: 1),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: SfCartesianChart(
-                      plotAreaBorderWidth: 0,
-                      title: ChartTitle(
-                        text: "performanceByGrade".tr,
-                        textStyle: NotoSansArabicCustomTextStyle.semibold
-                            .copyWith(
-                                fontSize: fontSizeProvider.fontSize + 2,
-                                color: AppColor.black),
-                      ),
-                      primaryXAxis: CategoryAxis(
-                        labelRotation: -35,
-                        labelIntersectAction:
-                            AxisLabelIntersectAction.multipleRows,
-                        edgeLabelPlacement: EdgeLabelPlacement.shift,
-                        majorGridLines: const MajorGridLines(width: 0),
-                        axisLine: const AxisLine(width: 0),
-                        majorTickLines: const MajorTickLines(width: 0),
-                        maximumLabelWidth: 90,
-                        labelStyle: NotoSansArabicCustomTextStyle.regular
-                            .copyWith(
-                                fontSize: fontSizeProvider.fontSize - 1,
-                                color: AppColor.black),
-                      ),
-                      primaryYAxis: NumericAxis(
-                        minimum: 0,
-                        maximum: 10,
-                        interval: 1,
-                        axisLine: const AxisLine(width: 0),
-                        majorTickLines: const MajorTickLines(width: 0),
-                        title: AxisTitle(
-                          text: "marksOutOfTen".tr,
-                          textStyle: NotoSansArabicCustomTextStyle.regular
-                              .copyWith(
-                                  fontSize: fontSizeProvider.fontSize - 1,
-                                  color: AppColor.textGrey),
-                        ),
-                      ),
-                      tooltipBehavior: TooltipBehavior(
-                        enable: true,
-                        format: 'point.x : point.y/10',
-                      ),
-                      series: <CartesianSeries<_GradeChartPoint, String>>[
-                        ColumnSeries<_GradeChartPoint, String>(
-                          dataSource: chartData,
-                          xValueMapper: (_GradeChartPoint data, _) =>
-                              _compactGradeForChart(data.grade),
-                          yValueMapper: (_GradeChartPoint data, _) =>
-                              data.averageMark,
-                          pointColorMapper: (_GradeChartPoint data, _) =>
-                              _scoreColor(data.averageMark),
-                          dataLabelMapper: (_GradeChartPoint data, _) =>
-                              _formatChartValue(data.averageMark),
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(6)),
-                          width: 0.55,
-                          dataLabelSettings: DataLabelSettings(
-                            isVisible: true,
-                            labelAlignment: ChartDataLabelAlignment.top,
-                            textStyle: NotoSansArabicCustomTextStyle.semibold
-                                .copyWith(
-                                    fontSize: fontSizeProvider.fontSize - 1,
-                                    color: AppColor.black),
-                          ),
-                        ),
-                      ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    "schoolperfo".tr,
+                    style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                      fontSize: fontSizeProvider.fontSize + 4,
+                      color: _textLight,
                     ),
                   ),
                 ),
-              if (chartData.isNotEmpty) const SizedBox(height: 12),
-              if (chartData.isNotEmpty)
-                Container(
-                  width: double.infinity,
-                  height: 350,
-                  decoration: BoxDecoration(
-                    color: AppColor.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColor.lightGrey, width: 1),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      children: [
-                        LayoutBuilder(builder: (context, rowConstraints) {
-                          final isNarrow = rowConstraints.maxWidth < 700;
-                          final titleText =
-                              "${"subjectsByGrade".tr} (${_selectedGradeForSubjects == null ? '-' : _shortGradeLabel(_selectedGradeForSubjects!)})";
-
-                          if (isNarrow) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  titleText,
-                                  style: NotoSansArabicCustomTextStyle.semibold
-                                      .copyWith(
-                                          fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black),
-                                ),
-                                if (gradeOptions.isNotEmpty)
-                                  const SizedBox(height: 8),
-                                if (gradeOptions.isNotEmpty)
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 40,
-                                    child: DropdownButtonFormField<String>(
-                                      isExpanded: true,
-                                      value: _selectedGradeForSubjects,
-                                      decoration: const InputDecoration(
-                                        border: OutlineInputBorder(),
-                                        contentPadding: EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 8),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Directionality.of(context) == TextDirection.rtl
+                  ? Alignment.centerRight
+                  : Alignment.centerLeft,
+              child: Text(
+                "schoolPerformanceWindow30Days".tr,
+                style: NotoSansArabicCustomTextStyle.regular.copyWith(
+                    fontSize: fontSizeProvider.fontSize - 1, color: _textMuted),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: isMobile ? 260 : 320,
+              child: _loadingMetrics
+                  ? const Center(child: CircularProgressIndicator())
+                  : _metricsError != null
+                      ? Center(
+                          child: Text(_metricsError!,
+                              style: NotoSansArabicCustomTextStyle.medium
+                                  .copyWith(color: _textLight)),
+                        )
+                      : metrics.isEmpty
+                          ? Center(
+                              child: Text(
+                                  "noSchoolPerformanceDataLast30Days".tr,
+                                  style: NotoSansArabicCustomTextStyle.medium
+                                      .copyWith(color: _textLight)),
+                            )
+                          : ListView.builder(
+                              itemCount: metrics.length,
+                              itemBuilder: (context, index) {
+                                final item = metrics[index];
+                                final metricItem = item is Map
+                                    ? item.cast<dynamic, dynamic>()
+                                    : <dynamic, dynamic>{};
+                                final grade = metricItem['grade'] ?? 'Unknown';
+                                final gradeDisplay =
+                                    _shortGradeLabel(grade.toString());
+                                final dynamic subjectsRaw =
+                                    metricItem['subjects'];
+                                final Map<String, dynamic> subjects =
+                                    subjectsRaw is Map
+                                        ? subjectsRaw.map(
+                                            (k, v) => MapEntry(k.toString(), v))
+                                        : <String, dynamic>{};
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: _panelDarkSoft,
+                                        borderRadius: BorderRadius.circular(7),
+                                        boxShadow: const [
+                                          BoxShadow(
+                                              blurRadius: 5,
+                                              color: Color(0x22000000),
+                                              offset: Offset(0, 5))
+                                        ]),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const SizedBox(height: 5),
+                                          Row(
+                                            children: [
+                                              Text('${"grade".tr} : ',
+                                                  style:
+                                                      NotoSansArabicCustomTextStyle
+                                                          .semibold
+                                                          .copyWith(
+                                                              fontSize: 15,
+                                                              color:
+                                                                  _textLight)),
+                                              Text(gradeDisplay,
+                                                  style:
+                                                      NotoSansArabicCustomTextStyle
+                                                          .regular
+                                                          .copyWith(
+                                                              fontSize: 15,
+                                                              color:
+                                                                  _textLight)),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 5),
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text('${"subject".tr} : ',
+                                                  style:
+                                                      NotoSansArabicCustomTextStyle
+                                                          .semibold
+                                                          .copyWith(
+                                                              fontSize: 15,
+                                                              color:
+                                                                  _textLight)),
+                                              const SizedBox(width: 5),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: subjects.entries
+                                                      .map((e) {
+                                                    final mark =
+                                                        _resolveSubjectAverageMark(
+                                                            metricItem,
+                                                            e.key,
+                                                            e.value);
+                                                    if (mark != "-") {
+                                                      return Text(
+                                                        "${e.key} - ${"averageMarks".tr} : $mark",
+                                                        style: NotoSansArabicCustomTextStyle
+                                                            .regular
+                                                            .copyWith(
+                                                                fontSize: 14,
+                                                                color:
+                                                                    _textLight),
+                                                      );
+                                                    }
+                                                    final gradeSymbol =
+                                                        _extractGradeSymbol(
+                                                            e.value);
+                                                    return Text(
+                                                      "${e.key} - ${"averageGrade".tr} : $gradeSymbol",
+                                                      style:
+                                                          NotoSansArabicCustomTextStyle
+                                                              .regular
+                                                              .copyWith(
+                                                                  fontSize: 14,
+                                                                  color:
+                                                                      _textLight),
+                                                    );
+                                                  }).toList()
+                                                    ..addAll(subjects.isEmpty
+                                                        ? [
+                                                            Text(
+                                                              "noMarksHistoryYet"
+                                                                  .tr,
+                                                              style: NotoSansArabicCustomTextStyle
+                                                                  .regular
+                                                                  .copyWith(
+                                                                      fontSize:
+                                                                          13,
+                                                                      color:
+                                                                          _textMuted),
+                                                            )
+                                                          ]
+                                                        : []),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
-                                      items: gradeOptions
-                                          .map((g) => DropdownMenuItem<String>(
-                                                value: g,
-                                                child: Text(_shortGradeLabel(g),
-                                                    overflow:
-                                                        TextOverflow.ellipsis),
-                                              ))
-                                          .toList(),
-                                      onChanged: (value) {
-                                        if (value == null) return;
-                                        setState(() {
-                                          _selectedGradeForSubjects = value;
-                                        });
-                                      },
                                     ),
                                   ),
-                              ],
-                            );
-                          }
+                                );
+                              },
+                            ),
+            ),
+            if (chartData.isNotEmpty) const SizedBox(height: 12),
+            if (chartData.isNotEmpty)
+              Container(
+                width: double.infinity,
+                height: 260,
+                decoration: BoxDecoration(
+                  color: _panelDarkSoft,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF2A2E3A), width: 1),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SfCartesianChart(
+                    backgroundColor: Colors.transparent,
+                    plotAreaBorderWidth: 0,
+                    title: ChartTitle(
+                      text: "performanceByGrade".tr,
+                      textStyle: NotoSansArabicCustomTextStyle.semibold
+                          .copyWith(
+                              fontSize: fontSizeProvider.fontSize + 2,
+                              color: _textLight),
+                    ),
+                    primaryXAxis: CategoryAxis(
+                      labelRotation: -35,
+                      labelIntersectAction:
+                          AxisLabelIntersectAction.multipleRows,
+                      edgeLabelPlacement: EdgeLabelPlacement.shift,
+                      majorGridLines: const MajorGridLines(width: 0),
+                      axisLine: const AxisLine(width: 0),
+                      majorTickLines: const MajorTickLines(width: 0),
+                      maximumLabelWidth: 90,
+                      labelStyle: NotoSansArabicCustomTextStyle.regular
+                          .copyWith(
+                              fontSize: fontSizeProvider.fontSize - 1,
+                              color: _textMuted),
+                    ),
+                    primaryYAxis: NumericAxis(
+                      minimum: 0,
+                      maximum: 10,
+                      interval: 1,
+                      axisLine: const AxisLine(width: 0),
+                      majorTickLines: const MajorTickLines(width: 0),
+                      title: AxisTitle(
+                        text: "marksOutOfTen".tr,
+                        textStyle: NotoSansArabicCustomTextStyle.regular
+                            .copyWith(
+                                fontSize: fontSizeProvider.fontSize - 1,
+                                color: _textMuted),
+                      ),
+                    ),
+                    tooltipBehavior: TooltipBehavior(
+                      enable: true,
+                      format: 'point.x : point.y/10',
+                    ),
+                    series: <CartesianSeries<_GradeChartPoint, String>>[
+                      ColumnSeries<_GradeChartPoint, String>(
+                        dataSource: chartData,
+                        xValueMapper: (_GradeChartPoint data, _) =>
+                            _compactGradeForChart(data.grade),
+                        yValueMapper: (_GradeChartPoint data, _) =>
+                            data.averageMark,
+                        pointColorMapper: (_GradeChartPoint data, _) =>
+                            _scoreColor(data.averageMark),
+                        dataLabelMapper: (_GradeChartPoint data, _) =>
+                            _formatChartValue(data.averageMark),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6)),
+                        width: 0.55,
+                        dataLabelSettings: DataLabelSettings(
+                          isVisible: true,
+                          labelAlignment: ChartDataLabelAlignment.top,
+                          textStyle: NotoSansArabicCustomTextStyle.semibold
+                              .copyWith(
+                                  fontSize: fontSizeProvider.fontSize - 1,
+                                  color: _textLight),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (chartData.isNotEmpty) const SizedBox(height: 12),
+            if (chartData.isNotEmpty)
+              Container(
+                width: double.infinity,
+                height: 350,
+                decoration: BoxDecoration(
+                  color: _panelDarkSoft,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF2A2E3A), width: 1),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      LayoutBuilder(builder: (context, rowConstraints) {
+                        final isNarrow = rowConstraints.maxWidth < 700;
+                        final titleText =
+                            "${"subjectsByGrade".tr} (${_selectedGradeForSubjects == null ? '-' : _shortGradeLabel(_selectedGradeForSubjects!)})";
 
-                          return Row(
+                        if (isNarrow) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  titleText,
-                                  style: NotoSansArabicCustomTextStyle.semibold
-                                      .copyWith(
-                                          fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.black),
-                                ),
+                              Text(
+                                titleText,
+                                style: NotoSansArabicCustomTextStyle.semibold
+                                    .copyWith(
+                                        fontSize: fontSizeProvider.fontSize,
+                                        color: _textLight),
                               ),
                               if (gradeOptions.isNotEmpty)
-                                const SizedBox(width: 12),
+                                const SizedBox(height: 8),
                               if (gradeOptions.isNotEmpty)
                                 SizedBox(
+                                  width: double.infinity,
                                   height: 40,
-                                  width: 220,
                                   child: DropdownButtonFormField<String>(
                                     isExpanded: true,
                                     value: _selectedGradeForSubjects,
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(),
+                                    dropdownColor: const Color(0xFF1F2330),
+                                    style: NotoSansArabicCustomTextStyle.medium
+                                        .copyWith(
+                                            color: _textLight,
+                                            fontSize: smallDropdownFont),
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: const Color(0xFF1A1E2B),
+                                      border: const OutlineInputBorder(),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: const BorderSide(
+                                            color: Color(0xFF384055)),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: const BorderSide(
+                                            color: Color(0xFFDCC8FF)),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
                                       contentPadding: EdgeInsets.symmetric(
                                           horizontal: 10, vertical: 8),
                                     ),
@@ -1361,6 +1423,12 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                         .map((g) => DropdownMenuItem<String>(
                                               value: g,
                                               child: Text(_shortGradeLabel(g),
+                                                  style: NotoSansArabicCustomTextStyle
+                                                      .medium
+                                                      .copyWith(
+                                                          fontSize:
+                                                              smallDropdownFont,
+                                                          color: _textLight),
                                                   overflow:
                                                       TextOverflow.ellipsis),
                                             ))
@@ -1375,94 +1443,167 @@ class _MasterDashboardState extends State<MasterDashboard> {
                                 ),
                             ],
                           );
-                        }),
-                        const SizedBox(height: 8),
-                        Expanded(
-                          child: subjectChartData.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    "noSubjectMarksForSelectedGrade".tr,
-                                    style: NotoSansArabicCustomTextStyle.medium
-                                        .copyWith(color: AppColor.black),
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                titleText,
+                                style: NotoSansArabicCustomTextStyle.semibold
+                                    .copyWith(
+                                        fontSize: fontSizeProvider.fontSize,
+                                        color: _textLight),
+                              ),
+                            ),
+                            if (gradeOptions.isNotEmpty)
+                              const SizedBox(width: 12),
+                            if (gradeOptions.isNotEmpty)
+                              SizedBox(
+                                height: 40,
+                                width: 220,
+                                child: DropdownButtonFormField<String>(
+                                  isExpanded: true,
+                                  value: _selectedGradeForSubjects,
+                                  dropdownColor: const Color(0xFF1F2330),
+                                  style: NotoSansArabicCustomTextStyle.medium
+                                      .copyWith(
+                                          color: _textLight,
+                                          fontSize: smallDropdownFont),
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: const Color(0xFF1A1E2B),
+                                    border: const OutlineInputBorder(),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFF384055)),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFFDCC8FF)),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 8),
                                   ),
-                                )
-                              : SfCartesianChart(
-                                  plotAreaBorderWidth: 0,
-                                  primaryXAxis: CategoryAxis(
-                                    labelRotation: -30,
-                                    labelIntersectAction:
-                                        AxisLabelIntersectAction.wrap,
-                                    edgeLabelPlacement:
-                                        EdgeLabelPlacement.shift,
-                                    maximumLabelWidth: 90,
-                                    majorGridLines:
-                                        const MajorGridLines(width: 0),
-                                    axisLine: const AxisLine(width: 0),
-                                    majorTickLines:
-                                        const MajorTickLines(width: 0),
+                                  items: gradeOptions
+                                      .map((g) => DropdownMenuItem<String>(
+                                            value: g,
+                                            child: Text(_shortGradeLabel(g),
+                                                style:
+                                                    NotoSansArabicCustomTextStyle
+                                                        .medium
+                                                        .copyWith(
+                                                            fontSize:
+                                                                smallDropdownFont,
+                                                            color: _textLight),
+                                                overflow:
+                                                    TextOverflow.ellipsis),
+                                          ))
+                                      .toList(),
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setState(() {
+                                      _selectedGradeForSubjects = value;
+                                    });
+                                  },
+                                ),
+                              ),
+                          ],
+                        );
+                      }),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: subjectChartData.isEmpty
+                            ? Center(
+                                child: Text(
+                                  "noSubjectMarksForSelectedGrade".tr,
+                                  style: NotoSansArabicCustomTextStyle.medium
+                                      .copyWith(color: _textMuted),
+                                ),
+                              )
+                            : SfCartesianChart(
+                                backgroundColor: Colors.transparent,
+                                plotAreaBorderWidth: 0,
+                                primaryXAxis: CategoryAxis(
+                                  labelRotation: -30,
+                                  labelIntersectAction:
+                                      AxisLabelIntersectAction.wrap,
+                                  edgeLabelPlacement: EdgeLabelPlacement.shift,
+                                  maximumLabelWidth: 90,
+                                  majorGridLines:
+                                      const MajorGridLines(width: 0),
+                                  axisLine: const AxisLine(width: 0),
+                                  majorTickLines:
+                                      const MajorTickLines(width: 0),
+                                  labelStyle: NotoSansArabicCustomTextStyle
+                                      .regular
+                                      .copyWith(
+                                          fontSize:
+                                              fontSizeProvider.fontSize - 1,
+                                          color: _textMuted),
+                                ),
+                                primaryYAxis: NumericAxis(
+                                  minimum: 0,
+                                  maximum: 10,
+                                  interval: 1,
+                                  axisLine: const AxisLine(width: 0),
+                                  majorTickLines:
+                                      const MajorTickLines(width: 0),
+                                  title: AxisTitle(
+                                    text: "marksOutOfTen".tr,
+                                    textStyle: NotoSansArabicCustomTextStyle
+                                        .regular
+                                        .copyWith(
+                                            fontSize:
+                                                fontSizeProvider.fontSize - 1,
+                                            color: _textMuted),
                                   ),
-                                  primaryYAxis: NumericAxis(
-                                    minimum: 0,
-                                    maximum: 10,
-                                    interval: 1,
-                                    axisLine: const AxisLine(width: 0),
-                                    majorTickLines:
-                                        const MajorTickLines(width: 0),
-                                    title: AxisTitle(
-                                      text: "marksOutOfTen".tr,
+                                ),
+                                tooltipBehavior: TooltipBehavior(
+                                  enable: true,
+                                  format: 'point.x : point.y/10',
+                                ),
+                                series: <CartesianSeries<_SubjectChartPoint,
+                                    String>>[
+                                  ColumnSeries<_SubjectChartPoint, String>(
+                                    dataSource: subjectChartData,
+                                    xValueMapper:
+                                        (_SubjectChartPoint data, _) =>
+                                            data.subject,
+                                    yValueMapper:
+                                        (_SubjectChartPoint data, _) =>
+                                            data.averageMark,
+                                    pointColorMapper:
+                                        (_SubjectChartPoint data, _) =>
+                                            _scoreColor(data.averageMark),
+                                    dataLabelMapper:
+                                        (_SubjectChartPoint data, _) =>
+                                            _formatChartValue(data.averageMark),
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(6)),
+                                    width: 0.55,
+                                    dataLabelSettings: DataLabelSettings(
+                                      isVisible: true,
+                                      labelAlignment:
+                                          ChartDataLabelAlignment.top,
                                       textStyle: NotoSansArabicCustomTextStyle
-                                          .regular
+                                          .semibold
                                           .copyWith(
                                               fontSize:
                                                   fontSizeProvider.fontSize - 1,
-                                              color: AppColor.textGrey),
+                                              color: _textLight),
                                     ),
                                   ),
-                                  tooltipBehavior: TooltipBehavior(
-                                    enable: true,
-                                    format: 'point.x : point.y/10',
-                                  ),
-                                  series: <CartesianSeries<_SubjectChartPoint,
-                                      String>>[
-                                    ColumnSeries<_SubjectChartPoint, String>(
-                                      dataSource: subjectChartData,
-                                      xValueMapper:
-                                          (_SubjectChartPoint data, _) =>
-                                              data.subject,
-                                      yValueMapper:
-                                          (_SubjectChartPoint data, _) =>
-                                              data.averageMark,
-                                      pointColorMapper:
-                                          (_SubjectChartPoint data, _) =>
-                                              _scoreColor(data.averageMark),
-                                      dataLabelMapper: (_SubjectChartPoint data,
-                                              _) =>
-                                          _formatChartValue(data.averageMark),
-                                      borderRadius: const BorderRadius.vertical(
-                                          top: Radius.circular(6)),
-                                      width: 0.55,
-                                      dataLabelSettings: DataLabelSettings(
-                                        isVisible: true,
-                                        labelAlignment:
-                                            ChartDataLabelAlignment.top,
-                                        textStyle: NotoSansArabicCustomTextStyle
-                                            .semibold
-                                            .copyWith(
-                                                fontSize:
-                                                    fontSizeProvider.fontSize -
-                                                        1,
-                                                color: AppColor.black),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ],
-                    ),
+                                ],
+                              ),
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );

@@ -20,6 +20,7 @@ class _EvaluatedScreenState extends State<EvaluatedScreen> {
     return LayoutBuilder(builder: (context, constraints) {
       bool isMobile = constraints.maxWidth <= 800;
       return Scaffold(
+        backgroundColor: AppColor.bgLavender,
         body: Stack(
           children: [
             isMobile ? const SizedBox() : const BackButtonWidget(),
@@ -35,7 +36,7 @@ class _EvaluatedScreenState extends State<EvaluatedScreen> {
                     SizedBox(height: isMobile ? 5 : 10),
                     Container(
                       decoration: BoxDecoration(
-                          color: AppColor.white,
+                          color: AppColor.panelDarkSoft,
                           borderRadius: BorderRadius.circular(12)),
                       child: Padding(
                         padding: const EdgeInsets.all(10.0),

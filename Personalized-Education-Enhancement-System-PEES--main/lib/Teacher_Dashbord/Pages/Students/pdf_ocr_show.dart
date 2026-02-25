@@ -122,6 +122,7 @@ class _PdfOcrScreenState extends State<PdfOcrScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               body: Stack(
                 children: [
                   isMobile ? const SizedBox() : const BackButtonWidget(),
@@ -141,9 +142,7 @@ class _PdfOcrScreenState extends State<PdfOcrScreen> {
                               : const SizedBox(),
                           Container(
                             decoration: BoxDecoration(
-                              color: themeManager.isHighContrast
-                                  ? AppColor.labelText
-                                  : AppColor.white,
+                              color: AppColor.panelDarkSoft,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Padding(

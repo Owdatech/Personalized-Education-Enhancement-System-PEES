@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pees/Common_Screen/Pages/themeWidget.dart';
 import 'package:pees/Common_Screen/Services/font_size_provider.dart';
 import 'package:pees/HeadMaster_Dashboard/Model/studentModel.dart';
 import 'package:pees/HeadMaster_Dashboard/Services/headMaster_services.dart';
@@ -91,7 +90,6 @@ class _StudentListState extends State<StudentList> {
 
   @override
   Widget build(BuildContext context) {
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     if (searchResults.isEmpty) {
       setState(() {
         _filterSearchResults(viewModel.studentList!);
@@ -109,78 +107,100 @@ class _StudentListState extends State<StudentList> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor:
+                  isMobile ? AppColor.bgLavender : AppColor.panelDark,
               appBar: PreferredSize(
                   preferredSize: const Size(double.infinity, 50),
                   child: isMobile ? MyAppBar("") : const SizedBox()),
               body: Stack(
                 children: [
-                  Positioned.fill(
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 20, right: 20, top: 20),
-                          child: Column(
-                            children: [
-                              searchBox(),
-                              const SizedBox(height: 20),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                padding: EdgeInsets.zero,
-                                itemCount: currentList.length,
-                                itemBuilder: (context, index) {
-                                  return studentItems(
-                                      currentList[index], isMobile);
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                        isMobile ? 10 : 18,
+                        isMobile ? 10 : 18,
+                        isMobile ? 10 : 18,
+                        isMobile ? 6 : 6),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColor.panelDark,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColor.lightGrey, width: 1),
+                      ),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                left: 20, right: 20, top: 20),
+                            child: Column(
                               children: [
-                                IconButton(
-                                  onPressed: () {
-                                    if (currentPage > 1) {
-                                      setState(() {
-                                        currentPage--;
-                                      });
-                                    }
-                                  },
-                                  icon: const Icon(Icons.arrow_back),
-                                ),
-                                Text(
-                                    "$currentPage/${(searchResults.length / itemsPerPage).ceil()}"),
-                                IconButton(
-                                  onPressed: () {
-                                    if (currentPage <
-                                        (searchResults.length / itemsPerPage)
-                                            .ceil()) {
-                                      setState(() {
-                                        currentPage++;
-                                      });
-                                    }
-                                  },
-                                  icon: const Icon(Icons.arrow_forward),
-                                ),
+                                searchBox(),
+                                const SizedBox(height: 20),
                               ],
                             ),
                           ),
-                        ),
-                      ],
+                          Expanded(
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
+                                  itemCount: currentList.length,
+                                  itemBuilder: (context, index) {
+                                    return studentItems(
+                                        currentList[index], isMobile);
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(5, 3, 5, 8),
+                            child: Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      if (currentPage > 1) {
+                                        setState(() {
+                                          currentPage--;
+                                        });
+                                      }
+                                    },
+                                    icon: const Icon(Icons.arrow_back,
+                                        color: AppColor.text),
+                                  ),
+                                  Text(
+                                    "$currentPage/${(searchResults.length / itemsPerPage).ceil()}",
+                                    style: NotoSansArabicCustomTextStyle
+                                        .semibold
+                                        .copyWith(
+                                            color: AppColor.text, fontSize: 16),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      if (currentPage <
+                                          (searchResults.length / itemsPerPage)
+                                              .ceil()) {
+                                        setState(() {
+                                          currentPage++;
+                                        });
+                                      }
+                                    },
+                                    icon: const Icon(Icons.arrow_forward,
+                                        color: AppColor.text),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   viewModel.loading ? const LoaderView() : Container()
@@ -193,16 +213,14 @@ class _StudentListState extends State<StudentList> {
 
   Widget studentItems(StudentModel model, bool isMobile) {
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     return SizedBox(
       width: double.infinity,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 13),
         child: Container(
+          height: isMobile ? null : 98,
           decoration: BoxDecoration(
-              color: themeManager.isHighContrast
-                  ? AppColor.labelText
-                  : AppColor.white,
+              color: AppColor.panelDarkSoft,
               boxShadow: const [
                 BoxShadow(
                     blurRadius: 5,
@@ -249,7 +267,7 @@ class _StudentListState extends State<StudentList> {
                                           .copyWith(
                                               fontSize:
                                                   fontSizeProvider.fontSize + 2,
-                                              color: AppColor.black),
+                                              color: AppColor.text),
                                     ),
                                   )
                                 ],
@@ -261,7 +279,7 @@ class _StudentListState extends State<StudentList> {
                                 style: NotoSansArabicCustomTextStyle.bold
                                     .copyWith(
                                         fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.black),
+                                        color: AppColor.text),
                               ),
                               const SizedBox(height: 5),
                               Text(
@@ -269,7 +287,7 @@ class _StudentListState extends State<StudentList> {
                                 style: NotoSansArabicCustomTextStyle.bold
                                     .copyWith(
                                         fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.black),
+                                        color: AppColor.text),
                               ),
                               const SizedBox(height: 5),
                             ],
@@ -325,7 +343,7 @@ class _StudentListState extends State<StudentList> {
                                         .copyWith(
                                             fontSize:
                                                 fontSizeProvider.fontSize + 2,
-                                            color: AppColor.black),
+                                            color: AppColor.text),
                                   ),
                                 )
                               ],
@@ -355,7 +373,7 @@ class _StudentListState extends State<StudentList> {
                                             .copyWith(
                                                 fontSize:
                                                     fontSizeProvider.fontSize,
-                                                color: AppColor.black),
+                                                color: AppColor.text),
                                       ),
                                     ),
                                   ),
@@ -370,7 +388,7 @@ class _StudentListState extends State<StudentList> {
                                           .copyWith(
                                               fontSize:
                                                   fontSizeProvider.fontSize,
-                                              color: AppColor.black),
+                                              color: AppColor.text),
                                     ),
                                     const SizedBox(height: 5),
                                     AppFillButton3(
@@ -397,13 +415,11 @@ class _StudentListState extends State<StudentList> {
 
   Widget searchBox() {
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     return Container(
       height: 60,
       width: double.infinity,
       decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: AppColor.panelDarkSoft,
           borderRadius: BorderRadius.circular(10),
           boxShadow: const [
             BoxShadow(
@@ -426,16 +442,12 @@ class _StudentListState extends State<StudentList> {
                   });
                 },
                 style: NotoSansArabicCustomTextStyle.bold.copyWith(
-                    color: themeManager.isHighContrast
-                        ? AppColor.black
-                        : AppColor.labelText,
+                    color: AppColor.text,
                     fontSize: fontSizeProvider.fontSize + 1),
                 decoration: InputDecoration(
                     border: InputBorder.none,
                     hintStyle: NotoSansArabicCustomTextStyle.bold.copyWith(
-                        color: themeManager.isHighContrast
-                            ? AppColor.black
-                            : AppColor.labelText,
+                        color: AppColor.labelText,
                         fontSize: fontSizeProvider.fontSize + 1),
                     hintText: "searchHint".tr,
                     contentPadding: EdgeInsets.only(

@@ -40,6 +40,7 @@ class _AnalyzeReportScreenState extends State<AnalyzeReportScreen> {
         create: (BuildContext context) => viewModel,
         child: Consumer<TeacherService>(builder: (context, value, _) {
           return Scaffold(
+            backgroundColor: AppColor.bgLavender,
             body: Stack(
               children: [
                 const BackButtonWidget(),
@@ -51,18 +52,20 @@ class _AnalyzeReportScreenState extends State<AnalyzeReportScreen> {
                       children: [
                         const SizedBox(height: 10),
                         Align(
-                          alignment: Alignment.centerLeft,
+                          alignment: selectedLanguage == 'ar'
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
                           child: Text(
                             "analyzeReport".tr,
                             style: NotoSansArabicCustomTextStyle.bold.copyWith(
-                                fontSize: 18, color: AppColor.buttonGreen),
+                                fontSize: 18, color: AppColor.accentPrimary),
                           ),
                         ),
                         const SizedBox(height: 10),
                         Container(
                             width: double.infinity,
                             decoration: BoxDecoration(
-                                color: AppColor.white,
+                                color: AppColor.panelDarkSoft,
                                 borderRadius: BorderRadius.circular(15)),
                             child: viewModel.analysisData.isNotEmpty &&
                                     hasValidData(viewModel.analysisData)
@@ -92,7 +95,7 @@ class _AnalyzeReportScreenState extends State<AnalyzeReportScreen> {
                                         "No data found.",
                                         style: TextStyle(
                                           fontSize: 16,
-                                          color: Colors.grey[600],
+                                          color: AppColor.textGrey,
                                         ),
                                       ),
                                     ),
@@ -137,14 +140,14 @@ class _AnalyzeReportScreenState extends State<AnalyzeReportScreen> {
           Text(
             title.tr,
             style: NotoSansArabicCustomTextStyle.bold
-                .copyWith(fontSize: 17, color: AppColor.black),
+                .copyWith(fontSize: 17, color: AppColor.white),
           ),
           const SizedBox(height: 8),
           ...items.map((item) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text("- $item",
                     style: NotoSansArabicCustomTextStyle.regular
-                        .copyWith(fontSize: 15, color: AppColor.black)),
+                        .copyWith(fontSize: 15, color: AppColor.white)),
               )),
         ],
       ),

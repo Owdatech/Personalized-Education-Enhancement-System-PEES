@@ -49,6 +49,7 @@ class _AllFeedbackScreenState extends State<AllFeedbackScreen> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.bgLavender,
               body: SafeArea(
                 child: Stack(
                   children: [
@@ -92,9 +93,7 @@ class _AllFeedbackScreenState extends State<AllFeedbackScreen> {
                                         child: Container(
                                           width: double.infinity,
                                           decoration: BoxDecoration(
-                                              color: themeManager.isHighContrast
-                                                  ? AppColor.labelText
-                                                  : AppColor.white,
+                                              color: AppColor.panelDarkSoft,
                                               boxShadow: const [
                                                 BoxShadow(
                                                   blurRadius: 5,

@@ -50,6 +50,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           return LayoutBuilder(builder: (context, constraints) {
             bool isMobile = constraints.maxWidth <= 800;
             return Scaffold(
+              backgroundColor: AppColor.panelDark,
               body: Stack(
                 children: [
                   Column(
@@ -106,7 +107,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                                                     MaterialPageRoute(
                                                         builder: (context) =>
                                                             AlertsNotificationScreen(
-                                                                isAlerts: true)));
+                                                                isAlerts:
+                                                                    true)));
                                               }),
                                             ),
                                             const SizedBox(width: 20),
@@ -142,7 +144,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   }
 
   Widget recentActivity(String title, Function() onTap) {
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
     return InkWell(
       onTap: () {
@@ -158,31 +159,24 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   blurRadius: 5,
                   offset: Offset(0, 5))
             ],
-            color: themeManager.isHighContrast
-                ? AppColor.labelText
-                : AppColor.white),
-          child: Center(
+            color: AppColor.panelDarkSoft),
+        child: Center(
             child: Text(
-              title.tr,
-              style: NotoSansArabicCustomTextStyle.medium.copyWith(
-                  fontSize: fontSizeProvider.fontSize,
-                  color: themeManager.isHighContrast
-                      ? AppColor.white
-                      : AppColor.black),
-            )),
+          title.tr,
+          style: NotoSansArabicCustomTextStyle.medium.copyWith(
+              fontSize: fontSizeProvider.fontSize, color: AppColor.text),
+        )),
       ),
     );
   }
 
   Widget recentAlerts() {
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     return Container(
       // width: 450,
       height: 280,
       decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: AppColor.panelDarkSoft,
           borderRadius: BorderRadius.circular(5),
           boxShadow: const [
             BoxShadow(
@@ -200,7 +194,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   "viewall".tr,
                   style: PoppinsCustomTextStyle.medium.copyWith(
                       fontSize: fontSizeProvider.fontSize,
-                      color: AppColor.buttonGreen),
+                      color: AppColor.accentPrimary),
                 )),
           ),
           Column(
@@ -243,7 +237,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                         viewModel.recentsAlertsList[index],
                         style: PoppinsCustomTextStyle.medium.copyWith(
                             fontSize: fontSizeProvider.fontSize,
-                            color: AppColor.black),
+                            color: AppColor.text),
                       ),
                     );
                   },
@@ -258,13 +252,11 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
   Widget upcomingActions() {
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     return Container(
       // width: 450,
       height: 280,
       decoration: BoxDecoration(
-          color:
-              themeManager.isHighContrast ? AppColor.labelText : AppColor.white,
+          color: AppColor.panelDarkSoft,
           borderRadius: BorderRadius.circular(5),
           boxShadow: const [
             BoxShadow(
@@ -312,7 +304,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     viewModel.upComingAletsList[index],
                     style: PoppinsCustomTextStyle.medium.copyWith(
                         fontSize: fontSizeProvider.fontSize,
-                        color: AppColor.black),
+                        color: AppColor.text),
                   ),
                 );
               },
@@ -324,7 +316,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   }
 
   Widget classTable(bool isMobile) {
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,12 +362,11 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         Container(
           // height: 300,
           decoration: BoxDecoration(
-            color: viewModel.classGradeList.isEmpty
-                ? AppColor.white
-                : AppColor.textGrey,
+            color: AppColor.panelDarkSoft,
             borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(5),
                 bottomRight: Radius.circular(5)),
+            border: Border.all(color: AppColor.lightGrey, width: 0.8),
             boxShadow: const [
               BoxShadow(
                   color: AppColor.greyShadow,
@@ -389,7 +379,13 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               viewModel.classGradeList.isEmpty
-                  ? Center(child: Text("norecordYet".tr))
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Center(
+                          child: Text("norecordYet".tr,
+                              style: NotoSansArabicCustomTextStyle.medium
+                                  .copyWith(color: AppColor.text))),
+                    )
                   : ListView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: viewModel.classGradeList.length,
@@ -405,9 +401,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                                   height: 35,
                                   width: double.infinity,
                                   decoration: BoxDecoration(
-                                    color: themeManager.isHighContrast
-                                        ? AppColor.labelText
-                                        : AppColor.white,
+                                    color: AppColor.panelDark,
                                     // borderRadius: BorderRadius.only(
                                     //     bottomLeft: Radius.circular(
                                     //         index == list.length - 1 ? 5 : 0))
@@ -429,7 +423,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                                             .regular
                                             .copyWith(
                                                 fontSize: 15,
-                                                color: AppColor.black),
+                                                color: AppColor.text),
                                       ),
                                     ),
                                   ),
@@ -441,9 +435,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                                   height: 35,
                                   width: double.infinity,
                                   decoration: BoxDecoration(
-                                    color: themeManager.isHighContrast
-                                        ? AppColor.labelText
-                                        : AppColor.white,
+                                    color: AppColor.panelDark,
                                     // borderRadius: BorderRadius.only(
                                     //     bottomRight: Radius.circular(
                                     //         index == list.length - 1 ? 5 : 0)
@@ -457,7 +449,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                                           .regular
                                           .copyWith(
                                               fontSize: 15,
-                                              color: AppColor.black),
+                                              color: AppColor.text),
                                     ),
                                   ),
                                 ),
