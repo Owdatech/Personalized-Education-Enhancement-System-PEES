@@ -4,7 +4,7 @@ import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:pees/API_SERVICES/config.dart';
 import 'package:pees/Common_Screen/Pages/themeWidget.dart';
 import 'package:pees/Common_Screen/Services/font_size_provider.dart';
@@ -56,8 +56,19 @@ class _ObservationScreenState extends State<ObservationScreen> {
   String? selectedCurriculum;
   String? selectedSubject;
   String attendanceStatus = 'Present';
+  String? selectedBehaviorInClass;
   List<String> curriculumNames = [];
   String? imageUrl;
+  final List<String> _behaviorOptions = const [
+    'behaviorExcellentInteraction',
+    'behaviorVeryGoodInteraction',
+    'behaviorAcceptableInteraction',
+    'behaviorWeakInteraction',
+    'behaviorNoInteraction',
+    'behaviorDisruptive',
+    'behaviorLackOfFocus',
+    'behaviorHomeworkNotDone',
+  ];
 
   _obsSelectDate(BuildContext context) async {
     DateTime? newSelectedDate = await showDatePicker(
@@ -71,18 +82,33 @@ class _ObservationScreenState extends State<ObservationScreen> {
       builder: (context, Widget? child) {
         return Theme(
           data: ThemeData.dark().copyWith(
-              colorScheme: const ColorScheme.dark(
-                primary: AppColor.buttonGreen,
-                onPrimary: Colors.white,
-                surface: AppColor.lightYellow,
-                onSurface: Colors.black,
+            textTheme: ThemeData.dark().textTheme.apply(
+                  bodyColor: Colors.white,
+                  displayColor: Colors.white,
+                ),
+            colorScheme: const ColorScheme.dark(
+              primary: AppColor.accentPrimary,
+              onPrimary: Colors.white,
+              surface: AppColor.panelDarkSoft,
+              onSurface: Colors.white,
+            ),
+            dialogBackgroundColor: AppColor.panelDarkSoft,
+            dividerColor: AppColor.accentPrimary,
+            datePickerTheme: const DatePickerThemeData(
+              backgroundColor: AppColor.panelDarkSoft,
+              headerBackgroundColor: AppColor.panelDark,
+              headerForegroundColor: Colors.white,
+              dayForegroundColor: WidgetStatePropertyAll(Colors.white),
+              yearForegroundColor: WidgetStatePropertyAll(Colors.white),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: AppColor.accentPrimary,
+                textStyle: const TextStyle(fontSize: 16),
               ),
-              dialogBackgroundColor: Colors.white,
-              textButtonTheme: TextButtonThemeData(
-                  style: TextButton.styleFrom(
-                      foregroundColor: AppColor.white,
-                      backgroundColor: AppColor.buttonGreen,
-                      textStyle: const TextStyle(fontSize: 16)))),
+            ),
+          ),
           child: child!,
         );
       },
@@ -98,6 +124,15 @@ class _ObservationScreenState extends State<ObservationScreen> {
             offset: obsdateController.text.length,
             affinity: TextAffinity.upstream));
     }
+  }
+
+  void _setObservationDateToToday() {
+    _obsSelectedDate = DateTime.now();
+    obsdateController
+      ..text = DateFormat('dd-MM-yyyy').format(_obsSelectedDate!)
+      ..selection = TextSelection.fromPosition(
+        TextPosition(offset: obsdateController.text.length),
+      );
   }
 
   fetchObservation() async {
@@ -209,7 +244,10 @@ class _ObservationScreenState extends State<ObservationScreen> {
       return;
     }
 
-    if (observation.isEmpty && attendanceStatus != 'Absent') {
+    if (observation.isEmpty &&
+        attendanceStatus != 'Absent' &&
+        (selectedBehaviorInClass == null ||
+            selectedBehaviorInClass!.trim().isEmpty)) {
       Utils.snackBar("Please enter an observation", context);
       return;
     }
@@ -228,6 +266,18 @@ class _ObservationScreenState extends State<ObservationScreen> {
         .hasMatch(observation)) {
       observation =
           "${"attendance".tr}: $localizedAttendanceValue\n$observation";
+    }
+    if (selectedBehaviorInClass != null &&
+        selectedBehaviorInClass!.trim().isNotEmpty &&
+        _behaviorOptions.contains(selectedBehaviorInClass)) {
+      final behaviorLabel = "behaviorInClass".tr;
+      final behaviorValue = selectedBehaviorInClass!.tr;
+      final behaviorLinePattern = RegExp(
+          r'^\s*(Behavior in Class|Behaviour in Class|سلوك الطالب في الصف)\s*:',
+          caseSensitive: false);
+      if (!behaviorLinePattern.hasMatch(observation)) {
+        observation = "$behaviorLabel: $behaviorValue\n$observation";
+      }
     }
 
     // Proceed with API call
@@ -267,10 +317,11 @@ class _ObservationScreenState extends State<ObservationScreen> {
 
   clearMethod() {
     observationController.clear();
-    obsdateController.clear();
     _trxnStatus = null;
     file = null;
     attendanceStatus = 'Present';
+    selectedBehaviorInClass = null;
+    _setObservationDateToToday();
   }
 
   String? _observationId(Map<String, dynamic> item) {
@@ -439,6 +490,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
     fetchObservation();
     // fetchSubjectList();
     loadCurriculum();
+    _setObservationDateToToday();
     super.initState();
   }
 
@@ -504,6 +556,10 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                                           setState(() {
                                                             isAddObservation =
                                                                 true;
+                                                            if (obsdateController
+                                                                .text.isEmpty) {
+                                                              _setObservationDateToToday();
+                                                            }
                                                           });
                                                         },
                                                         borderRadius:
@@ -1203,66 +1259,172 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                 ? 10
                                 : 20),
                     child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: [
-                          Text(
-                            "${"attendance".tr} :",
-                            style: NotoSansArabicCustomTextStyle.medium
-                                .copyWith(
-                                    fontSize: fontSizeProvider.fontSize,
-                                    color: AppColor.text),
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Radio<String>(
-                                value: 'Present',
-                                groupValue: attendanceStatus,
-                                activeColor: AppColor.buttonGreen,
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  setState(() {
-                                    attendanceStatus = value;
-                                  });
-                                },
+                      alignment: selectedLanguage == 'ar'
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Directionality(
+                        textDirection: selectedLanguage == 'ar'
+                            ? TextDirection.rtl
+                            : TextDirection.ltr,
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            Text(
+                              "${"attendance".tr} :",
+                              style: NotoSansArabicCustomTextStyle.medium
+                                  .copyWith(
+                                      fontSize: fontSizeProvider.fontSize,
+                                      color: AppColor.text),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Radio<String>(
+                                  value: 'Present',
+                                  groupValue: attendanceStatus,
+                                  activeColor: AppColor.buttonGreen,
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setState(() {
+                                      attendanceStatus = value;
+                                    });
+                                  },
+                                ),
+                                Text(
+                                  "present".tr,
+                                  style: NotoSansArabicCustomTextStyle.medium
+                                      .copyWith(
+                                          fontSize: fontSizeProvider.fontSize,
+                                          color: AppColor.text),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Radio<String>(
+                                  value: 'Absent',
+                                  groupValue: attendanceStatus,
+                                  activeColor: AppColor.buttonGreen,
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setState(() {
+                                      attendanceStatus = value;
+                                    });
+                                  },
+                                ),
+                                Text(
+                                  "absent".tr,
+                                  style: NotoSansArabicCustomTextStyle.medium
+                                      .copyWith(
+                                          fontSize: fontSizeProvider.fontSize,
+                                          color: AppColor.text),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: EdgeInsets.only(
+                        left: selectedLanguage == 'en'
+                            ? isMobile
+                                ? 10
+                                : 20
+                            : isMobile
+                                ? 10
+                                : 20,
+                        right: selectedLanguage == 'en'
+                            ? isMobile
+                                ? 10
+                                : 20
+                            : isMobile
+                                ? 10
+                                : 20),
+                    child: Align(
+                      alignment: selectedLanguage == 'ar'
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Directionality(
+                        textDirection: selectedLanguage == 'ar'
+                            ? TextDirection.rtl
+                            : TextDirection.ltr,
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            Text(
+                              "${"behaviorInClass".tr} :",
+                              style: NotoSansArabicCustomTextStyle.medium
+                                  .copyWith(
+                                      fontSize: fontSizeProvider.fontSize,
+                                      color: AppColor.text),
+                            ),
+                            Container(
+                              height: 32,
+                              width: isMobile ? 260 : 330,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              decoration: BoxDecoration(
+                                color: AppColor.textField,
+                                borderRadius: BorderRadius.circular(5),
+                                border: Border.all(
+                                    width: 1.0, color: AppColor.textGrey),
                               ),
-                              Text(
-                                "present".tr,
-                                style: NotoSansArabicCustomTextStyle.medium
-                                    .copyWith(
-                                        fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.text),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: selectedBehaviorInClass,
+                                  isExpanded: true,
+                                  dropdownColor: AppColor.panelDarkSoft,
+                                  style: NotoSansArabicCustomTextStyle.regular
+                                      .copyWith(
+                                          fontSize: fontSizeProvider.fontSize,
+                                          color: AppColor.white),
+                                  hint: Text(
+                                    "selectBehaviorInClass".tr,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: NotoSansArabicCustomTextStyle.medium
+                                        .copyWith(
+                                            fontSize: fontSizeProvider.fontSize,
+                                            color: AppColor.textGrey),
+                                  ),
+                                  icon: Image.asset(AppImage.arrowDown,
+                                      width: 16),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      selectedBehaviorInClass = value;
+                                    });
+                                  },
+                                  items: _behaviorOptions
+                                      .map((optionKey) =>
+                                          DropdownMenuItem<String>(
+                                            value: optionKey,
+                                            child: Text(
+                                              optionKey.tr,
+                                              overflow: TextOverflow.ellipsis,
+                                              style:
+                                                  NotoSansArabicCustomTextStyle
+                                                      .regular
+                                                      .copyWith(
+                                                          fontSize:
+                                                              fontSizeProvider
+                                                                  .fontSize,
+                                                          color:
+                                                              AppColor.white),
+                                            ),
+                                          ))
+                                      .toList(),
+                                ),
                               ),
-                            ],
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Radio<String>(
-                                value: 'Absent',
-                                groupValue: attendanceStatus,
-                                activeColor: AppColor.buttonGreen,
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  setState(() {
-                                    attendanceStatus = value;
-                                  });
-                                },
-                              ),
-                              Text(
-                                "absent".tr,
-                                style: NotoSansArabicCustomTextStyle.medium
-                                    .copyWith(
-                                        fontSize: fontSizeProvider.fontSize,
-                                        color: AppColor.text),
-                              ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

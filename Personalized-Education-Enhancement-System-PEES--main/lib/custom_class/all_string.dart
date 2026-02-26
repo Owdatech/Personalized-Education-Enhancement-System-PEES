@@ -150,6 +150,16 @@ class LocaleString extends Translations {
           'listStudent': "List of Notes for student",
           'feedback': "Feedback :",
           'providedFeedback': "Provided Feedback", //
+          'behaviorInClass': "Behaviour in Class",
+          'selectBehaviorInClass': "Select behaviour (optional)",
+          'behaviorExcellentInteraction': "Excellent interaction in class",
+          'behaviorVeryGoodInteraction': "Very good interaction in class",
+          'behaviorAcceptableInteraction': "Acceptable interaction in class",
+          'behaviorWeakInteraction': "Weak interaction in class",
+          'behaviorNoInteraction': "No interaction in class",
+          'behaviorDisruptive': "Disruptive behavior in class",
+          'behaviorLackOfFocus': "Lack of focus in class",
+          'behaviorHomeworkNotDone': "Homework not completed",
           'subjectPerformance': "Subject Performance",
           // setting screen
           'profileSettings': "Profile Settings",
@@ -535,6 +545,16 @@ class LocaleString extends Translations {
           'listStudent': "قائمة الملاحظات للطالب", //
           'feedback': "ملاحظات :",
           'providedFeedback': "ردود الفعل المقدمة", //
+          'behaviorInClass': "سلوك الطالب في الصف",
+          'selectBehaviorInClass': "اختر السلوك (اختياري)",
+          'behaviorExcellentInteraction': "تفاعل ممتاز في الصف",
+          'behaviorVeryGoodInteraction': "تفاعل جيد جدا في الصف",
+          'behaviorAcceptableInteraction': "تفاعل مقبول في الصف",
+          'behaviorWeakInteraction': "تفاعل ضعيف في الصف",
+          'behaviorNoInteraction': "لا يوجد أي تفاعل في الصف",
+          'behaviorDisruptive': "شغب في الصف",
+          'behaviorLackOfFocus': "عدم تركيز في الصف",
+          'behaviorHomeworkNotDone': "لم يتم حل الواجب",
           'subjectPerformance': "أداء المادة",
           // setting screen
           'profileSettings': "إعدادات الملف الشخصي",

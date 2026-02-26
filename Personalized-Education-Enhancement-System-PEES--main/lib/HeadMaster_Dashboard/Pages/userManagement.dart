@@ -182,249 +182,89 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   Column(
                     children: [
                       Expanded(
-                        child: SingleChildScrollView(
-                          child: SizedBox(
-                            width: isMobile
-                                ? null
-                                : MediaQuery.of(context).size.width,
-                            height: isMobile
-                                ? MediaQuery.of(context).size.height
-                                : null,
-                            child: Padding(
-                                padding: EdgeInsets.only(
-                                    left: isMobile ? 10 : 20,
-                                    right: isMobile ? 10 : 20,
-                                    top: 20),
-                                child: Column(
-                                  children: [
-                                    searchBox(),
-                                    const SizedBox(height: 20),
-                                    tabBar(isMobile),
-                                    const SizedBox(height: 7),
-                                    if (viewModel.selectedList == UserEnum.all)
-                                      isMobile
-                                          ? Expanded(
-                                              child: ListView.builder(
-                                                padding: EdgeInsets.zero,
-                                                itemCount: currentList.length,
-                                                shrinkWrap: true,
-                                                itemBuilder: (context, index) {
-                                                  return usresItems(
-                                                      currentList[index],
-                                                      isMobile);
-                                                },
-                                              ),
-                                            )
-                                          : ListView.builder(
-                                              padding: EdgeInsets.zero,
-                                              itemCount: currentList.length,
-                                              shrinkWrap: true,
-                                              itemBuilder: (context, index) {
-                                                return usresItems(
-                                                    currentList[index],
-                                                    isMobile);
-                                              },
-                                            )
-                                    else if (viewModel.selectedList ==
-                                        UserEnum.teacher)
-                                      isMobile
-                                          ? Expanded(
-                                              child: ListView.builder(
-                                                  padding: EdgeInsets.zero,
-                                                  itemCount: currentList.length,
-                                                  shrinkWrap: true,
-                                                  itemBuilder:
-                                                      (context, index) {
-                                                    return usresItems(
-                                                        currentList[index],
-                                                        isMobile);
-                                                  }),
-                                            )
-                                          : ListView.builder(
-                                              padding: EdgeInsets.zero,
-                                              itemCount: currentList.length,
-                                              shrinkWrap: true,
-                                              itemBuilder: (context, index) {
-                                                return usresItems(
-                                                    currentList[index],
-                                                    isMobile);
-                                              })
-                                    else if (viewModel.selectedList ==
-                                        UserEnum.student)
-                                      isMobile
-                                          ? Expanded(
-                                              child: ListView.builder(
-                                                  padding: EdgeInsets.zero,
-                                                  itemCount: currentList.length,
-                                                  shrinkWrap: true,
-                                                  itemBuilder:
-                                                      (context, index) {
-                                                    return usresItems(
-                                                        currentList[index],
-                                                        isMobile);
-                                                  }),
-                                            )
-                                          : ListView.builder(
-                                              padding: EdgeInsets.zero,
-                                              itemCount: currentList.length,
-                                              shrinkWrap: true,
-                                              itemBuilder: (context, index) {
-                                                return usresItems(
-                                                    currentList[index],
-                                                    isMobile);
-                                              })
-                                    else if (viewModel.selectedList ==
-                                        UserEnum.parent)
-                                      isMobile
-                                          ? Expanded(
-                                              child: ListView.builder(
-                                                  padding: EdgeInsets.zero,
-                                                  itemCount: currentList.length,
-                                                  shrinkWrap: true,
-                                                  itemBuilder:
-                                                      (context, index) {
-                                                    return usresItems(
-                                                        currentList[index],
-                                                        isMobile);
-                                                  }),
-                                            )
-                                          : ListView.builder(
-                                              padding: EdgeInsets.zero,
-                                              itemCount: currentList.length,
-                                              shrinkWrap: true,
-                                              itemBuilder: (context, index) {
-                                                return usresItems(
-                                                    currentList[index],
-                                                    isMobile);
-                                              }),
-                                    isMobile
-                                        ? const SizedBox(height: 100)
-                                        : const SizedBox(height: 15),
-                                    isMobile
-                                        ? SizedBox()
-                                        : Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              children: [
-                                                Align(
-                                                    alignment:
-                                                        Alignment.centerLeft,
-                                                    child: AppFillButton3(
-                                                        onPressed: () {
-                                                          addNewUserAction();
-                                                        },
-                                                        color: AppColor
-                                                            .buttonGreen,
-                                                        text: "addNewUser")),
-                                                Row(
-                                                  children: [
-                                                    IconButton(
-                                                      onPressed: () {
-                                                        if (currentPage > 1) {
-                                                          setState(() {
-                                                            currentPage--;
-                                                          });
-                                                        }
-                                                      },
-                                                      icon: const Icon(
-                                                          Icons.arrow_back,
-                                                          color:
-                                                              AppColor.white),
-                                                    ),
-                                                    Text(
-                                                        "$currentPage/${(searchResults.length / itemsPerPage).ceil()}",
-                                                        style: NotoSansArabicCustomTextStyle
-                                                            .medium
-                                                            .copyWith(
-                                                                color: AppColor
-                                                                    .white)),
-                                                    IconButton(
-                                                      onPressed: () {
-                                                        if (currentPage <
-                                                            (searchResults
-                                                                        .length /
-                                                                    itemsPerPage)
-                                                                .ceil()) {
-                                                          setState(() {
-                                                            currentPage++;
-                                                          });
-                                                        }
-                                                      },
-                                                      icon: const Icon(
-                                                          Icons.arrow_forward,
-                                                          color:
-                                                              AppColor.white),
-                                                    ),
-                                                  ],
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                    const SizedBox(height: 15),
-                                  ],
-                                )),
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            left: isMobile ? 10 : 20,
+                            right: isMobile ? 10 : 20,
+                            top: 20,
+                          ),
+                          child: Column(
+                            children: [
+                              searchBox(),
+                              const SizedBox(height: 20),
+                              tabBar(isMobile),
+                              const SizedBox(height: 7),
+                              Expanded(
+                                child: ListView.builder(
+                                  padding: EdgeInsets.zero,
+                                  itemCount: currentList.length,
+                                  itemBuilder: (context, index) {
+                                    return usresItems(
+                                        currentList[index], isMobile);
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      isMobile
-                          ? Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: AppFillButton3(
-                                          onPressed: () {
-                                            addNewUserAction();
-                                          },
-                                          color: AppColor.buttonGreen,
-                                          text: "addNewUser")),
-                                  Row(
-                                    children: [
-                                      IconButton(
-                                        onPressed: () {
-                                          if (currentPage > 1) {
-                                            setState(() {
-                                              currentPage--;
-                                            });
-                                          }
-                                        },
-                                        icon: const Icon(Icons.arrow_back,
-                                            color: AppColor.white),
-                                      ),
-                                      Text(
-                                          "$currentPage/${(searchResults.length / itemsPerPage).ceil()}",
-                                          style: NotoSansArabicCustomTextStyle
-                                              .medium
-                                              .copyWith(color: AppColor.white)),
-                                      IconButton(
-                                        onPressed: () {
-                                          if (currentPage <
-                                              (searchResults.length /
-                                                      itemsPerPage)
-                                                  .ceil()) {
-                                            setState(() {
-                                              currentPage++;
-                                            });
-                                          }
-                                        },
-                                        icon: const Icon(Icons.arrow_forward,
-                                            color: AppColor.white),
-                                      ),
-                                    ],
-                                  )
-                                ],
+                      Padding(
+                        padding: EdgeInsets.only(
+                          left: isMobile ? 12 : 20,
+                          right: isMobile ? 12 : 20,
+                          top: 8,
+                          bottom: 8,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: AppFillButton3(
+                                onPressed: () {
+                                  addNewUserAction();
+                                },
+                                color: AppColor.buttonGreen,
+                                text: "addNewUser",
                               ),
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    if (currentPage > 1) {
+                                      setState(() {
+                                        currentPage--;
+                                      });
+                                    }
+                                  },
+                                  icon: const Icon(Icons.arrow_back,
+                                      color: AppColor.white),
+                                ),
+                                Text(
+                                  "$currentPage/${((searchResults.length / itemsPerPage).ceil()).clamp(1, 9999)}",
+                                  style: NotoSansArabicCustomTextStyle.medium
+                                      .copyWith(color: AppColor.white),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    if (currentPage <
+                                        (searchResults.length / itemsPerPage)
+                                            .ceil()) {
+                                      setState(() {
+                                        currentPage++;
+                                      });
+                                    }
+                                  },
+                                  icon: const Icon(Icons.arrow_forward,
+                                      color: AppColor.white),
+                                ),
+                              ],
                             )
-                          : SizedBox(),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                   viewModel.loading ? const LoaderView() : Container()
