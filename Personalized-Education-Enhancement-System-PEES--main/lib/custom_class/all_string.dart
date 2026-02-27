@@ -100,7 +100,7 @@ class LocaleString extends Translations {
           //tab
           'academicData': "Academic Data",
           'teachingPlans': "Teaching Plans",
-          'observation': "Observation",
+          'observation': "Observations",
           'progress': "Progress",
           // academic
           'subject': "Subject",
@@ -144,6 +144,8 @@ class LocaleString extends Translations {
           'teachMethod': "Recommended teaching methods",
           // Observation
           'selectSubject': "Select Subject",
+          'selectGrade': "Select Grade",
+          'selectStudentName': "Select Student",
           'observationTitle': "Observation : ",
           'attachFiles': "Attach Files : ",
           'teachersNotes': "Teacher’s Notes :", //
@@ -186,7 +188,7 @@ class LocaleString extends Translations {
           'actions': "Actions",
           // teacher sections
           'teachingPlan': "TEACHING PLANS",
-          'observationHeading': "OBSERVATION",
+          'observationHeading': "OBSERVATIONS",
           'className': "Class Name",
           'numberofStudents': "Number of Students",
           'examScript': "Exam Script",
@@ -208,6 +210,9 @@ class LocaleString extends Translations {
           'hideDetails': "Hide Details",
           'viewObservation': "View Observation",
           'addNewObservation': "Add New Observation",
+          'observationSavedSuccessfully': "Observation saved successfully",
+          'pleaseSelectGrade': "Please select a grade",
+          'pleaseSelectStudent': "Please select a student",
           'filters': "Filters",
           'export': "Export",
           'upcomingActions': "Upcoming Actions",
@@ -495,7 +500,7 @@ class LocaleString extends Translations {
           'assignedteacher': "المعلم المعيّن",
           'academicData': "البيانات الأكاديمية",
           'teachingPlans': "خطط التدريس",
-          'observation': "الملاحظة",
+          'observation': "الملاحظات",
           'progress': "التقدم", //التقدم
           // academic
           'subject': "المادة",
@@ -539,6 +544,8 @@ class LocaleString extends Translations {
           'teachMethod': "طرق التدريس الموصى بها", //
           // Observation
           'selectSubject': "اختر المادة",
+          'selectGrade': "اختر الصف",
+          'selectStudentName': "اختر الطالب",
           'observationTitle': "الملاحظة :",
           'attachFiles': "إرفاق الملفات :",
           'teachersNotes': "ملاحظات المعلم :", //
@@ -581,7 +588,7 @@ class LocaleString extends Translations {
           'actions': "Actions", //
           // teacher sections
           'teachingPlan': "خطط التدريس",
-          'observationHeading': "الملاحظة",
+          'observationHeading': "الملاحظات",
           'className': "اسم الصف",
           'numberofStudents': "عدد الطلاب",
           'examScript': "أوراق الامتحانات",
@@ -602,6 +609,9 @@ class LocaleString extends Translations {
           'hideDetails': "إخفاء التفاصيل",
           'viewObservation': "عرض الملاحظة",
           'addNewObservation': "إضافة ملاحظة جديدة",
+          'observationSavedSuccessfully': "تم حفظ الملاحظة بنجاح",
+          'pleaseSelectGrade': "يرجى اختيار الصف",
+          'pleaseSelectStudent': "يرجى اختيار الطالب",
           'filters': "الفلاتر",
           'export': "تصدير",
           'upcomingActions': "الإجراءات القادمة",

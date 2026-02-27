@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:pees/Common_Screen/Services/font_size_provider.dart';
 import 'package:pees/HeadMaster_Dashboard/Model/studentModel.dart';
 import 'package:pees/HeadMaster_Dashboard/Services/headMaster_services.dart';
+import 'package:pees/Teacher_Dashbord/Pages/Observation/add_observation_universal_screen.dart';
 import 'package:pees/Teacher_Dashbord/Pages/Observation/observation_screen.dart';
 import 'package:pees/Widgets/AppButton.dart';
 import 'package:pees/Widgets/AppColor.dart';
@@ -46,6 +47,15 @@ class _ObservationStudListState extends State<ObservationStudList> {
     if (isRefesh) {
       refreshStudentList();
     }
+  }
+
+  void openUniversalAddObservation() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddObservationUniversalScreen(),
+      ),
+    );
   }
 
   refreshStudentList() {
@@ -150,43 +160,73 @@ class _ObservationStudListState extends State<ObservationStudList> {
                             ),
                           ),
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(5, 3, 5, 8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                IconButton(
-                                  onPressed: () {
-                                    if (currentPage > 1) {
-                                      setState(() {
-                                        currentPage--;
-                                      });
-                                    }
-                                  },
-                                  icon: const Icon(Icons.arrow_back,
-                                      color: AppColor.text),
-                                ),
-                                Text(
-                                  "$currentPage/${(searchResults.length / itemsPerPage).ceil()}",
-                                  style: NotoSansArabicCustomTextStyle.semibold
-                                      .copyWith(
-                                          color: AppColor.text, fontSize: 16),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    if (currentPage <
-                                        (searchResults.length / itemsPerPage)
-                                            .ceil()) {
-                                      setState(() {
-                                        currentPage++;
-                                      });
-                                    }
-                                  },
-                                  icon: const Icon(Icons.arrow_forward,
-                                      color: AppColor.text),
-                                ),
-                              ],
-                            ),
+                            padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
+                            child: LayoutBuilder(builder: (context, rowConstraints) {
+                              final isCompact = rowConstraints.maxWidth < 900;
+                              final pagination = Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      if (currentPage > 1) {
+                                        setState(() {
+                                          currentPage--;
+                                        });
+                                      }
+                                    },
+                                    icon: const Icon(Icons.arrow_back,
+                                        color: AppColor.text),
+                                  ),
+                                  Text(
+                                    "$currentPage/${(searchResults.length / itemsPerPage).ceil()}",
+                                    style: NotoSansArabicCustomTextStyle.semibold
+                                        .copyWith(
+                                            color: AppColor.text, fontSize: 16),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      if (currentPage <
+                                          (searchResults.length / itemsPerPage)
+                                              .ceil()) {
+                                        setState(() {
+                                          currentPage++;
+                                        });
+                                      }
+                                    },
+                                    icon: const Icon(Icons.arrow_forward,
+                                        color: AppColor.text),
+                                  ),
+                                ],
+                              );
+
+                              final addButton = AppFillButton3(
+                                onPressed: openUniversalAddObservation,
+                                text: "addNewObservation",
+                                color: AppColor.buttonGreen,
+                              );
+
+                              if (isCompact) {
+                                return Column(
+                                  children: [
+                                    pagination,
+                                    const SizedBox(height: 8),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: addButton,
+                                    ),
+                                  ],
+                                );
+                              }
+
+                              return Row(
+                                children: [
+                                  const Spacer(),
+                                  pagination,
+                                  const Spacer(),
+                                  addButton,
+                                ],
+                              );
+                            }),
                           ),
                         ],
                       ),
