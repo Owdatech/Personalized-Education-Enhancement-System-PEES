@@ -123,7 +123,7 @@ class _AddObservationUniversalScreenState
       if (g.isNotEmpty) grades.add(g);
     }
     _gradeOptions = grades.toList();
-    _gradeOptions.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    _gradeOptions.sort(_compareGrades);
 
     if (_gradeOptions.isNotEmpty) {
       _selectedGrade = _gradeOptions.first;
@@ -132,6 +132,46 @@ class _AddObservationUniversalScreenState
     }
 
     _updateSubjectAndStudentByGrade(resetStudentSelection: true);
+  }
+
+  int _gradeVariantOrder(String normalized) {
+    if (normalized.contains('SCIENCE') || normalized.contains('(SC)')) return 0;
+    if (normalized.contains('LITERATURE') || normalized.contains('(LI)')) return 1;
+    return 2;
+  }
+
+  int _extractGradeNumber(String normalized) {
+    final match = RegExp(r'GRADE\s*[_-]?\s*(\d+)', caseSensitive: false)
+        .firstMatch(normalized);
+    if (match == null) return 999;
+    return int.tryParse(match.group(1) ?? '') ?? 999;
+  }
+
+  int _compareGrades(String a, String b) {
+    final aNorm = a.trim().toUpperCase().replaceAll('_', ' ');
+    final bNorm = b.trim().toUpperCase().replaceAll('_', ' ');
+
+    final aIsKg = aNorm.contains('KG1') || aNorm.contains('KG 1') || aNorm == 'KG';
+    final bIsKg = bNorm.contains('KG1') || bNorm.contains('KG 1') || bNorm == 'KG';
+    final aIsKg2 = aNorm.contains('KG2') || aNorm.contains('KG 2');
+    final bIsKg2 = bNorm.contains('KG2') || bNorm.contains('KG 2');
+
+    if (aIsKg && !bIsKg && !bIsKg2) return -1;
+    if (bIsKg && !aIsKg && !aIsKg2) return 1;
+    if (aIsKg2 && !bIsKg && !bIsKg2) return -1;
+    if (bIsKg2 && !aIsKg && !aIsKg2) return 1;
+    if (aIsKg && bIsKg2) return -1;
+    if (aIsKg2 && bIsKg) return 1;
+
+    final aNum = _extractGradeNumber(aNorm);
+    final bNum = _extractGradeNumber(bNorm);
+    if (aNum != bNum) return aNum.compareTo(bNum);
+
+    final aVariant = _gradeVariantOrder(aNorm);
+    final bVariant = _gradeVariantOrder(bNorm);
+    if (aVariant != bVariant) return aVariant.compareTo(bVariant);
+
+    return aNorm.compareTo(bNorm);
   }
 
   void _updateSubjectAndStudentByGrade({required bool resetStudentSelection}) {
