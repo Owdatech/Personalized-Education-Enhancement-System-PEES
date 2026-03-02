@@ -2659,7 +2659,7 @@ def login1():
 
 # login with auth  code
 
-FIREBASE_API_KEY = " AIzaSyAju5l99D0BqMdIMc_-WjSu9IUbfwscaH0"
+FIREBASE_API_KEY = os.environ.get("FIREBASE_API_KEY", "")
 
 # Firebase REST API Login URL
 LOGIN_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_API_KEY}"
