@@ -941,18 +941,64 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                         fontSize: fontSizeProvider.fontSize,
                                         color: AppColor.text)),
                             const SizedBox(height: 5),
-                            AppFillButton3(
-                                onPressed: () {
-                                  setState(() {
-                                    isViewDetails = true;
-                                    date = sortedList[i]['date'];
-                                    subjectName = sortedList[i]['subject'];
-                                    description = sortedList[i]['observation'];
-                                    imageUrl = sortedList[i]['attachment_url'];
-                                  });
-                                },
-                                text: "viewObservation",
-                                color: AppColor.buttonGreen),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AppFillButton3(
+                                    onPressed: () {
+                                      setState(() {
+                                        isViewDetails = true;
+                                        date = sortedList[i]['date'];
+                                        subjectName = sortedList[i]['subject'];
+                                        description =
+                                            sortedList[i]['observation'];
+                                        imageUrl =
+                                            sortedList[i]['attachment_url'];
+                                      });
+                                    },
+                                    text: "viewObservation",
+                                    color: AppColor.buttonGreen),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 10,
+                                  runSpacing: 8,
+                                  children: [
+                                    TextButton.icon(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColor.text,
+                                        side: const BorderSide(
+                                            color: AppColor.accentBorder),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 8),
+                                      ),
+                                      onPressed: () =>
+                                          _showEditObservationDialog(
+                                              Map<String, dynamic>.from(
+                                                  sortedList[i])),
+                                      icon: const Icon(Icons.edit_outlined,
+                                          size: 18),
+                                      label: Text("edit".tr),
+                                    ),
+                                    TextButton.icon(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColor.brown,
+                                        side: const BorderSide(
+                                            color: AppColor.brown),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 8),
+                                      ),
+                                      onPressed: () =>
+                                          _showDeleteObservationDialog(
+                                              Map<String, dynamic>.from(
+                                                  sortedList[i])),
+                                      icon: const Icon(Icons.delete_outline,
+                                          size: 18),
+                                      label: Text("delete".tr),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ],
                         )
                       : Row(
@@ -992,21 +1038,73 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                                   fontSizeProvider.fontSize,
                                               color: AppColor.text)),
                                   const SizedBox(height: 8),
-                                  AppFillButton3(
-                                      onPressed: () {
-                                        setState(() {
-                                          isViewDetails = true;
-                                          date = sortedList[i]['date'];
-                                          subjectName =
-                                              sortedList[i]['subject'];
-                                          description =
-                                              sortedList[i]['observation'];
-                                          imageUrl =
-                                              sortedList[i]['attachment_url'];
-                                        });
-                                      },
-                                      text: "viewObservation",
-                                      color: AppColor.buttonGreen),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      AppFillButton3(
+                                          onPressed: () {
+                                            setState(() {
+                                              isViewDetails = true;
+                                              date = sortedList[i]['date'];
+                                              subjectName =
+                                                  sortedList[i]['subject'];
+                                              description = sortedList[i]
+                                                  ['observation'];
+                                              imageUrl = sortedList[i]
+                                                  ['attachment_url'];
+                                            });
+                                          },
+                                          text: "viewObservation",
+                                          color: AppColor.buttonGreen),
+                                      const SizedBox(height: 6),
+                                      Wrap(
+                                        alignment: WrapAlignment.end,
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          TextButton.icon(
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: AppColor.text,
+                                              side: const BorderSide(
+                                                  color:
+                                                      AppColor.accentBorder),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 8),
+                                            ),
+                                            onPressed: () =>
+                                                _showEditObservationDialog(
+                                                    Map<String, dynamic>.from(
+                                                        sortedList[i])),
+                                            icon: const Icon(
+                                                Icons.edit_outlined,
+                                                size: 18),
+                                            label: Text("edit".tr),
+                                          ),
+                                          TextButton.icon(
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: AppColor.brown,
+                                              side: const BorderSide(
+                                                  color: AppColor.brown),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 8),
+                                            ),
+                                            onPressed: () =>
+                                                _showDeleteObservationDialog(
+                                                    Map<String, dynamic>.from(
+                                                        sortedList[i])),
+                                            icon: const Icon(
+                                                Icons.delete_outline,
+                                                size: 18),
+                                            label: Text("delete".tr),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),

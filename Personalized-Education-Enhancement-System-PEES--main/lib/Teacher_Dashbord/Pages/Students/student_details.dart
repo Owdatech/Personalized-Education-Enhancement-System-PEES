@@ -106,14 +106,18 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
       initialEntryMode: DatePickerEntryMode.calendarOnly,
       builder: (context, Widget? child) {
         return Theme(
-          data: ThemeData.dark().copyWith(
-              colorScheme: const ColorScheme.dark(
+          data: ThemeData.light().copyWith(
+              colorScheme: const ColorScheme.light(
                 primary: AppColor.buttonGreen,
                 onPrimary: Colors.white,
-                surface: AppColor.lightYellow,
-                onSurface: Colors.black,
+                surface: Color(0xFFF1EDFF),
+                onSurface: Color(0xFF1E2230),
               ),
-              dialogBackgroundColor: Colors.white,
+              dialogBackgroundColor: const Color(0xFFF1EDFF),
+              textTheme: ThemeData.light().textTheme.apply(
+                    bodyColor: const Color(0xFF1E2230),
+                    displayColor: const Color(0xFF1E2230),
+                  ),
               textButtonTheme: TextButtonThemeData(
                   style: TextButton.styleFrom(
                       foregroundColor: AppColor.white,
@@ -601,8 +605,14 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userId = prefs.getString('userId');
-      final response = await http
-          .get(Uri.parse('${Config.baseURL}curriculum?teacherId=$userId'));
+      final String curriculumUrl = (userId != null && userId.trim().isNotEmpty)
+          ? '${Config.baseURL}curriculum?teacherId=${Uri.encodeComponent(userId)}'
+          : '${Config.baseURL}curriculum';
+      http.Response response = await http.get(Uri.parse(curriculumUrl));
+      if (response.statusCode != 200) {
+        // Fallback to unfiltered curriculum if teacher-based filtering fails.
+        response = await http.get(Uri.parse('${Config.baseURL}curriculum'));
+      }
       teacherViewmodel.setLoading(true);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -611,18 +621,23 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
         curriculumList =
             curriculumJson.map((item) => Curriculum.fromJson(item)).toList();
         setState(() {
+          final targetGrade = _normalizeGrade(widget.model?.grade);
           filteredCurricula = curriculumList
               .where((curriculum) =>
-                  curriculum.grade.toLowerCase() ==
-                  widget.model?.grade?.toLowerCase())
+                  _normalizeGrade(curriculum.grade) == targetGrade)
               .toList();
+          if (filteredCurricula.isEmpty) {
+            // Fallback if grade labels differ in formatting between APIs and UI.
+            filteredCurricula = List<Curriculum>.from(curriculumList);
+          }
           print("Curriculum List Length : ${filteredCurricula.length}");
           print("Grade in widget model: ${widget.model?.grade}");
           print(
               "Available grades in curriculumList: ${curriculumList.map((e) => e.grade).toList()}");
 
           filterSubject = filteredCurricula
-              .map((subject) => subject.subject)
+              .map((subject) => subject.subject.trim())
+              .where((subject) => subject.isNotEmpty)
               .toSet()
               .toList();
           print("Subject List : $filterSubject");
@@ -631,7 +646,9 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
             fetchSelectSubject = filterSubject.first;
             isSubjectSelcet = true;
             filteredCurriculumList = filteredCurricula
-                .where((curriculum) => curriculum.subject == fetchSelectSubject)
+                .where((curriculum) =>
+                    curriculum.subject.trim().toLowerCase() ==
+                    fetchSelectSubject?.trim().toLowerCase())
                 .toList();
             selectedFetchCurriculum = null;
             fetchSelectCurriculumId = null;
@@ -668,7 +685,9 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
   void filterCurriculaBySubject(String subject) {
     setState(() {
       filteredCurriculumList = filteredCurricula
-          .where((curriculum) => curriculum.subject == subject)
+          .where((curriculum) =>
+              curriculum.subject.trim().toLowerCase() ==
+              subject.trim().toLowerCase())
           .toList();
       selectedFetchCurriculum = null; // Reset curriculum selection
     });
@@ -678,10 +697,40 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     setState(() {
       // selectedSubject = subject;
       filteredCurriculumList = filteredCurricula
-          .where((curriculum) => curriculum.subject == subject)
+          .where((curriculum) =>
+              curriculum.subject.trim().toLowerCase() ==
+              subject.trim().toLowerCase())
           .toList();
       // selectedFetchCurriculumExam = null; // Reset curriculum selection
     });
+  }
+
+  void _ensureDefaultSubjectSelection() {
+    if (filterSubject.isEmpty) return;
+    final firstSubject = filterSubject.first;
+    final needsAcademicDefault =
+        fetchSelectSubject == null || !filterSubject.contains(fetchSelectSubject);
+    final needsExamDefault = fetchSelectSubjectExam == null ||
+        !filterSubject.contains(fetchSelectSubjectExam);
+
+    if (needsAcademicDefault) {
+      fetchSelectSubject = firstSubject;
+      isSubjectSelcet = true;
+      filteredCurriculumList = filteredCurricula
+          .where((curriculum) =>
+              curriculum.subject.trim().toLowerCase() ==
+              firstSubject.trim().toLowerCase())
+          .toList();
+      selectedFetchCurriculum = null;
+      fetchSelectCurriculumId = null;
+    }
+
+    if (needsExamDefault) {
+      fetchSelectSubjectExam = firstSubject;
+      isSubjectSelectedExam = true;
+      selectedFetchCurriculumExam = null;
+      fetchSelectCurriculumExamId = null;
+    }
   }
 
   fetchAcademicData() async {
@@ -706,6 +755,20 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
 
   String _displayGrade(String? grade) {
     return _isHiddenGrade(grade) ? "" : (grade ?? "");
+  }
+
+  String _normalizeGrade(String? value) {
+    if (value == null) return "";
+    return value
+        .toLowerCase()
+        .replaceAll('_', '')
+        .replaceAll('-', '')
+        .replaceAll(' ', '')
+        .replaceAll('(science)', '(sc)')
+        .replaceAll('(literature)', '(li)')
+        .replaceAll('science', 'sc')
+        .replaceAll('literature', 'li')
+        .trim();
   }
 
   @override
@@ -933,13 +996,29 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     Color borderColor = themeManager.isHighContrast
         ? AppColor.accentBorder
         : AppColor.lightGrey;
+    if (filterSubject.isNotEmpty &&
+        (fetchSelectSubject == null ||
+            !filterSubject.contains(fetchSelectSubject))) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _ensureDefaultSubjectSelection();
+        });
+      });
+    }
+
     return SizedBox(
       height: 50,
       width: 250,
       child: DropdownButtonFormField<String>(
+        isExpanded: true,
+        dropdownColor: AppColor.panelDark,
+        style: const TextStyle(color: AppColor.white, fontSize: 15),
+        iconEnabledColor: AppColor.white,
+        iconDisabledColor: AppColor.labelText,
         decoration: InputDecoration(
-          hintText: "Select a subject",
-          hintStyle: TextStyle(color: textColor),
+          hintText: "selectSubject".tr,
+          hintStyle: const TextStyle(color: AppColor.white, fontSize: 15),
           filled: true,
           fillColor: bgColor,
           border:
@@ -951,11 +1030,20 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           errorBorder: const OutlineInputBorder(
               borderSide: BorderSide(color: Colors.red, width: 2)),
         ),
-        value: fetchSelectSubject, // Must be in subjects list
+        value: (fetchSelectSubject != null && filterSubject.contains(fetchSelectSubject))
+            ? fetchSelectSubject
+            : null,
+        selectedItemBuilder: (context) => filterSubject
+            .map((subject) => Text(
+                  subject,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppColor.white),
+                ))
+            .toList(),
         items: filterSubject.map((subject) {
           return DropdownMenuItem<String>(
             value: subject,
-            child: Text(subject, style: TextStyle(color: textColor)),
+            child: Text(subject, style: const TextStyle(color: AppColor.white)),
           );
         }).toList(),
         onChanged: (String? newSubject) {
@@ -971,7 +1059,8 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           }
           _formKey.currentState?.validate();
         },
-        validator: (value) => value == null ? "Please select a subject" : null,
+        validator: (value) =>
+            filterSubject.isNotEmpty ? null : "selectSubject".tr,
       ),
     );
   }
@@ -1064,7 +1153,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
 
   Widget academicTable() {
     List<DataRow> rows = [];
-    final List<Map<String, String>> historyItems = [];
+    final List<Map<String, dynamic>> historyItems = [];
     reportModel?.subjects.forEach((subjectName, subject) {
       subject.history.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       for (var history in subject.history) {
@@ -1078,6 +1167,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           "totalMarks": history.totalMark?.toString() ?? "",
           "grade": _displayGrade(history.grade),
           "date": formattedDate,
+          "history": history,
         });
         rows.add(DataRow(cells: [
           DataCell(Text(subjectName,
@@ -1096,6 +1186,21 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                   style: const TextStyle(color: AppColor.text)))), // Grade
           DataCell(Text(formattedDate,
               style: const TextStyle(color: AppColor.text))), // Date
+          DataCell(Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: "edit".tr,
+                onPressed: () => _showEditMarkDialog(subjectName, history),
+                icon: const Icon(Icons.edit_outlined, color: AppColor.text),
+              ),
+              IconButton(
+                tooltip: "delete".tr,
+                onPressed: () => _showDeleteMarkDialog(subjectName, history),
+                icon: const Icon(Icons.delete_outline, color: AppColor.brown),
+              ),
+            ],
+          )),
         ]));
       }
     });
@@ -1452,6 +1557,36 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                               fontSize:
                                                   fontSizeProvider.fontSize),
                                     ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        TextButton.icon(
+                                          onPressed: () => _showEditMarkDialog(
+                                              item["subject"] as String,
+                                              item["history"] as History),
+                                          icon: const Icon(Icons.edit_outlined,
+                                              size: 18,
+                                              color: AppColor.text),
+                                          label: Text("edit".tr,
+                                              style: const TextStyle(
+                                                  color: AppColor.text)),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        TextButton.icon(
+                                          onPressed: () => _showDeleteMarkDialog(
+                                              item["subject"] as String,
+                                              item["history"] as History),
+                                          icon: const Icon(
+                                              Icons.delete_outline,
+                                              size: 18,
+                                              color: AppColor.brown),
+                                          label: Text("delete".tr,
+                                              style: const TextStyle(
+                                                  color: AppColor.brown)),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ))
@@ -1493,6 +1628,11 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                         fontSize: 15, color: AppColor.white))),
                         DataColumn(
                             label: Text("dateTitle".tr,
+                                style: NotoSansArabicCustomTextStyle.bold
+                                    .copyWith(
+                                        fontSize: 15, color: AppColor.white))),
+                        DataColumn(
+                            label: Text("action".tr,
                                 style: NotoSansArabicCustomTextStyle.bold
                                     .copyWith(
                                         fontSize: 15, color: AppColor.white))),
@@ -1985,9 +2125,15 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
         ? AppColor.accentBorder
         : AppColor.lightGrey;
 
-    if (fetchSelectSubjectExam != null &&
-        !filterSubject.contains(fetchSelectSubjectExam)) {
-      fetchSelectSubjectExam = null;
+    if (filterSubject.isNotEmpty &&
+        (fetchSelectSubjectExam == null ||
+            !filterSubject.contains(fetchSelectSubjectExam))) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _ensureDefaultSubjectSelection();
+        });
+      });
     }
 
     return SizedBox(
@@ -2026,7 +2172,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
         items: filterSubject.map((subject) {
           return DropdownMenuItem<String>(
             value: subject,
-            child: Text(subject, style: TextStyle(color: textColor)),
+            child: Text(subject, style: const TextStyle(color: AppColor.white)),
           );
         }).toList(),
         onChanged: (String? newSubject) {

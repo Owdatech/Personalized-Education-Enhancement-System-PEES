@@ -347,6 +347,7 @@ class LocaleString extends Translations {
           'deleteMarksEndpointUnavailable':
               "Delete endpoint not available on server",
           'deleteMarksFailed': "Failed to delete marks",
+          'action': "Action",
           'updateSuccessReportCard': "Your Report Card Successfully Updated",
           'successTeachingPlan': "Teaching Plan Successfully Updated.",
           'downloadPlan': "Teaching Plans Successfully Downloaded.",
@@ -747,6 +748,7 @@ class LocaleString extends Translations {
           'deleteMarksEndpointUnavailable':
               "نقطة نهاية حذف الدرجات غير متاحة على الخادم",
           'deleteMarksFailed': "فشل حذف الدرجات",
+          'action': "الإجراءات",
           'updateSuccessReportCard': "تم تحديث بطاقة التقرير بنجاح",
           'successTeachingPlan': "تم تحديث خطة التدريس بنجاح",
           'downloadPlan': "تم تحميل خطة التدريس بنجاح",
