@@ -1,6 +1,30 @@
 .DS_Store
+
+# Secrets
+*.pem
+*.key
+*.env
 backend/.env
 backend/serviceAccountKey.json
 backend/*firebase-adminsdk*.json
+backend/*-firebase-adminsdk-*.json
+
+# Backend generated/content safety
 backend/static/*.py
 backend/uploads/*.py
+
+# Python runtime
+__pycache__/
+*.pyc
+venv/
+.venv/
+uploads/
+output_images/
+*.log
+nohup.out
+Backup.zip
+
+# Flutter/Firebase local artifacts
+Personalized-Education-Enhancement-System-PEES--main/.firebase/
+Personalized-Education-Enhancement-System-PEES--main/build/
+Personalized-Education-Enhancement-System-PEES--main/Personalized-Education-Enhancement-System-PEES/
