@@ -505,7 +505,7 @@ class LocaleString extends Translations {
           'progress': "التقدم", //التقدم
           // academic
           'subject': "المادة",
-          'marks': "ماركس", //
+          'marks': "الدرجة", //
           'attendance': "حضور", //
           'reportCard': "بطاقة التقرير",
           'totalMarks': "مجموع الدرجات",

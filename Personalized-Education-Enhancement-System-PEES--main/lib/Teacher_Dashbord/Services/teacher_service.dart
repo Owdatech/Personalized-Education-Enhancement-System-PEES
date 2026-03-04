@@ -14,6 +14,7 @@ import 'package:pees/Models/base_viewmodel.dart';
 import 'package:pees/Teacher_Dashbord/Models/exam_history_model.dart';
 import 'package:pees/Teacher_Dashbord/Pages/Progress/progress_screen.dart';
 import 'package:pees/Widgets/AppImage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../HeadMaster_Dashboard/Services/headMaster_services.dart';
 
@@ -43,6 +44,11 @@ class TeacherService extends BaseVM {
   List<dynamic> feedbackList = [];
   List<ClassModel> classGradeList = [];
   String? improvementList;
+
+  Future<String> _currentTeacherId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userId') ?? "";
+  }
 
   Future<int?> saveReports(
     String teacherId,
@@ -120,8 +126,10 @@ class TeacherService extends BaseVM {
     required String timestamp,
   }) async {
     setLoading(true);
+    final teacherId = await _currentTeacherId();
     final payload = {
       "studentId": studentId,
+      "teacher_id": teacherId,
       "entryId": entryId,
       "subject": subject,
       "curriculumName": curriculumName,
@@ -190,8 +198,10 @@ class TeacherService extends BaseVM {
     required String timestamp,
   }) async {
     setLoading(true);
+    final teacherId = await _currentTeacherId();
     final payload = {
       "studentId": studentId,
+      "teacher_id": teacherId,
       "entryId": entryId,
       "subject": subject,
       "timestamp": timestamp,
@@ -508,6 +518,7 @@ class TeacherService extends BaseVM {
     String observation,
     String date,
   ) async {
+    final teacherId = await _currentTeacherId();
     String isoDate = date;
     String displayDate = date;
     try {
@@ -531,6 +542,7 @@ class TeacherService extends BaseVM {
       "selected_date": isoDate,
       "selectedDate": isoDate,
       "date_ddmmyyyy": displayDate,
+      "teacher_id": teacherId,
     };
     print("Request Data : $data");
     setLoading(true);
@@ -563,6 +575,7 @@ class TeacherService extends BaseVM {
       request.fields['date_ddmmyyyy'] = displayDate;
       request.fields['subject'] = subject;
       request.fields['observation'] = observation;
+      request.fields['teacher_id'] = teacherId;
       print("Add observation fields: ${request.fields}");
       // Send the request
       var streamedResponse = await request.send();
@@ -595,9 +608,11 @@ class TeacherService extends BaseVM {
     String observation,
   ) async {
     setLoading(true);
+    final teacherId = await _currentTeacherId();
     final body = jsonEncode({
       "subject": subject,
       "observation": observation,
+      "teacher_id": teacherId,
     });
 
     final endpoints = [
@@ -651,6 +666,7 @@ class TeacherService extends BaseVM {
 
   Future<int?> deleteObservation(String studId, String observationId) async {
     setLoading(true);
+    final teacherId = await _currentTeacherId();
 
     final endpoints = [
       "${Config.baseURL}students/$studId/observations/$observationId",
@@ -664,6 +680,7 @@ class TeacherService extends BaseVM {
         final response = await http.delete(
           Uri.parse(endpoint),
           headers: {"Content-Type": "application/json"},
+          body: jsonEncode({"teacher_id": teacherId}),
         );
 
         if (response.statusCode == 200 || response.statusCode == 204) {
@@ -695,6 +712,7 @@ class TeacherService extends BaseVM {
     required String newObservation,
   }) async {
     setLoading(true);
+    final teacherId = await _currentTeacherId();
     final payload = {
       "old": {
         "date": oldDate,
@@ -711,6 +729,7 @@ class TeacherService extends BaseVM {
       "updated_subject": newSubject,
       "updated_observation": newObservation,
       "action": "update",
+      "teacher_id": teacherId,
     };
     final body = jsonEncode(payload);
 
@@ -788,11 +807,13 @@ class TeacherService extends BaseVM {
     required String observation,
   }) async {
     setLoading(true);
+    final teacherId = await _currentTeacherId();
     final payload = {
       "date": date,
       "subject": subject,
       "observation": observation,
       "action": "delete",
+      "teacher_id": teacherId,
     };
     final body = jsonEncode(payload);
 

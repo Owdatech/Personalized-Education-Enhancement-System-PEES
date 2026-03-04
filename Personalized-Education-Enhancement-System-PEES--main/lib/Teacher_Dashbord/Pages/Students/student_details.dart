@@ -616,7 +616,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
       teacherViewmodel.setLoading(true);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        List<dynamic> curriculumJson = data['curriculum'];
+        List<dynamic> curriculumJson = (data['curriculum'] as List?) ?? [];
         print("Response  : ${response.body}");
         curriculumList =
             curriculumJson.map((item) => Curriculum.fromJson(item)).toList();
@@ -635,28 +635,39 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           print(
               "Available grades in curriculumList: ${curriculumList.map((e) => e.grade).toList()}");
 
-          filterSubject = filteredCurricula
-              .map((subject) => subject.subject.trim())
-              .where((subject) => subject.isNotEmpty)
-              .toSet()
-              .toList();
+          final Map<String, String> subjectMap = {};
+          for (final curriculum in filteredCurricula) {
+            final raw = curriculum.subject.trim();
+            final normalized = _normalizeSubject(raw);
+            if (normalized.isNotEmpty && !subjectMap.containsKey(normalized)) {
+              subjectMap[normalized] = raw;
+            }
+          }
+          filterSubject = subjectMap.values.toList();
           print("Subject List : $filterSubject");
 
           if (filterSubject.isNotEmpty) {
             fetchSelectSubject = filterSubject.first;
             isSubjectSelcet = true;
-            filteredCurriculumList = filteredCurricula
-                .where((curriculum) =>
-                    curriculum.subject.trim().toLowerCase() ==
-                    fetchSelectSubject?.trim().toLowerCase())
-                .toList();
-            selectedFetchCurriculum = null;
-            fetchSelectCurriculumId = null;
+            filteredCurriculumList = _curriculaForSubject(fetchSelectSubject!);
+            if (filteredCurriculumList.isNotEmpty) {
+              selectedFetchCurriculum = filteredCurriculumList.first;
+              fetchSelectCurriculumId = selectedFetchCurriculum?.curriculumId;
+            } else {
+              selectedFetchCurriculum = null;
+              fetchSelectCurriculumId = null;
+            }
 
             fetchSelectSubjectExam = filterSubject.first;
             isSubjectSelectedExam = true;
-            selectedFetchCurriculumExam = null;
-            fetchSelectCurriculumExamId = null;
+            if (filteredCurriculumList.isNotEmpty) {
+              selectedFetchCurriculumExam = filteredCurriculumList.first;
+              fetchSelectCurriculumExamId =
+                  selectedFetchCurriculumExam?.curriculumId;
+            } else {
+              selectedFetchCurriculumExam = null;
+              fetchSelectCurriculumExamId = null;
+            }
           } else {
             fetchSelectSubject = null;
             fetchSelectSubjectExam = null;
@@ -682,27 +693,11 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     }
   }
 
-  void filterCurriculaBySubject(String subject) {
-    setState(() {
-      filteredCurriculumList = filteredCurricula
-          .where((curriculum) =>
-              curriculum.subject.trim().toLowerCase() ==
-              subject.trim().toLowerCase())
-          .toList();
-      selectedFetchCurriculum = null; // Reset curriculum selection
-    });
-  }
-
-  void filterCurriculaBySubjectExam(String subject) {
-    setState(() {
-      // selectedSubject = subject;
-      filteredCurriculumList = filteredCurricula
-          .where((curriculum) =>
-              curriculum.subject.trim().toLowerCase() ==
-              subject.trim().toLowerCase())
-          .toList();
-      // selectedFetchCurriculumExam = null; // Reset curriculum selection
-    });
+  List<Curriculum> _curriculaForSubject(String subject) {
+    return filteredCurricula
+        .where((curriculum) =>
+            _normalizeSubject(curriculum.subject) == _normalizeSubject(subject))
+        .toList();
   }
 
   void _ensureDefaultSubjectSelection() {
@@ -716,20 +711,26 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     if (needsAcademicDefault) {
       fetchSelectSubject = firstSubject;
       isSubjectSelcet = true;
-      filteredCurriculumList = filteredCurricula
-          .where((curriculum) =>
-              curriculum.subject.trim().toLowerCase() ==
-              firstSubject.trim().toLowerCase())
-          .toList();
-      selectedFetchCurriculum = null;
-      fetchSelectCurriculumId = null;
+      filteredCurriculumList = _curriculaForSubject(firstSubject);
+      if (filteredCurriculumList.isNotEmpty) {
+        selectedFetchCurriculum = filteredCurriculumList.first;
+        fetchSelectCurriculumId = selectedFetchCurriculum?.curriculumId;
+      } else {
+        selectedFetchCurriculum = null;
+        fetchSelectCurriculumId = null;
+      }
     }
 
     if (needsExamDefault) {
       fetchSelectSubjectExam = firstSubject;
       isSubjectSelectedExam = true;
-      selectedFetchCurriculumExam = null;
-      fetchSelectCurriculumExamId = null;
+      if (filteredCurriculumList.isNotEmpty) {
+        selectedFetchCurriculumExam = filteredCurriculumList.first;
+        fetchSelectCurriculumExamId = selectedFetchCurriculumExam?.curriculumId;
+      } else {
+        selectedFetchCurriculumExam = null;
+        fetchSelectCurriculumExamId = null;
+      }
     }
   }
 
@@ -768,6 +769,14 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
         .replaceAll('(literature)', '(li)')
         .replaceAll('science', 'sc')
         .replaceAll('literature', 'li')
+        .trim();
+  }
+
+  String _normalizeSubject(String? value) {
+    return (value ?? "")
+        .toLowerCase()
+        .replaceAll('\u00a0', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
 
@@ -853,47 +862,6 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                                 ? academicTable()
                                                 : formView(),
                                             const SizedBox(height: 15),
-                                            viewModel.selectedExamTab ==
-                                                    ExamScriptFor.academic
-                                                ? Padding(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 12),
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment.end,
-                                                      children: [
-                                                        AppFillButton3(
-                                                            onPressed: () {
-                                                              if (_formKey
-                                                                  .currentState!
-                                                                  .validate()) {
-                                                                if (markController
-                                                                    .text
-                                                                    .isEmpty) {
-                                                                  Utils.snackBar(
-                                                                      "assignMarks"
-                                                                          .tr,
-                                                                      context);
-                                                                } else if (subjectTotalMarkController
-                                                                    .text
-                                                                    .isEmpty) {
-                                                                  Utils.snackBar(
-                                                                      "assignTotalMark"
-                                                                          .tr,
-                                                                      context);
-                                                                } else {
-                                                                  saveReports();
-                                                                }
-                                                              }
-                                                            },
-                                                            text: "save",
-                                                            color: AppColor
-                                                                .buttonGreen),
-                                                      ],
-                                                    ),
-                                                  )
-                                                : const SizedBox(),
                                           ],
                                         ),
                                       ),
@@ -996,16 +964,11 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     Color borderColor = themeManager.isHighContrast
         ? AppColor.accentBorder
         : AppColor.lightGrey;
-    if (filterSubject.isNotEmpty &&
-        (fetchSelectSubject == null ||
-            !filterSubject.contains(fetchSelectSubject))) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _ensureDefaultSubjectSelection();
-        });
-      });
-    }
+    final availableSubjects = List<String>.from(filterSubject);
+    final currentSubject =
+        (fetchSelectSubject != null && availableSubjects.contains(fetchSelectSubject))
+            ? fetchSelectSubject
+            : null;
 
     return SizedBox(
       height: 50,
@@ -1030,17 +993,15 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           errorBorder: const OutlineInputBorder(
               borderSide: BorderSide(color: Colors.red, width: 2)),
         ),
-        value: (fetchSelectSubject != null && filterSubject.contains(fetchSelectSubject))
-            ? fetchSelectSubject
-            : null,
-        selectedItemBuilder: (context) => filterSubject
+        value: currentSubject,
+        selectedItemBuilder: (context) => availableSubjects
             .map((subject) => Text(
                   subject,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: AppColor.white),
                 ))
             .toList(),
-        items: filterSubject.map((subject) {
+        items: availableSubjects.map((subject) {
           return DropdownMenuItem<String>(
             value: subject,
             child: Text(subject, style: const TextStyle(color: AppColor.white)),
@@ -1051,9 +1012,14 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
             setState(() {
               fetchSelectSubject = newSubject;
               isSubjectSelcet = true;
-              selectedFetchCurriculum = null;
-              fetchSelectCurriculumId = null;
-              filterCurriculaBySubject(newSubject);
+              filteredCurriculumList = _curriculaForSubject(newSubject);
+              if (filteredCurriculumList.isNotEmpty) {
+                selectedFetchCurriculum = filteredCurriculumList.first;
+                fetchSelectCurriculumId = selectedFetchCurriculum?.curriculumId;
+              } else {
+                selectedFetchCurriculum = null;
+                fetchSelectCurriculumId = null;
+              }
               print("academic data subject = $fetchSelectSubject");
             });
           }
@@ -1074,6 +1040,18 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     Color borderColor = themeManager.isHighContrast
         ? AppColor.accentBorder
         : AppColor.lightGrey;
+    final availableCurricula =
+        isSubjectSelcet ? List<Curriculum>.from(filteredCurriculumList) : <Curriculum>[];
+    Curriculum? selectedValue;
+    if (selectedFetchCurriculum != null) {
+      for (final item in availableCurricula) {
+        if (item.curriculumId == selectedFetchCurriculum!.curriculumId &&
+            item.curriculumName == selectedFetchCurriculum!.curriculumName) {
+          selectedValue = item;
+          break;
+        }
+      }
+    }
 
     return SizedBox(
       width: 250,
@@ -1084,14 +1062,13 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
         style: TextStyle(color: textColor, fontSize: 15),
         iconEnabledColor: textColor,
         iconDisabledColor: AppColor.labelText,
-        hint: const Text(
-          "Select Curriculum",
-          style: TextStyle(color: AppColor.white, fontSize: 15),
+        hint: Text(
+          "selectCurriculumn".tr,
+          style: const TextStyle(color: AppColor.white, fontSize: 15),
           overflow: TextOverflow.ellipsis,
         ),
         selectedItemBuilder: (context) {
-          final source =
-              isSubjectSelcet ? filteredCurriculumList : <Curriculum>[];
+          final source = availableCurricula;
           return source
               .map((curriculum) => Text(
                     curriculum.curriculumName,
@@ -1112,16 +1089,16 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           errorBorder: const OutlineInputBorder(
               borderSide: BorderSide(color: Colors.red, width: 2)),
         ),
-        value: selectedFetchCurriculum,
+        value: selectedValue,
 
-        items: isSubjectSelcet
-            ? filteredCurriculumList.map((curriculum) {
+        items: availableCurricula
+            .map((curriculum) {
                 return DropdownMenuItem<Curriculum>(
                     value: curriculum,
                     child: Text('${curriculum.curriculumName}',
                         style: TextStyle(color: textColor)));
               }).toList()
-            : [],
+            ,
         onChanged: isSubjectSelcet
             ? (Curriculum? newCurriculum) {
                 setState(() {
@@ -1154,6 +1131,22 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
   Widget academicTable() {
     List<DataRow> rows = [];
     final List<Map<String, dynamic>> historyItems = [];
+    Widget saveButton() {
+      return AppFillButton3(
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              if (markController.text.isEmpty) {
+                Utils.snackBar("assignMarks".tr, context);
+              } else if (subjectTotalMarkController.text.isEmpty) {
+                Utils.snackBar("assignTotalMark".tr, context);
+              } else {
+                saveReports();
+              }
+            }
+          },
+          text: "save",
+          color: AppColor.buttonGreen);
+    }
     reportModel?.subjects.forEach((subjectName, subject) {
       subject.history.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       for (var history in subject.history) {
@@ -1167,43 +1160,55 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           "totalMarks": history.totalMark?.toString() ?? "",
           "grade": _displayGrade(history.grade),
           "date": formattedDate,
+          "timestampRaw": history.timestamp,
           "history": history,
         });
-        rows.add(DataRow(cells: [
-          DataCell(Text(subjectName,
-              style: const TextStyle(color: AppColor.text))), // Subject
-          DataCell(Text(history.curriculumName,
-              style: const TextStyle(color: AppColor.text))), // Curriculum Name
-          DataCell(Center(
-              child: Text(history.marks.toString(),
-                  style: const TextStyle(color: AppColor.text)))), // Marks
-          DataCell(Center(
-              child: Text(history.totalMark?.toString() ?? "",
-                  style:
-                      const TextStyle(color: AppColor.text)))), // Total Marks
-          DataCell(Center(
-              child: Text(_displayGrade(history.grade),
-                  style: const TextStyle(color: AppColor.text)))), // Grade
-          DataCell(Text(formattedDate,
-              style: const TextStyle(color: AppColor.text))), // Date
-          DataCell(Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                tooltip: "edit".tr,
-                onPressed: () => _showEditMarkDialog(subjectName, history),
-                icon: const Icon(Icons.edit_outlined, color: AppColor.text),
-              ),
-              IconButton(
-                tooltip: "delete".tr,
-                onPressed: () => _showDeleteMarkDialog(subjectName, history),
-                icon: const Icon(Icons.delete_outline, color: AppColor.brown),
-              ),
-            ],
-          )),
-        ]));
       }
     });
+    historyItems.sort((a, b) {
+      final aTs = (a["timestampRaw"] ?? "").toString();
+      final bTs = (b["timestampRaw"] ?? "").toString();
+      final aDt = DateTime.tryParse(aTs);
+      final bDt = DateTime.tryParse(bTs);
+      if (aDt != null && bDt != null) return bDt.compareTo(aDt);
+      return bTs.compareTo(aTs);
+    });
+    for (final item in historyItems) {
+      final subjectName = item["subject"] as String;
+      final history = item["history"] as History;
+      rows.add(DataRow(cells: [
+        DataCell(
+            Text(subjectName, style: const TextStyle(color: AppColor.text))),
+        DataCell(Text(item["curriculum"] as String,
+            style: const TextStyle(color: AppColor.text))),
+        DataCell(Center(
+            child: Text(item["marks"] as String,
+                style: const TextStyle(color: AppColor.text)))),
+        DataCell(Center(
+            child: Text(item["totalMarks"] as String,
+                style: const TextStyle(color: AppColor.text)))),
+        DataCell(Center(
+            child: Text(item["grade"] as String,
+                style: const TextStyle(color: AppColor.text)))),
+        DataCell(Text(item["date"] as String,
+            style: const TextStyle(color: AppColor.text))),
+        DataCell(Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: "edit".tr,
+              onPressed: () => _showEditMarkDialog(subjectName, history),
+              icon: const Icon(Icons.edit_outlined, color: AppColor.text),
+            ),
+            IconButton(
+              tooltip: "delete".tr,
+              onPressed: () => _showDeleteMarkDialog(subjectName, history),
+              icon: const Icon(Icons.delete_outline, color: AppColor.brown),
+            ),
+          ],
+        )),
+      ]));
+    }
     final fontSizeProvider = Provider.of<FontSizeProvider>(context);
     final themeManager = Provider.of<ThemeManager>(context, listen: false);
     return LayoutBuilder(builder: (context, constraints) {
@@ -1287,27 +1292,28 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                           ],
                         ),
                   const SizedBox(height: 10),
-                  fetchSelectSubject != null
-                      ? (isMobile
-                          ? Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppColor.panelDarkSoft,
-                                border: Border.all(
-                                    width: 0.8, color: AppColor.buttonGreen),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColor.panelDarkSoft,
+                      border:
+                          Border.all(width: 0.8, color: AppColor.buttonGreen),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          fetchSelectSubject ?? "selectSubject".tr,
+                          style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                              color: AppColor.text,
+                              fontSize: fontSizeProvider.fontSize),
+                        ),
+                        const SizedBox(height: 10),
+                        isMobile
+                            ? Column(
                                 children: [
-                                  Text(fetchSelectSubject ?? "",
-                                      style: NotoSansArabicCustomTextStyle.bold
-                                          .copyWith(
-                                              color: AppColor.text,
-                                              fontSize:
-                                                  fontSizeProvider.fontSize)),
-                                  const SizedBox(height: 10),
                                   AppTextField(
                                       textController: markController,
                                       inputType: TextInputType.number,
@@ -1327,8 +1333,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                       icon: null),
                                   const SizedBox(height: 10),
                                   AppTextField(
-                                      textController:
-                                          subjectTotalMarkController,
+                                      textController: subjectTotalMarkController,
                                       inputType: TextInputType.number,
                                       validator: (value) {
                                         if (value == null ||
@@ -1339,69 +1344,18 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                       },
                                       hintText: "totalMarks".tr,
                                       icon: null),
+                                  const SizedBox(height: 12),
+                                  Align(
+                                      alignment: Alignment.centerRight,
+                                      child: saveButton()),
                                 ],
-                              ),
-                            )
-                          : DataTable(
-                              headingRowColor: WidgetStateColor.resolveWith(
-                                  (states) => AppColor.buttonGreen),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    width: 0.8, color: AppColor.text),
-                              ),
-                              columnSpacing: 16,
-                              columns: [
-                                DataColumn(
-                                    label: Text("subject".tr,
-                                        style: NotoSansArabicCustomTextStyle
-                                            .semibold
-                                            .copyWith(
-                                                color: AppColor.white,
-                                                fontSize: 15))),
-                                DataColumn(
-                                    label: Text("marks".tr,
-                                        style: NotoSansArabicCustomTextStyle
-                                            .semibold
-                                            .copyWith(
-                                                color: AppColor.white,
-                                                fontSize: 15))),
-                                DataColumn(
-                                    label: Text("gradee".tr,
-                                        style: NotoSansArabicCustomTextStyle
-                                            .semibold
-                                            .copyWith(
-                                                color: AppColor.white,
-                                                fontSize: 15))),
-                                DataColumn(
-                                    label: Text("totalMarks".tr,
-                                        style: NotoSansArabicCustomTextStyle
-                                            .semibold
-                                            .copyWith(
-                                                color: AppColor.white,
-                                                fontSize: 15))),
-                              ],
-                              rows: [
-                                DataRow(cells: [
-                                  DataCell(
-                                    Text(
-                                      fetchSelectSubject ?? "",
-                                      style: NotoSansArabicCustomTextStyle
-                                          .regular
-                                          .copyWith(
-                                              fontSize: 15,
-                                              color: AppColor.text),
-                                    ),
-                                  ),
-                                  DataCell(
-                                    SizedBox(
-                                      width: 70,
-                                      child: TextFormField(
-                                        textAlign: TextAlign.center,
-                                        controller: markController,
-                                        keyboardType: TextInputType.number,
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter.digitsOnly
-                                        ],
+                              )
+                            : Row(
+                                children: [
+                                  Expanded(
+                                    child: AppTextField(
+                                        textController: markController,
+                                        inputType: TextInputType.number,
                                         validator: (value) {
                                           if (value == null ||
                                               value.trim().isEmpty) {
@@ -1409,42 +1363,21 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                           }
                                           return null;
                                         },
-                                        style: PoppinsCustomTextStyle.regular
-                                            .copyWith(
-                                                color: AppColor.text,
-                                                fontSize: 13),
-                                        decoration: const InputDecoration(
-                                            isDense: true,
-                                            border: OutlineInputBorder()),
-                                      ),
-                                    ),
+                                        hintText: "marks".tr,
+                                        icon: null),
                                   ),
-                                  DataCell(
-                                    SizedBox(
-                                      width: 70,
-                                      child: TextFormField(
-                                        textAlign: TextAlign.center,
-                                        controller: gradeeController,
-                                        style: PoppinsCustomTextStyle.regular
-                                            .copyWith(
-                                                color: AppColor.text,
-                                                fontSize: 13),
-                                        decoration: const InputDecoration(
-                                            isDense: true,
-                                            border: OutlineInputBorder()),
-                                      ),
-                                    ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: AppTextField(
+                                        textController: gradeeController,
+                                        hintText: "gradee".tr,
+                                        icon: null),
                                   ),
-                                  DataCell(
-                                    SizedBox(
-                                      width: 90,
-                                      child: TextFormField(
-                                        textAlign: TextAlign.center,
-                                        controller: subjectTotalMarkController,
-                                        keyboardType: TextInputType.number,
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter.digitsOnly
-                                        ],
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: AppTextField(
+                                        textController: subjectTotalMarkController,
+                                        inputType: TextInputType.number,
                                         validator: (value) {
                                           if (value == null ||
                                               value.trim().isEmpty) {
@@ -1452,30 +1385,16 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                                           }
                                           return null;
                                         },
-                                        style: PoppinsCustomTextStyle.regular
-                                            .copyWith(
-                                                color: AppColor.text,
-                                                fontSize: 13),
-                                        decoration: const InputDecoration(
-                                            isDense: true,
-                                            border: OutlineInputBorder()),
-                                      ),
-                                    ),
-                                  )
-                                ])
-                              ],
-                            ))
-                      : Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 4),
-                          child: Text(
-                            "selectSubjectAndCurriculumHint".tr,
-                            style: NotoSansArabicCustomTextStyle.medium
-                                .copyWith(
-                                    color: AppColor.labelText,
-                                    fontSize: fontSizeProvider.fontSize),
-                          ),
-                        ),
+                                        hintText: "totalMarks".tr,
+                                        icon: null),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  SizedBox(width: 120, child: saveButton()),
+                                ],
+                              ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 20),
                   if (rows.isEmpty)
                     Padding(
@@ -2035,6 +1954,19 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
     Color borderColor = themeManager.isHighContrast
         ? AppColor.accentBorder
         : AppColor.lightGrey;
+    final availableCurricula = isSubjectSelectedExam
+        ? List<Curriculum>.from(filteredCurriculumList)
+        : <Curriculum>[];
+    Curriculum? selectedValue;
+    if (selectedFetchCurriculumExam != null) {
+      for (final item in availableCurricula) {
+        if (item.curriculumId == selectedFetchCurriculumExam!.curriculumId &&
+            item.curriculumName == selectedFetchCurriculumExam!.curriculumName) {
+          selectedValue = item;
+          break;
+        }
+      }
+    }
     return SizedBox(
       width: 250,
       height: 50,
@@ -2051,8 +1983,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         selectedItemBuilder: (context) {
-          final source =
-              isSubjectSelectedExam ? filteredCurriculumList : <Curriculum>[];
+          final source = availableCurricula;
           return source
               .map((curriculum) => Text(
                     curriculum.curriculumName,
@@ -2075,9 +2006,9 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           errorBorder: const OutlineInputBorder(
               borderSide: BorderSide(color: Colors.red, width: 2)),
         ),
-        value: selectedFetchCurriculumExam,
-        items: isSubjectSelectedExam
-            ? filteredCurriculumList.map((curriculum) {
+        value: selectedValue,
+        items: availableCurricula
+            .map((curriculum) {
                 return DropdownMenuItem<Curriculum>(
                   value: curriculum,
                   child: Text(curriculum.curriculumName,
@@ -2085,8 +2016,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
                           color: textColor,
                           fontSize: fontSizeProvider.fontSize)),
                 );
-              }).toList()
-            : [],
+              }).toList(),
         onChanged: isSubjectSelectedExam
             ? (Curriculum? newCurriculum) {
                 setState(() {
@@ -2125,16 +2055,12 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
         ? AppColor.accentBorder
         : AppColor.lightGrey;
 
-    if (filterSubject.isNotEmpty &&
-        (fetchSelectSubjectExam == null ||
-            !filterSubject.contains(fetchSelectSubjectExam))) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _ensureDefaultSubjectSelection();
-        });
-      });
-    }
+    final availableSubjects = List<String>.from(filterSubject);
+    final currentSubject =
+        (fetchSelectSubjectExam != null &&
+                availableSubjects.contains(fetchSelectSubjectExam))
+            ? fetchSelectSubjectExam
+            : null;
 
     return SizedBox(
       height: 50,
@@ -2149,7 +2075,7 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           style: TextStyle(color: AppColor.white, fontSize: 15),
           overflow: TextOverflow.ellipsis,
         ),
-        selectedItemBuilder: (context) => filterSubject
+        selectedItemBuilder: (context) => availableSubjects
             .map((subject) => Text(
                   subject,
                   overflow: TextOverflow.ellipsis,
@@ -2168,8 +2094,8 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
           errorBorder: const OutlineInputBorder(
               borderSide: BorderSide(color: Colors.red, width: 2)),
         ),
-        value: fetchSelectSubjectExam,
-        items: filterSubject.map((subject) {
+        value: currentSubject,
+        items: availableSubjects.map((subject) {
           return DropdownMenuItem<String>(
             value: subject,
             child: Text(subject, style: const TextStyle(color: AppColor.white)),
@@ -2180,9 +2106,15 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
             setState(() {
               fetchSelectSubjectExam = newSubject;
               isSubjectSelectedExam = true;
-              selectedFetchCurriculumExam = null;
-              fetchSelectCurriculumExamId = null;
-              filterCurriculaBySubjectExam(newSubject);
+              filteredCurriculumList = _curriculaForSubject(newSubject);
+              if (filteredCurriculumList.isNotEmpty) {
+                selectedFetchCurriculumExam = filteredCurriculumList.first;
+                fetchSelectCurriculumExamId =
+                    selectedFetchCurriculumExam?.curriculumId;
+              } else {
+                selectedFetchCurriculumExam = null;
+                fetchSelectCurriculumExamId = null;
+              }
             });
             print("Subject : $fetchSelectSubjectExam");
           }

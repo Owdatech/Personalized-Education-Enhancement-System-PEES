@@ -8074,6 +8074,25 @@ def _build_observation_id(index):
     return str(index)
 
 
+def _extract_teacher_id():
+    teacher_id = (
+        request.args.get("teacher_id")
+        or request.args.get("teacherId")
+    )
+    if teacher_id:
+        return str(teacher_id).strip()
+    if request.is_json:
+        payload = request.get_json(silent=True) or {}
+        teacher_id = payload.get("teacher_id") or payload.get("teacherId")
+        if teacher_id:
+            return str(teacher_id).strip()
+    else:
+        teacher_id = request.form.get("teacher_id") or request.form.get("teacherId")
+        if teacher_id:
+            return str(teacher_id).strip()
+    return ""
+
+
 def _find_observation_index(observations, observation_id):
     try:
         idx = int(str(observation_id))
@@ -8085,6 +8104,22 @@ def _find_observation_index(observations, observation_id):
         if str(item.get("observation_id", "")).strip() == str(observation_id).strip():
             return idx
     return -1
+
+
+def _entry_teacher_id(entry):
+    if not isinstance(entry, dict):
+        return ""
+    for key in (
+        "teacher_id",
+        "teacherId",
+        "created_by_teacher_id",
+        "updated_by_teacher_id",
+        "assigned_teacher_id",
+    ):
+        value = entry.get(key)
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return ""
 
 
 @app.route("/students/<student_id>/observations", methods=["POST"])
@@ -8104,6 +8139,7 @@ def add_observation(student_id):
         if request.is_json:
             payload = request.get_json(silent=True) or {}
             action = (payload.get("action") or "").strip().lower()
+            request_teacher_id = _extract_teacher_id()
             if action in {"update", "delete"}:
                 target = payload.get("old", payload)
                 target_date = (target.get("date") or payload.get("date") or "").strip()
@@ -8114,6 +8150,8 @@ def add_observation(student_id):
 
                 match_index = -1
                 for idx, item in enumerate(observations):
+                    if request_teacher_id and str(item.get("teacher_id", "")).strip() != request_teacher_id:
+                        continue
                     date_ok = (item.get("date") or "").strip() == target_date
                     subject_ok = (item.get("subject") or "").strip() == target_subject
                     observation_ok = (
@@ -8144,6 +8182,7 @@ def add_observation(student_id):
                 return jsonify({"message": "Observation updated successfully", "observation": observations[match_index]}), 200
 
         attachment_url = None
+        request_teacher_id = _extract_teacher_id()
         if request.is_json:
             source = request.get_json(silent=True) or {}
             subject = source.get("subject")
@@ -8189,6 +8228,7 @@ def add_observation(student_id):
             "subject": subject,
             "observation": observation_text,
             "attachment_url": attachment_url,
+            "teacher_id": request_teacher_id,
         }
         observations.append(observation)
         student_ref.update({"observations": observations})
@@ -8210,6 +8250,13 @@ def get_observations(student_id):
         observations = student_doc.to_dict().get("observations", [])
         if not isinstance(observations, list):
             observations = []
+        teacher_id = (request.args.get("teacher_id") or request.args.get("teacherId") or "").strip()
+        if teacher_id:
+            observations = [
+                item
+                for item in observations
+                if _entry_teacher_id(item) in ("", teacher_id)
+            ]
 
         normalized = []
         for idx, item in enumerate(observations):
@@ -8235,10 +8282,13 @@ def update_or_delete_observation(student_id, observation_id):
         observations = data.get("observations", [])
         if not isinstance(observations, list):
             observations = []
+        teacher_id = _extract_teacher_id()
 
         idx = _find_observation_index(observations, observation_id)
         if idx < 0:
             return jsonify({"error": "Observation not found"}), 404
+        if teacher_id and _entry_teacher_id(observations[idx]) != teacher_id:
+            return jsonify({"error": "You can only modify your own observations"}), 403
 
         if request.method == "DELETE":
             removed = observations.pop(idx)
@@ -10852,6 +10902,7 @@ async def enter_student_report_card():
                     "marks": current_score,
                     "totalMark": total_mark,
                     "grade": grade, # This will be "" if not provided
+                    "teacher_id": teacherId,
                 }
             )
 
@@ -13719,6 +13770,7 @@ def get_student_report_card(student_id):
         # Get student's academic data
         academic_data = student_data.get("academicData", {})
         subjects = academic_data.get("subjects", {})
+        teacher_id = (request.args.get("teacher_id") or request.args.get("teacherId") or "").strip()
 
         # --- GRADE FETCHING LOGIC ---
         # 1. Try academicData first
@@ -13787,6 +13839,8 @@ def get_student_report_card(student_id):
             history = details.get("history", [])
             if not isinstance(history, list):
                 history = []
+            # Marks history is returned without teacher-level filtering.
+            # Filtering is handled in UI/use-case specific flows if needed.
 
             normalized_history = []
             for idx, entry in enumerate(history):
@@ -13888,6 +13942,7 @@ def _update_or_delete_report_card_history(student_id, payload, entry_id_from_pat
         subjects = {}
 
     action = (payload.get("action") or "").strip().lower()
+    teacher_id = str(payload.get("teacher_id") or payload.get("teacherId") or request.args.get("teacher_id") or request.args.get("teacherId") or "").strip()
     entry_id = entry_id_from_path or payload.get("entryId") or payload.get("entry_id")
     subject = payload.get("subject")
     timestamp = payload.get("timestamp")
@@ -13905,6 +13960,10 @@ def _update_or_delete_report_card_history(student_id, payload, entry_id_from_pat
     )
     if found_subject is None or found_index is None:
         return jsonify({"error": "History entry not found"}), 404
+    if teacher_id:
+        entry_teacher_id = _entry_teacher_id(found_entry)
+        if not entry_teacher_id or entry_teacher_id != teacher_id:
+            return jsonify({"error": "You can only modify your own marks"}), 403
 
     history = subjects.get(found_subject, {}).get("history", [])
     if not isinstance(history, list):
@@ -14894,11 +14953,76 @@ def fetch_curriculum():
     API route handler to fetch curriculum data.
     """
     teacher_id = request.args.get("teacherId")
-    
-    # ✅ FIX: Run the async function synchronously using your global loop
-    # This matches how you handled 'get_students_list'
+
+    def _extract_curriculum_from_response(resp_obj):
+        try:
+            if isinstance(resp_obj, tuple):
+                response = resp_obj[0]
+            else:
+                response = resp_obj
+            payload = response.get_json(silent=True) or {}
+            items = payload.get("curriculum", [])
+            if isinstance(items, list):
+                return items
+            return []
+        except Exception:
+            return []
+
+    def _load_curriculum_from_local_json():
+        fallback_path = os.path.join(os.path.dirname(__file__), "curriculum_by_grade.json")
+        if not os.path.exists(fallback_path):
+            return []
+        try:
+            with open(fallback_path, "r", encoding="utf-8") as f:
+                raw = json.load(f)
+            if not isinstance(raw, dict):
+                return []
+            flattened = []
+            seen = set()
+            for grade, classes in raw.items():
+                if not isinstance(classes, dict):
+                    continue
+                for _, subjects in classes.items():
+                    if not isinstance(subjects, list):
+                        continue
+                    for subject in subjects:
+                        grade_val = str(grade or "").strip()
+                        subject_val = str(subject or "").strip()
+                        if not grade_val or not subject_val:
+                            continue
+                        dedupe_key = (grade_val.lower(), subject_val.lower())
+                        if dedupe_key in seen:
+                            continue
+                        seen.add(dedupe_key)
+                        flattened.append(
+                            {
+                                "curriculum_id": f"{grade_val}::{subject_val}",
+                                "curriculum_name": subject_val,
+                                "grade": grade_val,
+                                "subject": subject_val,
+                            }
+                        )
+            return flattened
+        except Exception as e:
+            logging.error(f"Failed to load fallback curriculum JSON: {e}")
+            return []
+
+    # ✅ Run async function synchronously using shared loop
     try:
-        return loop.run_until_complete(get_curriculum_list(teacher_id))
+        primary_resp = loop.run_until_complete(get_curriculum_list(teacher_id))
+        primary_items = _extract_curriculum_from_response(primary_resp)
+        if primary_items:
+            return primary_resp
+
+        if teacher_id:
+            # Keep teacher-scoped requests strict to avoid leaking random/global subjects.
+            return jsonify({"curriculum": []}), 200
+
+        fallback_items = _load_curriculum_from_local_json()
+        if fallback_items:
+            return jsonify({"curriculum": fallback_items}), 200
+
+        return primary_resp
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
