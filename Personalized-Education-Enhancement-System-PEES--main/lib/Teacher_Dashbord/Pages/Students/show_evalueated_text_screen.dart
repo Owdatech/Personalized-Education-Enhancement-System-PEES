@@ -43,6 +43,36 @@ class _EvaluatedScreenState extends State<EvaluatedScreen> {
                         child: MarkdownBody(
                           data: widget.text,
                           selectable: true,
+                          styleSheet: MarkdownStyleSheet.fromTheme(
+                                  Theme.of(context))
+                              .copyWith(
+                            p: const TextStyle(
+                                fontSize: 15, color: AppColor.text),
+                            h1: const TextStyle(
+                                fontSize: 22,
+                                color: AppColor.white,
+                                fontWeight: FontWeight.bold),
+                            h2: const TextStyle(
+                                fontSize: 20,
+                                color: AppColor.white,
+                                fontWeight: FontWeight.bold),
+                            h3: const TextStyle(
+                                fontSize: 18,
+                                color: AppColor.white,
+                                fontWeight: FontWeight.bold),
+                            listBullet: const TextStyle(
+                                fontSize: 15, color: AppColor.text),
+                            strong: const TextStyle(
+                                fontSize: 15,
+                                color: AppColor.white,
+                                fontWeight: FontWeight.bold),
+                            em: const TextStyle(
+                                fontSize: 15, color: AppColor.text),
+                            code: const TextStyle(
+                                fontSize: 14, color: AppColor.white),
+                            blockquote: const TextStyle(
+                                fontSize: 15, color: AppColor.text),
+                          ),
                           extensionSet: md.ExtensionSet(
                             md.ExtensionSet.gitHubFlavored.blockSyntaxes,
                             [

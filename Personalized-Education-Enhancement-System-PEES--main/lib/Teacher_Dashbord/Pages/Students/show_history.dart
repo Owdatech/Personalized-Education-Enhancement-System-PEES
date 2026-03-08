@@ -106,9 +106,7 @@ class _ShowHistoryScreenState extends State<ShowHistoryScreen> {
                             "examHistoryTitle".tr,
                             style: NotoSansArabicCustomTextStyle.bold.copyWith(
                                 fontSize: 18,
-                                color: themeManager.isHighContrast
-                                    ? AppColor.white
-                                    : AppColor.buttonGreen),
+                                color: AppColor.white),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -177,7 +175,7 @@ class _ShowHistoryScreenState extends State<ShowHistoryScreen> {
                                                                     fontSize:
                                                                         14,
                                                                     color: AppColor
-                                                                        .black)),
+                                                                        .white)),
                                                         const SizedBox(
                                                             width: 7),
                                                         Text(
@@ -189,7 +187,7 @@ class _ShowHistoryScreenState extends State<ShowHistoryScreen> {
                                                                     fontSize:
                                                                         13,
                                                                     color: AppColor
-                                                                        .black)),
+                                                                        .text)),
                                                       ],
                                                     ),
                                                     Row(
@@ -202,7 +200,7 @@ class _ShowHistoryScreenState extends State<ShowHistoryScreen> {
                                                                     fontSize:
                                                                         14,
                                                                     color: AppColor
-                                                                        .black)),
+                                                                        .white)),
                                                         const SizedBox(
                                                             width: 7),
                                                         Text(
@@ -214,7 +212,7 @@ class _ShowHistoryScreenState extends State<ShowHistoryScreen> {
                                                                     fontSize:
                                                                         13,
                                                                     color: AppColor
-                                                                        .black))
+                                                                        .text))
                                                       ],
                                                     ),
                                                     Row(
@@ -253,7 +251,7 @@ class _ShowHistoryScreenState extends State<ShowHistoryScreen> {
                                                                           fontSize:
                                                                               14,
                                                                           color:
-                                                                              AppColor.black)),
+                                                                              AppColor.white)),
                                                               Text(
                                                                   exams[index]
                                                                       .date,
@@ -263,7 +261,7 @@ class _ShowHistoryScreenState extends State<ShowHistoryScreen> {
                                                                           fontSize:
                                                                               13,
                                                                           color:
-                                                                              AppColor.black)),
+                                                                              AppColor.text)),
                                                             ],
                                                           )
                                                         : const SizedBox(),

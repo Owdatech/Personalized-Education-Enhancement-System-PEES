@@ -151,9 +151,57 @@ class _PdfOcrScreenState extends State<PdfOcrScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     MarkdownBody(
-                                      data: widget.evaluationReport ??
-                                          "No evaluation report available",
+                                      data: (widget.evaluationReport != null &&
+                                              widget.evaluationReport!
+                                                  .trim()
+                                                  .isNotEmpty)
+                                          ? widget.evaluationReport!
+                                          : "No evaluation report available",
                                       selectable: true,
+                                      styleSheet: MarkdownStyleSheet.fromTheme(
+                                              Theme.of(context))
+                                          .copyWith(
+                                        p: NotoSansArabicCustomTextStyle.medium
+                                            .copyWith(
+                                                fontSize: 15,
+                                                color: AppColor.text),
+                                        h1: NotoSansArabicCustomTextStyle.bold
+                                            .copyWith(
+                                                fontSize: 22,
+                                                color: AppColor.white),
+                                        h2: NotoSansArabicCustomTextStyle.bold
+                                            .copyWith(
+                                                fontSize: 20,
+                                                color: AppColor.white),
+                                        h3: NotoSansArabicCustomTextStyle.bold
+                                            .copyWith(
+                                                fontSize: 18,
+                                                color: AppColor.white),
+                                        listBullet:
+                                            NotoSansArabicCustomTextStyle.medium
+                                                .copyWith(
+                                                    fontSize: 15,
+                                                    color: AppColor.text),
+                                        strong:
+                                            NotoSansArabicCustomTextStyle.bold
+                                                .copyWith(
+                                                    fontSize: 15,
+                                                    color: AppColor.white),
+                                        em: NotoSansArabicCustomTextStyle.medium
+                                            .copyWith(
+                                                fontSize: 15,
+                                                color: AppColor.text),
+                                        code: NotoSansArabicCustomTextStyle
+                                            .medium
+                                            .copyWith(
+                                                fontSize: 14,
+                                                color: AppColor.white),
+                                        blockquote:
+                                            NotoSansArabicCustomTextStyle.medium
+                                                .copyWith(
+                                                    fontSize: 15,
+                                                    color: AppColor.text),
+                                      ),
                                       extensionSet: md.ExtensionSet(
                                         md.ExtensionSet.gitHubFlavored
                                             .blockSyntaxes,
@@ -249,7 +297,7 @@ class _PdfOcrScreenState extends State<PdfOcrScreen> {
                                                           .copyWith(
                                                               fontSize: 14,
                                                               color: AppColor
-                                                                  .black)),
+                                                                  .white)),
                                             ],
                                           ),
                                           const SizedBox(height: 7),
@@ -265,7 +313,7 @@ class _PdfOcrScreenState extends State<PdfOcrScreen> {
                                                   .regular
                                                   .copyWith(
                                                       fontSize: 14,
-                                                      color: AppColor.black),
+                                                      color: AppColor.white),
                                               decoration: InputDecoration(
                                                 border: InputBorder.none,
                                                 hintText: "feedbackHint".tr,
@@ -277,7 +325,7 @@ class _PdfOcrScreenState extends State<PdfOcrScreen> {
                                                         .regular
                                                         .copyWith(
                                                             color:
-                                                                AppColor.text,
+                                                                AppColor.labelText,
                                                             fontSize: 14),
                                               ),
                                             ),
