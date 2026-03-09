@@ -41,6 +41,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   TextEditingController profileRoleController = TextEditingController();
   TextEditingController addressController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
+  TextEditingController newPasswordController = TextEditingController();
+  TextEditingController confirmPasswordController = TextEditingController();
   List<AssignGradeModel> assignGrade = [];
   List<Map<String, dynamic>> passGrade = [];
   Map<String, Map<String, List<String>>> studentGradeMap = {};
@@ -70,8 +72,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     String? address = addressController.text;
     String? phone = phoneController.text;
     String? email = emailAddressController.text;
+    String newPassword = newPasswordController.text.trim();
+    String confirmPassword = confirmPasswordController.text.trim();
     if (name.isEmpty) {
       Utils.snackBar("nameEmpty".tr, context);
+    } else if (newPassword.isNotEmpty && newPassword.length < 8) {
+      Utils.snackBar("newPasswordLength".tr, context);
+    } else if (newPassword.isNotEmpty && confirmPassword.isEmpty) {
+      Utils.snackBar("confirmPasswordEmpty".tr, context);
+    } else if (newPassword.isEmpty && confirmPassword.isNotEmpty) {
+      Utils.snackBar("newPasswordEmpty".tr, context);
+    } else if (newPassword != confirmPassword) {
+      Utils.snackBar("passwordMismatch".tr, context);
     } else {
       String className = classes.firstWhere((c) => c["id"] == selectedClass,
           orElse: () => {"name": "Unknown"})["name"];
@@ -111,6 +123,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         gradesPayload,
         widget.model.userID ?? "",
         jwtToken ?? "",
+        password: newPassword.isNotEmpty ? newPassword : null,
         associatedStudentIds:
             widget.model.role == "parent" && selectedStudentIds != null
                 ? selectedStudentIds.toList()
@@ -1387,6 +1400,44 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ],
         ),
         const SizedBox(height: 15),
+        Row(
+          children: [
+            Text("newPasswordTitle".tr,
+                style: PoppinsCustomTextStyle.semibold.copyWith(
+                    color: AppColor.black,
+                    fontSize: fontSizeProvider.fontSize)),
+            const SizedBox(width: 30),
+            SizedBox(
+              height: 35,
+              width: 650,
+              child: AppTextFieldBlank(
+                  textController: newPasswordController,
+                  isObscure: true,
+                  hintText: "newPasswordHint".tr,
+                  icon: null),
+            ),
+          ],
+        ),
+        const SizedBox(height: 15),
+        Row(
+          children: [
+            Text("confirmPasswordTitle".tr,
+                style: PoppinsCustomTextStyle.semibold.copyWith(
+                    color: AppColor.black,
+                    fontSize: fontSizeProvider.fontSize)),
+            const SizedBox(width: 30),
+            SizedBox(
+              height: 35,
+              width: 650,
+              child: AppTextFieldBlank(
+                  textController: confirmPasswordController,
+                  isObscure: true,
+                  hintText: "confirmPasswordHint".tr,
+                  icon: null),
+            ),
+          ],
+        ),
+        const SizedBox(height: 15),
         if (widget.model.role == "student")
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1530,6 +1581,34 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             textController: emailAddressController,
             readOnly: true,
             hintText: "emailHintTitle".tr,
+            icon: null),
+      ),
+      const SizedBox(height: 10),
+      Text("newPasswordTitle".tr,
+          style: PoppinsCustomTextStyle.semibold.copyWith(
+              color: AppColor.black, fontSize: fontSizeProvider.fontSize)),
+      const SizedBox(height: 5),
+      SizedBox(
+        height: 35,
+        width: 650,
+        child: AppTextFieldBlank(
+            textController: newPasswordController,
+            isObscure: true,
+            hintText: "newPasswordHint".tr,
+            icon: null),
+      ),
+      const SizedBox(height: 10),
+      Text("confirmPasswordTitle".tr,
+          style: PoppinsCustomTextStyle.semibold.copyWith(
+              color: AppColor.black, fontSize: fontSizeProvider.fontSize)),
+      const SizedBox(height: 5),
+      SizedBox(
+        height: 35,
+        width: 650,
+        child: AppTextFieldBlank(
+            textController: confirmPasswordController,
+            isObscure: true,
+            hintText: "confirmPasswordHint".tr,
             icon: null),
       ),
       const SizedBox(height: 10),

@@ -292,7 +292,8 @@ class HeadMasterServices extends BaseVM {
 
   Future<ApiResponse> updateUser(String email, String name, String phone,
       String role, dynamic grades, String userId, String token,
-      {List<String>? associatedStudentIds} // Optional parameter
+      {List<String>? associatedStudentIds,
+      String? password} // Optional parameter
       ) async {
     final String url = '${Config.baseURL}${ApiEndPoint.updateUser}$userId';
     final Map<String, dynamic> requestBody = {
@@ -306,6 +307,9 @@ class HeadMasterServices extends BaseVM {
     // Conditionally add associatedStudentIds if role is 'parent' and value is provided
     if (role.toLowerCase() == 'parent' && associatedStudentIds != null) {
       requestBody["associatedStudentIds"] = associatedStudentIds;
+    }
+    if (password != null && password.trim().isNotEmpty) {
+      requestBody["password"] = password.trim();
     }
 
     setLoading(true);

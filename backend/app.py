@@ -50,6 +50,14 @@ if not firebase_admin._apps:
 db = firestore.client()
 bucket = storage.bucket()
 
+def get_password_reset_auth_app():
+    try:
+        return firebase_admin.get_app("password_reset_app")
+    except ValueError:
+        cred = credentials.Certificate("serviceAccountKey.json")
+        return firebase_admin.initialize_app(cred, name="password_reset_app")
+
+
 # Configure logging
 logging.basicConfig(
     level=logging.ERROR, format="%(asctime)s %(levelname)s: %(message)s"
@@ -72,9 +80,8 @@ except Exception:
         return "en"
 from openai import OpenAI
 
-client_openai = OpenAI(
-    api_key="YOUR_OPENAI_API_KEY"
-)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+client_openai = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 
 # Helper Functions
@@ -1608,7 +1615,7 @@ def update_student_profile():
 
 #             #  Update Firebase Authentication Password
 #             try:
-#                 auth.update_user(uid=user_id, password=new_password)
+#                 auth.update_user(uid=user_id, password=new_password, app=get_password_reset_auth_app())
 #             except firebase_admin.auth.UserNotFoundError:
 #                 return (
 #                     jsonify({"error": "User not found in Firebase Authentication"}),
@@ -6079,7 +6086,11 @@ def update_user11(user_id):
         if "name" in updates: mapped_updates["profileInfo.personalInformation.name"] = updates["name"]
         if "contactNumber" in updates: mapped_updates["profileInfo.contactInformation.phoneNumber"] = updates.get("contactNumber")
         if "role" in updates: mapped_updates["role"] = updates["role"]
-        if "password" in updates: mapped_updates["passwordHash"] = encrypt_password(updates["password"])
+        new_password = None
+        if "password" in updates:
+            new_password = str(updates["password"]).strip()
+            if new_password:
+                mapped_updates["passwordHash"] = encrypt_password(new_password)
 
         # 5. Parent Logic
         if user_role == "parent":
@@ -6229,6 +6240,8 @@ def update_user11(user_id):
 
         # 7. Commit Updates
         if mapped_updates:
+            if new_password:
+                auth.update_user(uid=user_id, password=new_password)
             user_ref.update(mapped_updates)
             
             # Sync to Students collection
@@ -11873,7 +11886,7 @@ import pdfkit
 # Configuration
 AZURE_ENDPOINT = "https://aiocr395080637747.cognitiveservices.azure.com/"
 AZURE_KEY = "b1b026f421034dabb948999b80a63e8c"
-OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 
 if not AZURE_KEY:
     raise ValueError("AZURE_KEY environment variable is missing.")
@@ -14612,6 +14625,8 @@ from test2 import extract_from_pdf
 
 @app.route("/upload_exam_script", methods=["POST"])
 async def upload_exam_script():
+    temp_file_path = None
+    temp_pdf_path = None
     try:
         # Extract data from form-data
         exam_name = request.form.get("exam_name")
@@ -14627,6 +14642,16 @@ async def upload_exam_script():
         subject = request.form.get("subject")
         language = request.form.get("language", "ar")
         teacher_id = request.form.get("teacherId")
+
+        if not exam_name or not date or not observation or not student_id:
+            return (
+                jsonify(
+                    {
+                        "error": "Missing required fields: exam_name, date, observation, studentId, or file"
+                    }
+                ),
+                400,
+            )
 
         if file.filename == "":
             return jsonify({"error": "No selected file"}), 400
@@ -14686,38 +14711,30 @@ async def upload_exam_script():
         # query = f"Using extracted text of students exam sheet Extracted text :-  {extracted_text} and optional topics {curriculum_coverage} \n gather relevant content from vectorstore."
 
         print(language)
-        teaching_plan, evaluation_report, plan_id = await generate_teaching_plan(
-            # extracted_text=extracted_text,
-            curriculum_id=curriculum_id,
-            student_id=student_id,
-            # query=query,
-            curriculumname=curriculumName,
-            image_url=None,
-            language=language,
-            temp_pdf_path=temp_pdf_path,
-            openai_client=openai_client,
-            subject=subject,
-            curriculum_coverage=curriculum_coverage,
-            teacher_id=teacher_id,
-        )
+        teaching_plan = {}
+        evaluation_report = ""
+        plan_id = str(uuid.uuid4()).replace("-", "_")
+        try:
+            teaching_plan, evaluation_report, plan_id = await generate_teaching_plan(
+                # extracted_text=extracted_text,
+                curriculum_id=curriculum_id,
+                student_id=student_id,
+                # query=query,
+                curriculumname=curriculumName,
+                image_url=None,
+                language=language,
+                temp_pdf_path=temp_pdf_path,
+                openai_client=openai_client,
+                subject=subject,
+                curriculum_coverage=curriculum_coverage,
+                teacher_id=teacher_id,
+            )
+        except Exception as plan_error:
+            print(f"Teaching plan generation failed: {plan_error}")
         # temp_pdf_path, openai_client,curriculum_id,subject,curriculum_coverage
 
         print(plan_id)
         print(evaluation_report)
-        # Validate required fields
-        # teaching_plan = ""
-        # evaluation_report = extracted_text
-        # plan_id = ""
-
-        if not exam_name or not date or not observation or not student_id:
-            return (
-                jsonify(
-                    {
-                        "error": "Missing required fields: exam_name, date, observation, studentId, or file"
-                    }
-                ),
-                400,
-            )
 
         # Verify if studentId exists in the students collection
         student_doc = db.collection("students").document(student_id).get()
@@ -14782,6 +14799,12 @@ async def upload_exam_script():
     finally:
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
+        if (
+            temp_pdf_path
+            and temp_pdf_path != temp_file_path
+            and os.path.exists(temp_pdf_path)
+        ):
+            os.remove(temp_pdf_path)
 
 
 @app.route("/api/teaching-plan-detail", methods=["GET"])
@@ -16318,12 +16341,8 @@ if not firebase_admin._apps:
 db = firestore.client()
 bucket = storage.bucket()
 
-# OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
-# if not OPENAI_API_KEY:
-#     raise ValueError("Missing OpenAI API key")
-client_openai = OpenAI(
-    api_key="YOUR_OPENAI_API_KEY"
-)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+client_openai = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 
 # Fetch student data from Firebase
@@ -17136,6 +17155,8 @@ def send_to_gpt(context_data, subjects_data):
     """
 
     try:
+        if client_openai is None:
+            raise RuntimeError("OPENAI_API_KEY is not configured")
         response = client_openai.chat.completions.create(
             model="gpt-4-turbo", 
             messages=[
@@ -21454,9 +21475,8 @@ if not firebase_admin._apps:
 db = firestore.client()
 from openai import OpenAI
 
-client_openai = OpenAI(
-    api_key="YOUR_OPENAI_API_KEY"
-)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+client_openai = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 
 # âœ… Helper Function: Fetch teacher name using student_id
@@ -21865,7 +21885,7 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
-OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 if not OPENAI_API_KEY:
     raise ValueError("Missing OpenAI API key")
 client_openai = openai.Client(api_key=OPENAI_API_KEY)

@@ -309,6 +309,7 @@ class LocaleString extends Translations {
           'passwordLength':
               "Password length must be greater than eight character.",
           'confirmPasswordEmpty': "Confirm Password can't be empty.",
+          'passwordMismatch': "Passwords do not match.",
           'newPasswordLength':
               "New Password length must be greater than eight character.",
           'successResetPassword': "Your Passsowrd is successfully reset.",
@@ -711,6 +712,7 @@ class LocaleString extends Translations {
           'newPasswordEmpty': "لا يمكن أن تكون كلمة المرور الجديدة فارغة",
           'passwordLength': "يجب أن تكون كلمة المرور أطول من ثمانية أحرف",
           'confirmPasswordEmpty': "تأكيد كلمة المرور لا يمكن أن يكون فارغًا",
+          'passwordMismatch': "كلمتا المرور غير متطابقتين",
           'newPasswordLength':
               "يجب أن تكون كلمة المرور الجديدة أطول من ثمانية أحرف",
           'successResetPassword': "تمت إعادة تعيين كلمة المرور بنجاح",
