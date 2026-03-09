@@ -123,7 +123,7 @@ class _ObservationScreenParentState extends State<ObservationScreenParent> {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userId = prefs.getString('userId');
-      String url = '${Config.baseURL}curriculum?teacherId=$userId';
+      String url = '${Config.curriculumBaseURL}curriculum?teacherId=$userId';
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {

@@ -606,8 +606,8 @@ class _StudentDataScreenState extends State<StudentDataScreen> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userId = prefs.getString('userId');
       final String curriculumUrl = (userId != null && userId.trim().isNotEmpty)
-          ? '${Config.baseURL}curriculum?teacherId=${Uri.encodeComponent(userId)}'
-          : '${Config.baseURL}curriculum';
+          ? '${Config.curriculumBaseURL}curriculum?teacherId=${Uri.encodeComponent(userId)}'
+          : '${Config.curriculumBaseURL}curriculum';
       http.Response response = await http.get(Uri.parse(curriculumUrl));
       if (response.statusCode != 200) {
         // Fallback to unfiltered curriculum if teacher-based filtering fails.

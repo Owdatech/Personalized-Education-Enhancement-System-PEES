@@ -144,7 +144,7 @@ class _ObservationScreenState extends State<ObservationScreen> {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userId = prefs.getString('userId');
-      String url = '${Config.baseURL}curriculum?teacherId=$userId';
+      String url = '${Config.curriculumBaseURL}curriculum?teacherId=$userId';
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
@@ -1254,58 +1254,27 @@ class _ObservationScreenState extends State<ObservationScreen> {
                             : isMobile
                                 ? 10
                                 : 20),
-                    child: isMobile
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Wrap(
+                      spacing: 24,
+                      runSpacing: 10,
+                      alignment: selectedLanguage == 'ar'
+                          ? WrapAlignment.end
+                          : WrapAlignment.start,
+                      children: [
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 380),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                                Text("date".tr,
-                                    style: NotoSansArabicCustomTextStyle.medium
-                                        .copyWith(
-                                            fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.text)),
-                                const SizedBox(height: 5),
-                                SizedBox(
-                                    height: 25,
-                                    width: 250,
-                                    child: AppFillTextField(
-                                        textController: obsdateController,
-                                        readOnly: true,
-                                        suffixIcon: IconButton(
-                                            onPressed: () {
-                                              _obsSelectDate(context);
-                                            },
-                                            padding:
-                                                const EdgeInsets.only(left: 15),
-                                            icon: Image.asset(
-                                              AppImage.calendar,
-                                              width: 45,
-                                            )),
-                                        hintText: "selectDate".tr,
-                                        icon: null)),
-                                const SizedBox(height: 7),
-                                Text(
-                                  "subject".tr,
+                              Text("date".tr,
                                   style: NotoSansArabicCustomTextStyle.medium
                                       .copyWith(
                                           fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.text),
-                                ),
-                                const SizedBox(height: 5),
-                                obsSelectSubject(),
-                              ])
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(children: [
-                                Text("date".tr,
-                                    style: NotoSansArabicCustomTextStyle.medium
-                                        .copyWith(
-                                            fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.text)),
-                                const SizedBox(width: 25),
-                                SizedBox(
+                                          color: AppColor.text)),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: SizedBox(
                                     height: 25,
-                                    width: 250,
                                     child: AppFillTextField(
                                         textController: obsdateController,
                                         readOnly: true,
@@ -1321,23 +1290,29 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                             )),
                                         hintText: "selectDate".tr,
                                         icon: null)),
-                              ]),
-                              Padding(
-                                padding: EdgeInsets.only(right: 108),
-                                child: Row(children: [
-                                  Text(
-                                    "subject".tr,
-                                    style: NotoSansArabicCustomTextStyle.medium
-                                        .copyWith(
-                                            fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.text),
-                                  ),
-                                  const SizedBox(width: 25),
-                                  obsSelectSubject(),
-                                ]),
-                              )
+                              ),
                             ],
                           ),
+                        ),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 420),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "subject".tr,
+                                style: NotoSansArabicCustomTextStyle.medium
+                                    .copyWith(
+                                        fontSize: fontSizeProvider.fontSize,
+                                        color: AppColor.text),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(child: obsSelectSubject()),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 15),
                   Padding(
@@ -1387,6 +1362,9 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                     if (value == null) return;
                                     setState(() {
                                       attendanceStatus = value;
+                                      if (attendanceStatus == 'Absent') {
+                                        selectedBehaviorInClass = null;
+                                      }
                                     });
                                   },
                                 ),
@@ -1410,6 +1388,9 @@ class _ObservationScreenState extends State<ObservationScreen> {
                                     if (value == null) return;
                                     setState(() {
                                       attendanceStatus = value;
+                                      if (attendanceStatus == 'Absent') {
+                                        selectedBehaviorInClass = null;
+                                      }
                                     });
                                   },
                                 ),
@@ -1427,105 +1408,111 @@ class _ObservationScreenState extends State<ObservationScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: EdgeInsets.only(
-                        left: selectedLanguage == 'en'
-                            ? isMobile
-                                ? 10
-                                : 20
-                            : isMobile
-                                ? 10
-                                : 20,
-                        right: selectedLanguage == 'en'
-                            ? isMobile
-                                ? 10
-                                : 20
-                            : isMobile
-                                ? 10
-                                : 20),
-                    child: Align(
-                      alignment: selectedLanguage == 'ar'
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                      child: Directionality(
-                        textDirection: selectedLanguage == 'ar'
-                            ? TextDirection.rtl
-                            : TextDirection.ltr,
-                        child: Wrap(
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: [
-                            Text(
-                              "${"behaviorInClass".tr} :",
-                              style: NotoSansArabicCustomTextStyle.medium
-                                  .copyWith(
-                                      fontSize: fontSizeProvider.fontSize,
-                                      color: AppColor.text),
-                            ),
-                            Container(
-                              height: 32,
-                              width: isMobile ? 260 : 330,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              decoration: BoxDecoration(
-                                color: AppColor.textField,
-                                borderRadius: BorderRadius.circular(5),
-                                border: Border.all(
-                                    width: 1.0, color: AppColor.textGrey),
+                  if (attendanceStatus != 'Absent') ...[
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: EdgeInsets.only(
+                          left: selectedLanguage == 'en'
+                              ? isMobile
+                                  ? 10
+                                  : 20
+                              : isMobile
+                                  ? 10
+                                  : 20,
+                          right: selectedLanguage == 'en'
+                              ? isMobile
+                                  ? 10
+                                  : 20
+                              : isMobile
+                                  ? 10
+                                  : 20),
+                      child: Align(
+                        alignment: selectedLanguage == 'ar'
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: Directionality(
+                          textDirection: selectedLanguage == 'ar'
+                              ? TextDirection.rtl
+                              : TextDirection.ltr,
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              Text(
+                                "${"behaviorInClass".tr} :",
+                                style: NotoSansArabicCustomTextStyle.medium
+                                    .copyWith(
+                                        fontSize:
+                                            fontSizeProvider.fontSize,
+                                        color: AppColor.text),
                               ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: selectedBehaviorInClass,
-                                  isExpanded: true,
-                                  dropdownColor: AppColor.panelDarkSoft,
-                                  style: NotoSansArabicCustomTextStyle.regular
-                                      .copyWith(
-                                          fontSize: fontSizeProvider.fontSize,
-                                          color: AppColor.white),
-                                  hint: Text(
-                                    "selectBehaviorInClass".tr,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: NotoSansArabicCustomTextStyle.medium
-                                        .copyWith(
-                                            fontSize: fontSizeProvider.fontSize,
-                                            color: AppColor.textGrey),
+                              Container(
+                                height: 32,
+                                width: isMobile ? 260 : 330,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: AppColor.textField,
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(
+                                      width: 1.0, color: AppColor.textGrey),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: selectedBehaviorInClass,
+                                    isExpanded: true,
+                                    dropdownColor: AppColor.panelDarkSoft,
+                                    style:
+                                        NotoSansArabicCustomTextStyle.regular
+                                            .copyWith(
+                                                fontSize:
+                                                    fontSizeProvider.fontSize,
+                                                color: AppColor.white),
+                                    hint: Text(
+                                      "selectBehaviorInClass".tr,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: NotoSansArabicCustomTextStyle
+                                          .medium
+                                          .copyWith(
+                                              fontSize:
+                                                  fontSizeProvider.fontSize,
+                                              color: AppColor.textGrey),
+                                    ),
+                                    icon: Image.asset(AppImage.arrowDown,
+                                        width: 16),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedBehaviorInClass = value;
+                                      });
+                                    },
+                                    items: _behaviorOptions
+                                        .map((optionKey) =>
+                                            DropdownMenuItem<String>(
+                                              value: optionKey,
+                                              child: Text(
+                                                optionKey.tr,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
+                                                style: NotoSansArabicCustomTextStyle
+                                                    .regular
+                                                    .copyWith(
+                                                        fontSize:
+                                                            fontSizeProvider
+                                                                .fontSize,
+                                                        color: AppColor.white),
+                                              ),
+                                            ))
+                                        .toList(),
                                   ),
-                                  icon: Image.asset(AppImage.arrowDown,
-                                      width: 16),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      selectedBehaviorInClass = value;
-                                    });
-                                  },
-                                  items: _behaviorOptions
-                                      .map((optionKey) =>
-                                          DropdownMenuItem<String>(
-                                            value: optionKey,
-                                            child: Text(
-                                              optionKey.tr,
-                                              overflow: TextOverflow.ellipsis,
-                                              style:
-                                                  NotoSansArabicCustomTextStyle
-                                                      .regular
-                                                      .copyWith(
-                                                          fontSize:
-                                                              fontSizeProvider
-                                                                  .fontSize,
-                                                          color:
-                                                              AppColor.white),
-                                            ),
-                                          ))
-                                      .toList(),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 10),
                   SingleChildScrollView(
                     scrollDirection: isMobile ? Axis.horizontal : Axis.vertical,

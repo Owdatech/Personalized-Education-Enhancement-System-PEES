@@ -83,7 +83,8 @@ class _AddObservationUniversalScreenState
 
       final studentsUrl =
           "${Config.baseURL}${ApiEndPoint.studentlist}?userId=$userId";
-      final curriculumUrl = "${Config.baseURL}curriculum?teacherId=$userId";
+      final curriculumUrl =
+          "${Config.curriculumBaseURL}curriculum?teacherId=$userId";
 
       final responses = await Future.wait([
         http.get(Uri.parse(studentsUrl), headers: {"Content-Type": "application/json"}),
@@ -668,6 +669,9 @@ class _AddObservationUniversalScreenState
                                             if (value == null) return;
                                             setState(() {
                                               attendanceStatus = value;
+                                              if (attendanceStatus == 'Absent') {
+                                                selectedBehaviorInClass = null;
+                                              }
                                             });
                                           },
                                         ),
@@ -689,6 +693,9 @@ class _AddObservationUniversalScreenState
                                             if (value == null) return;
                                             setState(() {
                                               attendanceStatus = value;
+                                              if (attendanceStatus == 'Absent') {
+                                                selectedBehaviorInClass = null;
+                                              }
                                             });
                                           },
                                         ),
@@ -703,87 +710,98 @@ class _AddObservationUniversalScreenState
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            LayoutBuilder(builder: (context, constraints) {
-                              final behaviorWidth =
-                                  constraints.maxWidth > 620 ? 360.0 : constraints.maxWidth;
-                              return Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "${"behaviorInClass".tr} :",
-                                    style: NotoSansArabicCustomTextStyle.medium
-                                        .copyWith(color: AppColor.text),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  SizedBox(
-                                    width: behaviorWidth,
-                                    child: Container(
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        color: AppColor.textField,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                            color: AppColor.lightGrey, width: 1),
-                                      ),
-                                      child: DropdownButtonHideUnderline(
-                                        child: DropdownButton<String>(
-                                          value: _behaviorOptions
-                                                  .contains(selectedBehaviorInClass)
-                                              ? selectedBehaviorInClass
-                                              : null,
-                                          hint: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12),
-                                            child: Text(
-                                              "selectBehaviorInClass".tr,
-                                              style: NotoSansArabicCustomTextStyle.regular
-                                                  .copyWith(
-                                                      color: AppColor.labelText,
-                                                      fontSize: 13),
+                            if (attendanceStatus != 'Absent') ...[
+                              const SizedBox(height: 12),
+                              LayoutBuilder(builder: (context, constraints) {
+                                final behaviorWidth = constraints.maxWidth > 620
+                                    ? 360.0
+                                    : constraints.maxWidth;
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "${"behaviorInClass".tr} :",
+                                      style: NotoSansArabicCustomTextStyle.medium
+                                          .copyWith(color: AppColor.text),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    SizedBox(
+                                      width: behaviorWidth,
+                                      child: Container(
+                                        height: 44,
+                                        decoration: BoxDecoration(
+                                          color: AppColor.textField,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                              color: AppColor.lightGrey,
+                                              width: 1),
+                                        ),
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            value: _behaviorOptions.contains(
+                                                    selectedBehaviorInClass)
+                                                ? selectedBehaviorInClass
+                                                : null,
+                                            hint: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12),
+                                              child: Text(
+                                                "selectBehaviorInClass".tr,
+                                                style:
+                                                    NotoSansArabicCustomTextStyle
+                                                        .regular
+                                                        .copyWith(
+                                                            color: AppColor
+                                                                .labelText,
+                                                            fontSize: 13),
+                                              ),
                                             ),
-                                          ),
-                                          isExpanded: true,
-                                          dropdownColor: AppColor.panelDarkSoft,
-                                          icon: const Padding(
-                                            padding:
-                                                EdgeInsets.only(right: 12, left: 6),
-                                            child: Icon(Icons.keyboard_arrow_down,
-                                                color: AppColor.textGrey),
-                                          ),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              selectedBehaviorInClass = value;
-                                            });
-                                          },
-                                          items: _behaviorOptions
-                                              .map((behaviorKey) =>
-                                                  DropdownMenuItem<String>(
-                                                    value: behaviorKey,
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                              horizontal: 12),
-                                                      child: Text(
-                                                        behaviorKey.tr,
-                                                        style:
-                                                            NotoSansArabicCustomTextStyle
-                                                                .medium
-                                                                .copyWith(
-                                                                    color: AppColor
-                                                                        .text,
-                                                                    fontSize: 13),
+                                            isExpanded: true,
+                                            dropdownColor:
+                                                AppColor.panelDarkSoft,
+                                            icon: const Padding(
+                                              padding: EdgeInsets.only(
+                                                  right: 12, left: 6),
+                                              child: Icon(
+                                                  Icons.keyboard_arrow_down,
+                                                  color: AppColor.textGrey),
+                                            ),
+                                            onChanged: (value) {
+                                              setState(() {
+                                                selectedBehaviorInClass = value;
+                                              });
+                                            },
+                                            items: _behaviorOptions
+                                                .map((behaviorKey) =>
+                                                    DropdownMenuItem<String>(
+                                                      value: behaviorKey,
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 12),
+                                                        child: Text(
+                                                          behaviorKey.tr,
+                                                          style: NotoSansArabicCustomTextStyle
+                                                              .medium
+                                                              .copyWith(
+                                                                  color: AppColor
+                                                                      .text,
+                                                                  fontSize: 13),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ))
-                                              .toList(),
+                                                    ))
+                                                .toList(),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              );
-                            }),
+                                  ],
+                                );
+                              }),
+                            ],
                             const SizedBox(height: 14),
                             Text(
                               "${"observation".tr} :",

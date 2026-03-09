@@ -174,7 +174,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userId = prefs.getString('userId');
       final response = await http
-          .get(Uri.parse('${Config.baseURL}curriculum?teacherId=$userId'));
+          .get(Uri.parse('${Config.curriculumBaseURL}curriculum?teacherId=$userId'));
       viewModel.setLoading(true);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

@@ -6,8 +6,10 @@ enum Flavor {
 }
 
 class Config {
-  static Flavor appFlavor = Flavor.RELEASE;
+  static Flavor appFlavor = Flavor.DEVELOPMENT;
   static const String _baseUrlFromEnv = String.fromEnvironment('API_BASE_URL');
+  static const String _curriculumBaseUrlFromEnv =
+      String.fromEnvironment('CURRICULUM_API_BASE_URL');
 
   static String get helloMessage {
     switch (appFlavor) {
@@ -28,8 +30,17 @@ class Config {
       case Flavor.RELEASE:
         return "https://api.edupaths.app/";
       case Flavor.DEVELOPMENT:
-        return '';
+        return "http://127.0.0.1:5001/";
     }
+  }
+
+  static String get curriculumBaseURL {
+    if (_curriculumBaseUrlFromEnv.trim().isNotEmpty) {
+      final custom = _curriculumBaseUrlFromEnv.trim();
+      return custom.endsWith('/') ? custom : '$custom/';
+    }
+
+    return "https://api.edupaths.app/";
   }
 
   static String getProfileUrl(String path) {
