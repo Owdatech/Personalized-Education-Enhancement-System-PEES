@@ -58,6 +58,93 @@ def get_password_reset_auth_app():
         return firebase_admin.initialize_app(cred, name="password_reset_app")
 
 
+def sanitize_grade_key(key):
+    key = str(key).upper().strip()
+    key = re.sub(r'[\s\./\-]+', '_', key)
+    key = key.replace('_(', '(').replace(')_', ')')
+    key = re.sub(r'_{2,}', '_', key)
+    return key.strip('_')
+
+
+def extract_grade_map_for_user(user_data):
+    assigned = user_data.get("assignedGrades", {}) or {}
+    if isinstance(assigned, dict) and isinstance(assigned.get("grades"), dict):
+        return assigned.get("grades", {})
+    if isinstance(assigned, dict):
+        return assigned
+    return {}
+
+
+def extract_normalized_grade_keys(user_data):
+    return {
+        sanitize_grade_key(grade_key)
+        for grade_key in extract_grade_map_for_user(user_data).keys()
+    }
+
+
+def sync_student_teacher_links(student_id, student_data=None):
+    user_ref = db.collection("users").document(student_id)
+    student_ref = db.collection("students").document(student_id)
+
+    if student_data is None:
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            raise ValueError(f"Student {student_id} not found")
+        student_data = user_doc.to_dict() or {}
+
+    student_grade_keys = extract_normalized_grade_keys(student_data)
+
+    teachers = list(db.collection("users").where("role", "==", "teacher").stream())
+    matched_teacher_ids = set()
+    teacher_updates = []
+
+    for teacher_doc in teachers:
+        teacher_id = teacher_doc.id
+        teacher_data = teacher_doc.to_dict() or {}
+        teacher_grade_keys = extract_normalized_grade_keys(teacher_data)
+        should_link = bool(student_grade_keys and teacher_grade_keys and not student_grade_keys.isdisjoint(teacher_grade_keys))
+        currently_linked = student_id in (teacher_data.get("associatedIds") or [])
+
+        if should_link:
+            matched_teacher_ids.add(teacher_id)
+            if not currently_linked:
+                teacher_updates.append((teacher_id, firestore.ArrayUnion([student_id])))
+        elif currently_linked:
+            teacher_updates.append((teacher_id, firestore.ArrayRemove([student_id])))
+
+    existing_associated_ids = list(student_data.get("associatedIds") or [])
+    teacher_ids = {teacher_doc.id for teacher_doc in teachers}
+    existing_teacher_ids = {assoc_id for assoc_id in existing_associated_ids if assoc_id in teacher_ids}
+    teacher_ids_to_add = matched_teacher_ids - existing_teacher_ids
+    teacher_ids_to_remove = existing_teacher_ids - matched_teacher_ids
+
+    batch = db.batch()
+    batch_count = 0
+
+    for teacher_id, update_op in teacher_updates:
+        batch.update(db.collection("users").document(teacher_id), {"associatedIds": update_op})
+        batch_count += 1
+        if batch_count >= 400:
+            batch.commit()
+            batch = db.batch()
+            batch_count = 0
+
+    if teacher_ids_to_add:
+        batch.set(user_ref, {"associatedIds": firestore.ArrayUnion(list(teacher_ids_to_add))}, merge=True)
+        batch.set(student_ref, {"associatedIds": firestore.ArrayUnion(list(teacher_ids_to_add))}, merge=True)
+        batch_count += 2
+
+    if teacher_ids_to_remove:
+        batch.set(user_ref, {"associatedIds": firestore.ArrayRemove(list(teacher_ids_to_remove))}, merge=True)
+        batch.set(student_ref, {"associatedIds": firestore.ArrayRemove(list(teacher_ids_to_remove))}, merge=True)
+        batch_count += 2
+
+    if batch_count > 0:
+        batch.commit()
+
+    return sorted(matched_teacher_ids)
+
+
 # Configure logging
 logging.basicConfig(
     level=logging.ERROR, format="%(asctime)s %(levelname)s: %(message)s"
@@ -6040,20 +6127,11 @@ def update_user11(user_id):
     Handles user profile updates. 
     FIX: Ensures assignedGrades subjects are always stored as Arrays/Lists.
     """
-    
-    # --- HELPER FUNCTIONS ---
-    def sanitize_grade_key(key):
-        key = str(key).upper().strip()
-        key = re.sub(r'[\s\./]', '_', key)
-        key = key.replace('_(', '(').replace(')_', ')')
-        key = re.sub(r'_{2,}', '_', key)
-        return key.strip('_')
 
     def extract_grade_number(grade_str):
         temp_key = re.sub(r'\s*\([^)]*\)', '', sanitize_grade_key(grade_str))
         match = re.search(r"GRADE_?(\d+)", temp_key)
         return int(match.group(1)) if match else None
-    # --- END HELPER FUNCTIONS ---
 
     try:
         # 1. Authorization Check
@@ -6121,46 +6199,6 @@ def update_user11(user_id):
 
                 normalized_updates = {sanitize_grade_key(k): v for k, v in updates["grades"].items()}
                 mapped_updates["assignedGrades"] = {"grades": normalized_updates}
-
-                # Student Auto-Link Logic (Teacher Reconciliation)
-                try:
-                    student_new_grade_keys = set(normalized_updates.keys())
-                    teachers_ref = db.collection("users").where("role", "==", "teacher")
-                    teachers = teachers_ref.stream()
-
-                    batch = db.batch()
-                    batch_count = 0
-                    updates_made = False
-                    student_id_list = [user_id] 
-
-                    for teacher_doc in teachers:
-                        t_data = teacher_doc.to_dict()
-                        t_ref = db.collection("users").document(teacher_doc.id)
-                        t_assigned = t_data.get("assignedGrades", {})
-                        t_grade_keys = set(sanitize_grade_key(k) for k in t_assigned.keys())
-                        is_currently_associated = user_id in t_data.get("associatedIds", [])
-                        should_be_associated_now = not student_new_grade_keys.isdisjoint(t_grade_keys)
-
-                        action = None
-                        if should_be_associated_now and not is_currently_associated:
-                            batch.update(t_ref, {"associatedIds": firestore.ArrayUnion(student_id_list)})
-                            action = "Added"
-                        elif not should_be_associated_now and is_currently_associated:
-                            batch.update(t_ref, {"associatedIds": firestore.ArrayRemove(student_id_list)})
-                            action = "Removed"
-
-                        if action:
-                            batch_count += 1
-                            updates_made = True
-                            if batch_count >= 450:
-                                batch.commit()
-                                batch = db.batch()
-                                batch_count = 0
-
-                    if updates_made and batch_count > 0:
-                        batch.commit()
-                except Exception as e:
-                    print(f"⚠️ Warning: Failed to perform full teacher reconciliation: {e}")
 
             # --- CASE B: TEACHER UPDATE (FIXED) ---
             elif user_role == "teacher":
@@ -6256,6 +6294,8 @@ def update_user11(user_id):
                             student_sync_updates[key] = val
                     if student_sync_updates:
                         student_ref.update(student_sync_updates)
+                    refreshed_student = user_ref.get().to_dict() or {}
+                    sync_student_teacher_links(user_id, refreshed_student)
                 except Exception as e:
                     print(f"Warning: Student sync failed: {e}")
         else:
@@ -15928,14 +15968,6 @@ def add_user11():
         if not isinstance(associated_ids, list):
             return jsonify({"error": "associated_ids must be a list of IDs"}), 400
 
-        # Helper to normalize grade keys (removes dots, slashes, etc.)
-        def normalize_grade_key(key):
-            key = str(key).upper().strip()
-            key = re.sub(r'[\s\./\-]+', '_', key)
-            key = key.replace('_(', '(').replace(')_', ')')
-            key = re.sub(r'_{2,}', '_', key)
-            return key.strip('_')
-
         # --- LOGIC: TEACHER (FIXED) ---
         clean_assigned_grades = {}
         
@@ -15957,7 +15989,7 @@ def add_user11():
 
             # Sanitize & Format as LIST of subjects
             for grade_key, classes in processed_grades_dict.items():
-                norm_key = normalize_grade_key(grade_key)
+                norm_key = sanitize_grade_key(grade_key)
                 
                 if norm_key not in clean_assigned_grades:
                     clean_assigned_grades[norm_key] = {}
@@ -15996,7 +16028,7 @@ def add_user11():
                     s_grades_map = s_assigned.get('grades', s_assigned)
                     
                     if s_grades_map:
-                        norm_s_grades = {normalize_grade_key(k) for k in s_grades_map.keys()}
+                        norm_s_grades = {sanitize_grade_key(k) for k in s_grades_map.keys()}
                         
                         # If teacher shares ANY grade with student, link them
                         if not teacher_grade_keys.isdisjoint(norm_s_grades):
@@ -16069,6 +16101,17 @@ def add_user11():
         if role == "student":
             try:
                 db.collection("students").document(user_id).set(user_data)
+                teacher_ids = sync_student_teacher_links(user_id, user_data)
+                if teacher_ids:
+                    user_data["associatedIds"] = sorted(set((user_data.get("associatedIds") or []) + teacher_ids))
+                    db.collection("users").document(user_id).set(
+                        {"associatedIds": user_data["associatedIds"]},
+                        merge=True,
+                    )
+                    db.collection("students").document(user_id).set(
+                        {"associatedIds": user_data["associatedIds"]},
+                        merge=True,
+                    )
             except Exception as e:
                 logging.error(f"Failed mirror: {e}")
             
@@ -24392,4 +24435,3 @@ def headmasters_delete_user():
 if __name__ == "__main__":
     run_port = int(os.environ.get("PORT", "5001"))
     socketio.run(app, host='0.0.0.0', port=run_port, allow_unsafe_werkzeug=True)
-
