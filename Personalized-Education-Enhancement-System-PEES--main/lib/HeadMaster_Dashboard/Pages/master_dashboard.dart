@@ -156,14 +156,22 @@ class _MasterDashboardState extends State<MasterDashboard> {
     return !target.isBefore(start) && !target.isAfter(today);
   }
 
+  double _toPercentage(double marks, double? totalMarks) {
+    if (totalMarks != null && totalMarks > 0) {
+      return (marks / totalMarks) * 100.0;
+    }
+    if (marks >= 0 && marks <= 100) return marks;
+    return marks;
+  }
+
   String _formatChartValue(double value) {
-    return value.toStringAsFixed(2);
+    return '${value.toStringAsFixed(1)}%';
   }
 
   Color _scoreColor(double value) {
-    if (value >= 8.0) return const Color(0xFF8E7CFF);
-    if (value >= 6.0) return const Color(0xFF5C8DFF);
-    if (value >= 4.0) return const Color(0xFFF59E0B);
+    if (value >= 80.0) return const Color(0xFF8E7CFF);
+    if (value >= 60.0) return const Color(0xFF5C8DFF);
+    if (value >= 40.0) return const Color(0xFFF59E0B);
     return const Color(0xFFE53935);
   }
 
@@ -277,6 +285,11 @@ class _MasterDashboardState extends State<MasterDashboard> {
     });
   }
 
+  double? _parseDisplayedAverageMark(String text) {
+    final cleaned = text.replaceAll('%', '').trim();
+    return double.tryParse(cleaned);
+  }
+
   List<_GradeChartPoint> _buildGradeChartData() {
     final List<_GradeChartPoint> points = [];
 
@@ -295,7 +308,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
       for (final entry in subjects.entries) {
         final markText =
             _resolveSubjectAverageMark(metricItem, entry.key, entry.value);
-        final mark = double.tryParse(markText);
+        final mark = _parseDisplayedAverageMark(markText);
         if (mark != null) {
           sum += mark;
           count += 1;
@@ -360,7 +373,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
     for (final entry in subjects.entries) {
       final mark =
           _resolveSubjectAverageMark(metricItem, entry.key, entry.value);
-      final numeric = double.tryParse(mark);
+      final numeric = _parseDisplayedAverageMark(mark);
       if (numeric != null) {
         points.add(_SubjectChartPoint(
             subject: entry.key, averageMark: _roundToTwoDecimals(numeric)));
@@ -667,11 +680,13 @@ class _MasterDashboardState extends State<MasterDashboard> {
 
           final marks = _asDouble(historyItem['marks']);
           if (marks == null) continue;
+          final totalMarks = _asDouble(historyItem['totalMark']);
+          final percentage = _toPercentage(marks, totalMarks);
 
           gradeSubjectMarks
               .putIfAbsent(canonicalGrade, () => {})
               .putIfAbsent(subjectName, () => [])
-              .add(marks);
+              .add(percentage);
         }
       }
     }
@@ -841,7 +856,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
     }
 
     String toDisplay(double v) {
-      return v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(1);
+      return '${v.toStringAsFixed(1)}%';
     }
 
     if (rawValue == null) return "-";
@@ -1609,12 +1624,12 @@ class _MasterDashboardState extends State<MasterDashboard> {
                 ),
                 primaryYAxis: NumericAxis(
                   minimum: 0,
-                  maximum: 10,
-                  interval: 1,
+                  maximum: 100,
+                  interval: 20,
                   axisLine: const AxisLine(width: 0),
                   majorTickLines: const MajorTickLines(width: 0),
                   title: AxisTitle(
-                    text: "marksOutOfTen".tr,
+                    text: "percentageLabel".tr,
                     textStyle: NotoSansArabicCustomTextStyle.regular.copyWith(
                       fontSize: fontSizeProvider.fontSize - 1,
                       color: _textMuted,
@@ -1623,7 +1638,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
                 ),
                 tooltipBehavior: TooltipBehavior(
                   enable: true,
-                  format: 'point.x : point.y/10',
+                  format: 'point.x : point.y%',
                 ),
                 series: <CartesianSeries<_GradeChartPoint, String>>[
                   ColumnSeries<_GradeChartPoint, String>(
@@ -1844,12 +1859,12 @@ class _MasterDashboardState extends State<MasterDashboard> {
                       ),
                       primaryYAxis: NumericAxis(
                         minimum: 0,
-                        maximum: 10,
-                        interval: 1,
+                        maximum: 100,
+                        interval: 20,
                         axisLine: const AxisLine(width: 0),
                         majorTickLines: const MajorTickLines(width: 0),
                         title: AxisTitle(
-                          text: "marksOutOfTen".tr,
+                          text: "percentageLabel".tr,
                           textStyle:
                               NotoSansArabicCustomTextStyle.regular.copyWith(
                             fontSize: fontSizeProvider.fontSize - 1,
@@ -1859,7 +1874,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
                       ),
                       tooltipBehavior: TooltipBehavior(
                         enable: true,
-                        format: 'point.x : point.y/10',
+                        format: 'point.x : point.y%',
                       ),
                       series: <CartesianSeries<_SubjectChartPoint, String>>[
                         ColumnSeries<_SubjectChartPoint, String>(
