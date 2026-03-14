@@ -50,6 +50,11 @@ class LocaleString extends Translations {
               "No school performance data in the last 30 days",
           'performanceByGrade': "Performance by Grade",
           'subjectsByGrade': "Subjects by Grade",
+          'absenceByGrade': "Absence by Grade",
+          'absentStudentsCount': "Absent students",
+          'noAbsenceDataAvailable': "No absence data available yet",
+          'noAbsenceDataForSelectedMonth':
+              "No absences recorded for the selected month",
           'noSubjectMarksForSelectedGrade':
               "No subject marks available for selected grade",
           'schoolHint':
@@ -450,6 +455,11 @@ class LocaleString extends Translations {
               "لا توجد بيانات أداء للمدرسة خلال آخر 30 يومًا",
           'performanceByGrade': "الأداء حسب الصف",
           'subjectsByGrade': "المواد حسب الصف",
+          'absenceByGrade': "الغياب حسب الصف",
+          'absentStudentsCount': "عدد الطلاب الغائبين",
+          'noAbsenceDataAvailable': "لا توجد بيانات غياب متاحة بعد",
+          'noAbsenceDataForSelectedMonth':
+              "لا توجد حالات غياب مسجلة للشهر المحدد",
           'noSubjectMarksForSelectedGrade':
               "لا توجد درجات مواد متاحة للصف المحدد",
           'schoolHint':

@@ -32,8 +32,10 @@ class _MasterDashboardState extends State<MasterDashboard> {
   HeadMasterServices viewModel = HeadMasterServices();
   String? userId;
   String? _selectedGradeForSubjects;
+  String? _selectedAbsenceMonthKey;
 
   List<dynamic> metrics = [];
+  Map<String, Map<String, int>> _absenceCountsByMonthAndGrade = {};
   bool _loadingMetrics = false;
   String? _metricsError;
 
@@ -377,6 +379,206 @@ class _MasterDashboardState extends State<MasterDashboard> {
     return gradeOptions.isNotEmpty ? gradeOptions.first : null;
   }
 
+  bool _shouldExcludeMetricsSubject(String subjectName) {
+    final normalized = subjectName.trim().toLowerCase();
+    return normalized == 'e2e';
+  }
+
+  String _monthKey(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    return '${date.year}-$month';
+  }
+
+  String _dayKey(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
+  }
+
+  String _formatMonthLabel(String monthKey) {
+    final parts = monthKey.split('-');
+    if (parts.length != 2) return monthKey;
+    final year = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    if (year == null || month == null || month < 1 || month > 12) {
+      return monthKey;
+    }
+
+    const monthNamesEn = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    const monthNamesAr = [
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
+    ];
+
+    final isArabic = Directionality.of(context) == TextDirection.rtl;
+    final monthName = (isArabic ? monthNamesAr : monthNamesEn)[month - 1];
+    return '$monthName $year';
+  }
+
+  List<String> _availableAbsenceMonths() {
+    final months = _absenceCountsByMonthAndGrade.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
+    return months;
+  }
+
+  DateTime? _extractObservationDate(Map<dynamic, dynamic> item) {
+    const keys = [
+      'date',
+      'selectedDate',
+      'selected_date',
+      'observationDate',
+      'observation_date',
+      'entryDate',
+      'createdAt',
+      'created_at',
+      'updatedAt',
+      'updated_at',
+      'timestamp',
+    ];
+
+    for (final key in keys) {
+      if (!item.containsKey(key)) continue;
+      final parsed = _parseAnyDate(item[key]);
+      if (parsed != null) return parsed;
+    }
+    return _extractHistoryDate(item);
+  }
+
+  bool _isObservationMarkedAbsent(Map<dynamic, dynamic> item) {
+    final rawObservation = item['observation']?.toString() ?? '';
+    if (rawObservation.trim().isEmpty) return false;
+
+    final englishAbsent = RegExp(
+      r'(^|\n)\s*Attendance\s*:\s*Absent\b',
+      caseSensitive: false,
+      multiLine: true,
+    );
+    final arabicAbsent = RegExp(
+      r'(^|\n)\s*(حضور|الحضور)\s*:\s*(غائب|غائبة|غياب)\b',
+      multiLine: true,
+    );
+
+    return englishAbsent.hasMatch(rawObservation) ||
+        arabicAbsent.hasMatch(rawObservation);
+  }
+
+  Future<Map<String, Map<String, int>>> _buildAbsenceCountsFromObservations(
+      List<dynamic> students) async {
+    final Set<String> uniqueAbsences = <String>{};
+
+    Future<void> processStudent(dynamic student) async {
+      final studentId = _extractStudentId(student);
+      if (studentId == null) return;
+
+      final grade = _canonicalGrade(_extractStudentGrade(student));
+      if (grade.isEmpty) return;
+
+      final response = await http.get(
+        Uri.parse('${Config.baseURL}students/$studentId/observations'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) return;
+
+      final decoded = json.decode(response.body);
+      final observations = decoded is Map && decoded['observations'] is List
+          ? List<dynamic>.from(decoded['observations'])
+          : <dynamic>[];
+
+      for (final entry in observations) {
+        if (entry is! Map) continue;
+        final item = entry.cast<dynamic, dynamic>();
+        if (!_isObservationMarkedAbsent(item)) continue;
+
+        final date = _extractObservationDate(item);
+        if (date == null) continue;
+
+        final uniqueKey =
+            '${_monthKey(date)}|$grade|$studentId|${_dayKey(date)}';
+        uniqueAbsences.add(uniqueKey);
+      }
+    }
+
+    await Future.wait(students.map(processStudent));
+
+    final Map<String, Map<String, int>> counts = {};
+    for (final uniqueKey in uniqueAbsences) {
+      final parts = uniqueKey.split('|');
+      if (parts.length != 4) continue;
+      final month = parts[0];
+      final grade = parts[1];
+      counts.putIfAbsent(month, () => <String, int>{});
+      counts[month]![grade] = (counts[month]![grade] ?? 0) + 1;
+    }
+
+    counts.forEach((_, byGrade) {
+      final sortedEntries = byGrade.entries.toList()
+        ..sort((a, b) {
+          final aOrder = _extractGradeOrder(a.key);
+          final bOrder = _extractGradeOrder(b.key);
+          if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+          final aTrackOrder = _extractTrackOrder(a.key);
+          final bTrackOrder = _extractTrackOrder(b.key);
+          if (aTrackOrder != bTrackOrder) {
+            return aTrackOrder.compareTo(bTrackOrder);
+          }
+          return a.key.compareTo(b.key);
+        });
+      byGrade
+        ..clear()
+        ..addEntries(sortedEntries);
+    });
+
+    return counts;
+  }
+
+  List<_AbsenceChartPoint> _buildAbsenceChartData(String monthKey) {
+    final gradeCounts =
+        _absenceCountsByMonthAndGrade[monthKey] ?? <String, int>{};
+    final points = gradeCounts.entries
+        .map((entry) => _AbsenceChartPoint(
+              grade: entry.key,
+              absenceCount: entry.value,
+              order: _extractGradeOrder(entry.key),
+            ))
+        .toList();
+
+    points.sort((a, b) {
+      if (a.order != b.order) return a.order.compareTo(b.order);
+      final aTrackOrder = _extractTrackOrder(a.grade);
+      final bTrackOrder = _extractTrackOrder(b.grade);
+      if (aTrackOrder != bTrackOrder) {
+        return aTrackOrder.compareTo(bTrackOrder);
+      }
+      return a.grade.compareTo(b.grade);
+    });
+
+    return points;
+  }
+
   Future<List<dynamic>> _fetchStudentsList() async {
     final response = await http.get(
       Uri.parse("${Config.baseURL}students/list"),
@@ -395,8 +597,8 @@ class _MasterDashboardState extends State<MasterDashboard> {
     return <dynamic>[];
   }
 
-  Future<List<dynamic>> _buildMetricsFromReportCards() async {
-    final students = await _fetchStudentsList();
+  Future<List<dynamic>> _buildMetricsFromReportCards(
+      List<dynamic> students) async {
     if (students.isEmpty) return <dynamic>[];
 
     final Map<String, Map<String, List<double>>> gradeSubjectMarks = {};
@@ -437,7 +639,9 @@ class _MasterDashboardState extends State<MasterDashboard> {
 
       for (final entry in subjects.entries) {
         final subjectName = entry.key.toString().trim();
-        if (subjectName.isEmpty) continue;
+        if (subjectName.isEmpty || _shouldExcludeMetricsSubject(subjectName)) {
+          continue;
+        }
 
         final details = entry.value;
         if (details is! Map) continue;
@@ -486,6 +690,7 @@ class _MasterDashboardState extends State<MasterDashboard> {
           gradeSubjectMarks[grade] ?? <String, List<double>>{};
       final Map<String, dynamic> subjectsAvg = {};
       for (final subjectEntry in gradeSubjects.entries) {
+        if (_shouldExcludeMetricsSubject(subjectEntry.key)) continue;
         final values = subjectEntry.value;
         if (values.isEmpty) continue;
         final sum = values.fold<double>(0, (a, b) => a + b);
@@ -509,19 +714,29 @@ class _MasterDashboardState extends State<MasterDashboard> {
       _metricsError = null;
     });
     try {
-      final frontendMetrics = await _buildMetricsFromReportCards();
+      final students = await _fetchStudentsList();
+      final frontendMetrics = await _buildMetricsFromReportCards(students);
+      final absenceCounts = await _buildAbsenceCountsFromObservations(students);
       setState(() {
         metrics = frontendMetrics;
+        _absenceCountsByMonthAndGrade = absenceCounts;
         final grades = _availableGradesFromMetrics();
         if (_selectedGradeForSubjects == null ||
             !grades.contains(_selectedGradeForSubjects)) {
           _selectedGradeForSubjects = _firstGradeWithSubjectData(grades);
+        }
+        final months = _availableAbsenceMonths();
+        if (_selectedAbsenceMonthKey == null ||
+            !months.contains(_selectedAbsenceMonthKey)) {
+          _selectedAbsenceMonthKey = months.isNotEmpty ? months.first : null;
         }
         _metricsError = null;
       });
     } catch (e) {
       setState(() {
         metrics = [];
+        _absenceCountsByMonthAndGrade = {};
+        _selectedAbsenceMonthKey = null;
         _metricsError = 'Unable to load metrics';
       });
       print("School performance fetch failed: $e");
@@ -1139,526 +1354,765 @@ class _MasterDashboardState extends State<MasterDashboard> {
     final subjectChartData = _selectedGradeForSubjects == null
         ? <_SubjectChartPoint>[]
         : _buildSubjectChartDataForGrade(_selectedGradeForSubjects!);
-    return Container(
-      width: double.infinity,
-      decoration: _glassPanelDecoration(radius: 20),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCC8FF),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    "schoolperfo".tr,
-                    style: NotoSansArabicCustomTextStyle.bold.copyWith(
-                      fontSize: fontSizeProvider.fontSize + 4,
-                      color: _textLight,
+    final absenceMonths = _availableAbsenceMonths();
+    if (_selectedAbsenceMonthKey == null && absenceMonths.isNotEmpty) {
+      _selectedAbsenceMonthKey = absenceMonths.first;
+    }
+    final absenceChartData = _selectedAbsenceMonthKey == null
+        ? <_AbsenceChartPoint>[]
+        : _buildAbsenceChartData(_selectedAbsenceMonthKey!);
+
+    Widget buildSectionCard({
+      required String title,
+      Widget? subtitle,
+      required Widget child,
+    }) {
+      return Container(
+        width: double.infinity,
+        decoration: _glassPanelDecoration(radius: 20),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCC8FF),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Align(
-              alignment: Directionality.of(context) == TextDirection.rtl
-                  ? Alignment.centerRight
-                  : Alignment.centerLeft,
-              child: Text(
-                "schoolPerformanceWindow30Days".tr,
-                style: NotoSansArabicCustomTextStyle.regular.copyWith(
-                    fontSize: fontSizeProvider.fontSize - 1, color: _textMuted),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: NotoSansArabicCustomTextStyle.bold.copyWith(
+                        fontSize: fontSizeProvider.fontSize + 4,
+                        color: _textLight,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: isMobile ? 260 : 320,
-              child: _loadingMetrics
-                  ? const Center(child: CircularProgressIndicator())
-                  : _metricsError != null
-                      ? Center(
-                          child: Text(_metricsError!,
-                              style: NotoSansArabicCustomTextStyle.medium
-                                  .copyWith(color: _textLight)),
-                        )
-                      : metrics.isEmpty
-                          ? Center(
-                              child: Text(
-                                  "noSchoolPerformanceDataLast30Days".tr,
-                                  style: NotoSansArabicCustomTextStyle.medium
-                                      .copyWith(color: _textLight)),
-                            )
-                          : ListView.builder(
-                              itemCount: metrics.length,
-                              itemBuilder: (context, index) {
-                                final item = metrics[index];
-                                final metricItem = item is Map
-                                    ? item.cast<dynamic, dynamic>()
-                                    : <dynamic, dynamic>{};
-                                final grade = metricItem['grade'] ?? 'Unknown';
-                                final gradeDisplay =
-                                    _shortGradeLabel(grade.toString());
-                                final dynamic subjectsRaw =
-                                    metricItem['subjects'];
-                                final Map<String, dynamic> subjects =
-                                    subjectsRaw is Map
-                                        ? subjectsRaw.map(
-                                            (k, v) => MapEntry(k.toString(), v))
-                                        : <String, dynamic>{};
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 10),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        color: _panelDarkSoft,
-                                        borderRadius: BorderRadius.circular(7),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                              blurRadius: 5,
-                                              color: Color(0x22000000),
-                                              offset: Offset(0, 5))
-                                        ]),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const SizedBox(height: 5),
-                                          Row(
-                                            children: [
-                                              Text('${"grade".tr} : ',
-                                                  style:
-                                                      NotoSansArabicCustomTextStyle
-                                                          .semibold
-                                                          .copyWith(
-                                                              fontSize: 15,
-                                                              color:
-                                                                  _textLight)),
-                                              Text(gradeDisplay,
-                                                  style:
-                                                      NotoSansArabicCustomTextStyle
-                                                          .regular
-                                                          .copyWith(
-                                                              fontSize: 15,
-                                                              color:
-                                                                  _textLight)),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 5),
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text('${"subject".tr} : ',
-                                                  style:
-                                                      NotoSansArabicCustomTextStyle
-                                                          .semibold
-                                                          .copyWith(
-                                                              fontSize: 15,
-                                                              color:
-                                                                  _textLight)),
-                                              const SizedBox(width: 5),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: subjects.entries
-                                                      .map((e) {
-                                                    final mark =
-                                                        _resolveSubjectAverageMark(
-                                                            metricItem,
-                                                            e.key,
-                                                            e.value);
-                                                    if (mark != "-") {
-                                                      return Text(
-                                                        "${e.key} - ${"averageMarks".tr} : $mark",
-                                                        style: NotoSansArabicCustomTextStyle
-                                                            .regular
-                                                            .copyWith(
-                                                                fontSize: 14,
-                                                                color:
-                                                                    _textLight),
-                                                      );
-                                                    }
-                                                    final gradeSymbol =
-                                                        _extractGradeSymbol(
-                                                            e.value);
-                                                    return Text(
-                                                      "${e.key} - ${"averageGrade".tr} : $gradeSymbol",
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                subtitle,
+              ],
+              const SizedBox(height: 10),
+              child,
+            ],
+          ),
+        ),
+      );
+    }
+
+    final metricsWidget = SizedBox(
+      height: isMobile ? 260 : 320,
+      child: _loadingMetrics
+          ? const Center(child: CircularProgressIndicator())
+          : _metricsError != null
+              ? Center(
+                  child: Text(
+                    _metricsError!,
+                    style: NotoSansArabicCustomTextStyle.medium
+                        .copyWith(color: _textLight),
+                  ),
+                )
+              : metrics.isEmpty
+                  ? Center(
+                      child: Text(
+                        "noSchoolPerformanceDataLast30Days".tr,
+                        style: NotoSansArabicCustomTextStyle.medium
+                            .copyWith(color: _textLight),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: metrics.length,
+                      itemBuilder: (context, index) {
+                        final item = metrics[index];
+                        final metricItem = item is Map
+                            ? item.cast<dynamic, dynamic>()
+                            : <dynamic, dynamic>{};
+                        final grade = metricItem['grade'] ?? 'Unknown';
+                        final gradeDisplay = _shortGradeLabel(grade.toString());
+                        final dynamic subjectsRaw = metricItem['subjects'];
+                        final Map<String, dynamic> subjects = subjectsRaw is Map
+                            ? subjectsRaw
+                                .map((k, v) => MapEntry(k.toString(), v))
+                            : <String, dynamic>{};
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: _panelDarkSoft,
+                              borderRadius: BorderRadius.circular(7),
+                              boxShadow: const [
+                                BoxShadow(
+                                  blurRadius: 5,
+                                  color: Color(0x22000000),
+                                  offset: Offset(0, 5),
+                                )
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${"grade".tr} : ',
+                                        style: NotoSansArabicCustomTextStyle
+                                            .semibold
+                                            .copyWith(
+                                          fontSize: 15,
+                                          color: _textLight,
+                                        ),
+                                      ),
+                                      Text(
+                                        gradeDisplay,
+                                        style: NotoSansArabicCustomTextStyle
+                                            .regular
+                                            .copyWith(
+                                          fontSize: 15,
+                                          color: _textLight,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${"subject".tr} : ',
+                                        style: NotoSansArabicCustomTextStyle
+                                            .semibold
+                                            .copyWith(
+                                          fontSize: 15,
+                                          color: _textLight,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: subjects.entries.map((e) {
+                                            final mark =
+                                                _resolveSubjectAverageMark(
+                                              metricItem,
+                                              e.key,
+                                              e.value,
+                                            );
+                                            if (mark != '-') {
+                                              return Text(
+                                                "${e.key} - ${"averageMarks".tr} : $mark",
+                                                style:
+                                                    NotoSansArabicCustomTextStyle
+                                                        .regular
+                                                        .copyWith(
+                                                  fontSize: 14,
+                                                  color: _textLight,
+                                                ),
+                                              );
+                                            }
+                                            final gradeSymbol =
+                                                _extractGradeSymbol(e.value);
+                                            return Text(
+                                              "${e.key} - ${"averageGrade".tr} : $gradeSymbol",
+                                              style:
+                                                  NotoSansArabicCustomTextStyle
+                                                      .regular
+                                                      .copyWith(
+                                                fontSize: 14,
+                                                color: _textLight,
+                                              ),
+                                            );
+                                          }).toList()
+                                            ..addAll(subjects.isEmpty
+                                                ? [
+                                                    Text(
+                                                      "noMarksHistoryYet".tr,
                                                       style:
                                                           NotoSansArabicCustomTextStyle
                                                               .regular
                                                               .copyWith(
-                                                                  fontSize: 14,
-                                                                  color:
-                                                                      _textLight),
-                                                    );
-                                                  }).toList()
-                                                    ..addAll(subjects.isEmpty
-                                                        ? [
-                                                            Text(
-                                                              "noMarksHistoryYet"
-                                                                  .tr,
-                                                              style: NotoSansArabicCustomTextStyle
-                                                                  .regular
-                                                                  .copyWith(
-                                                                      fontSize:
-                                                                          13,
-                                                                      color:
-                                                                          _textMuted),
-                                                            )
-                                                          ]
-                                                        : []),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                                        fontSize: 13,
+                                                        color: _textMuted,
+                                                      ),
+                                                    )
+                                                  ]
+                                                : []),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-            ),
-            if (chartData.isNotEmpty) const SizedBox(height: 12),
-            if (chartData.isNotEmpty)
-              Container(
-                width: double.infinity,
-                height: 260,
-                decoration: BoxDecoration(
-                  color: _panelDarkSoft,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF2A2E3A), width: 1),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SfCartesianChart(
-                    backgroundColor: Colors.transparent,
-                    plotAreaBorderWidth: 0,
-                    title: ChartTitle(
-                      text: "performanceByGrade".tr,
-                      textStyle: NotoSansArabicCustomTextStyle.semibold
-                          .copyWith(
-                              fontSize: fontSizeProvider.fontSize + 2,
-                              color: _textLight),
-                    ),
-                    primaryXAxis: CategoryAxis(
-                      labelRotation: -35,
-                      labelIntersectAction:
-                          AxisLabelIntersectAction.multipleRows,
-                      edgeLabelPlacement: EdgeLabelPlacement.shift,
-                      majorGridLines: const MajorGridLines(width: 0),
-                      axisLine: const AxisLine(width: 0),
-                      majorTickLines: const MajorTickLines(width: 0),
-                      maximumLabelWidth: 90,
-                      labelStyle: NotoSansArabicCustomTextStyle.regular
-                          .copyWith(
-                              fontSize: fontSizeProvider.fontSize - 1,
-                              color: _textMuted),
-                    ),
-                    primaryYAxis: NumericAxis(
-                      minimum: 0,
-                      maximum: 10,
-                      interval: 1,
-                      axisLine: const AxisLine(width: 0),
-                      majorTickLines: const MajorTickLines(width: 0),
-                      title: AxisTitle(
-                        text: "marksOutOfTen".tr,
-                        textStyle: NotoSansArabicCustomTextStyle.regular
-                            .copyWith(
-                                fontSize: fontSizeProvider.fontSize - 1,
-                                color: _textMuted),
-                      ),
-                    ),
-                    tooltipBehavior: TooltipBehavior(
-                      enable: true,
-                      format: 'point.x : point.y/10',
-                    ),
-                    series: <CartesianSeries<_GradeChartPoint, String>>[
-                      ColumnSeries<_GradeChartPoint, String>(
-                        dataSource: chartData,
-                        xValueMapper: (_GradeChartPoint data, _) =>
-                            _compactGradeForChart(data.grade),
-                        yValueMapper: (_GradeChartPoint data, _) =>
-                            data.averageMark,
-                        pointColorMapper: (_GradeChartPoint data, _) =>
-                            _scoreColor(data.averageMark),
-                        dataLabelMapper: (_GradeChartPoint data, _) =>
-                            _formatChartValue(data.averageMark),
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(6)),
-                        width: 0.55,
-                        dataLabelSettings: DataLabelSettings(
-                          isVisible: true,
-                          labelAlignment: ChartDataLabelAlignment.top,
-                          textStyle: NotoSansArabicCustomTextStyle.semibold
-                              .copyWith(
-                                  fontSize: fontSizeProvider.fontSize - 1,
-                                  color: _textLight),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            if (chartData.isNotEmpty) const SizedBox(height: 12),
-            if (chartData.isNotEmpty)
-              Container(
-                width: double.infinity,
-                height: 350,
-                decoration: BoxDecoration(
-                  color: _panelDarkSoft,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF2A2E3A), width: 1),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      LayoutBuilder(builder: (context, rowConstraints) {
-                        final isNarrow = rowConstraints.maxWidth < 700;
-                        final titleText =
-                            "${"subjectsByGrade".tr} (${_selectedGradeForSubjects == null ? '-' : _shortGradeLabel(_selectedGradeForSubjects!)})";
-
-                        if (isNarrow) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                titleText,
-                                style: NotoSansArabicCustomTextStyle.semibold
-                                    .copyWith(
-                                        fontSize: fontSizeProvider.fontSize,
-                                        color: _textLight),
-                              ),
-                              if (gradeOptions.isNotEmpty)
-                                const SizedBox(height: 8),
-                              if (gradeOptions.isNotEmpty)
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 40,
-                                  child: DropdownButtonFormField<String>(
-                                    isExpanded: true,
-                                    value: _selectedGradeForSubjects,
-                                    dropdownColor: const Color(0xFF1F2330),
-                                    style: NotoSansArabicCustomTextStyle.medium
-                                        .copyWith(
-                                            color: _textLight,
-                                            fontSize: smallDropdownFont),
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: const Color(0xFF1A1E2B),
-                                      border: const OutlineInputBorder(),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide: const BorderSide(
-                                            color: Color(0xFF384055)),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide: const BorderSide(
-                                            color: Color(0xFFDCC8FF)),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 8),
-                                    ),
-                                    items: gradeOptions
-                                        .map((g) => DropdownMenuItem<String>(
-                                              value: g,
-                                              child: Text(_shortGradeLabel(g),
-                                                  style: NotoSansArabicCustomTextStyle
-                                                      .medium
-                                                      .copyWith(
-                                                          fontSize:
-                                                              smallDropdownFont,
-                                                          color: _textLight),
-                                                  overflow:
-                                                      TextOverflow.ellipsis),
-                                            ))
-                                        .toList(),
-                                    onChanged: (value) {
-                                      if (value == null) return;
-                                      setState(() {
-                                        _selectedGradeForSubjects = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                            ],
-                          );
-                        }
-
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                titleText,
-                                style: NotoSansArabicCustomTextStyle.semibold
-                                    .copyWith(
-                                        fontSize: fontSizeProvider.fontSize,
-                                        color: _textLight),
-                              ),
-                            ),
-                            if (gradeOptions.isNotEmpty)
-                              const SizedBox(width: 12),
-                            if (gradeOptions.isNotEmpty)
-                              SizedBox(
-                                height: 40,
-                                width: 220,
-                                child: DropdownButtonFormField<String>(
-                                  isExpanded: true,
-                                  value: _selectedGradeForSubjects,
-                                  dropdownColor: const Color(0xFF1F2330),
-                                  style: NotoSansArabicCustomTextStyle.medium
-                                      .copyWith(
-                                          color: _textLight,
-                                          fontSize: smallDropdownFont),
-                                  decoration: InputDecoration(
-                                    filled: true,
-                                    fillColor: const Color(0xFF1A1E2B),
-                                    border: const OutlineInputBorder(),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: const BorderSide(
-                                          color: Color(0xFF384055)),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: const BorderSide(
-                                          color: Color(0xFFDCC8FF)),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 8),
-                                  ),
-                                  items: gradeOptions
-                                      .map((g) => DropdownMenuItem<String>(
-                                            value: g,
-                                            child: Text(_shortGradeLabel(g),
-                                                style:
-                                                    NotoSansArabicCustomTextStyle
-                                                        .medium
-                                                        .copyWith(
-                                                            fontSize:
-                                                                smallDropdownFont,
-                                                            color: _textLight),
-                                                overflow:
-                                                    TextOverflow.ellipsis),
-                                          ))
-                                      .toList(),
-                                  onChanged: (value) {
-                                    if (value == null) return;
-                                    setState(() {
-                                      _selectedGradeForSubjects = value;
-                                    });
-                                  },
-                                ),
-                              ),
-                          ],
-                        );
-                      }),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: subjectChartData.isEmpty
-                            ? Center(
-                                child: Text(
-                                  "noSubjectMarksForSelectedGrade".tr,
-                                  style: NotoSansArabicCustomTextStyle.medium
-                                      .copyWith(color: _textMuted),
-                                ),
-                              )
-                            : SfCartesianChart(
-                                backgroundColor: Colors.transparent,
-                                plotAreaBorderWidth: 0,
-                                primaryXAxis: CategoryAxis(
-                                  labelRotation: -30,
-                                  labelIntersectAction:
-                                      AxisLabelIntersectAction.wrap,
-                                  edgeLabelPlacement: EdgeLabelPlacement.shift,
-                                  maximumLabelWidth: 90,
-                                  majorGridLines:
-                                      const MajorGridLines(width: 0),
-                                  axisLine: const AxisLine(width: 0),
-                                  majorTickLines:
-                                      const MajorTickLines(width: 0),
-                                  labelStyle: NotoSansArabicCustomTextStyle
-                                      .regular
-                                      .copyWith(
-                                          fontSize:
-                                              fontSizeProvider.fontSize - 1,
-                                          color: _textMuted),
-                                ),
-                                primaryYAxis: NumericAxis(
-                                  minimum: 0,
-                                  maximum: 10,
-                                  interval: 1,
-                                  axisLine: const AxisLine(width: 0),
-                                  majorTickLines:
-                                      const MajorTickLines(width: 0),
-                                  title: AxisTitle(
-                                    text: "marksOutOfTen".tr,
-                                    textStyle: NotoSansArabicCustomTextStyle
-                                        .regular
-                                        .copyWith(
-                                            fontSize:
-                                                fontSizeProvider.fontSize - 1,
-                                            color: _textMuted),
-                                  ),
-                                ),
-                                tooltipBehavior: TooltipBehavior(
-                                  enable: true,
-                                  format: 'point.x : point.y/10',
-                                ),
-                                series: <CartesianSeries<_SubjectChartPoint,
-                                    String>>[
-                                  ColumnSeries<_SubjectChartPoint, String>(
-                                    dataSource: subjectChartData,
-                                    xValueMapper:
-                                        (_SubjectChartPoint data, _) =>
-                                            data.subject,
-                                    yValueMapper:
-                                        (_SubjectChartPoint data, _) =>
-                                            data.averageMark,
-                                    pointColorMapper:
-                                        (_SubjectChartPoint data, _) =>
-                                            _scoreColor(data.averageMark),
-                                    dataLabelMapper:
-                                        (_SubjectChartPoint data, _) =>
-                                            _formatChartValue(data.averageMark),
-                                    borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(6)),
-                                    width: 0.55,
-                                    dataLabelSettings: DataLabelSettings(
-                                      isVisible: true,
-                                      labelAlignment:
-                                          ChartDataLabelAlignment.top,
-                                      textStyle: NotoSansArabicCustomTextStyle
-                                          .semibold
-                                          .copyWith(
-                                              fontSize:
-                                                  fontSizeProvider.fontSize - 1,
-                                              color: _textLight),
-                                    ),
+                                    ],
                                   ),
                                 ],
                               ),
-                      ),
-                    ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+    );
+
+    final performanceByGradeWidget = chartData.isEmpty
+        ? SizedBox(
+            height: 260,
+            child: Center(
+              child: Text(
+                "noSchoolPerformanceDataLast30Days".tr,
+                style: NotoSansArabicCustomTextStyle.medium
+                    .copyWith(color: _textLight),
+              ),
+            ),
+          )
+        : Container(
+            width: double.infinity,
+            height: 260,
+            decoration: BoxDecoration(
+              color: _panelDarkSoft,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF2A2E3A), width: 1),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SfCartesianChart(
+                backgroundColor: Colors.transparent,
+                plotAreaBorderWidth: 0,
+                primaryXAxis: CategoryAxis(
+                  labelRotation: -35,
+                  labelIntersectAction: AxisLabelIntersectAction.multipleRows,
+                  edgeLabelPlacement: EdgeLabelPlacement.shift,
+                  majorGridLines: const MajorGridLines(width: 0),
+                  axisLine: const AxisLine(width: 0),
+                  majorTickLines: const MajorTickLines(width: 0),
+                  maximumLabelWidth: 90,
+                  labelStyle: NotoSansArabicCustomTextStyle.regular.copyWith(
+                    fontSize: fontSizeProvider.fontSize - 1,
+                    color: _textMuted,
                   ),
                 ),
+                primaryYAxis: NumericAxis(
+                  minimum: 0,
+                  maximum: 10,
+                  interval: 1,
+                  axisLine: const AxisLine(width: 0),
+                  majorTickLines: const MajorTickLines(width: 0),
+                  title: AxisTitle(
+                    text: "marksOutOfTen".tr,
+                    textStyle: NotoSansArabicCustomTextStyle.regular.copyWith(
+                      fontSize: fontSizeProvider.fontSize - 1,
+                      color: _textMuted,
+                    ),
+                  ),
+                ),
+                tooltipBehavior: TooltipBehavior(
+                  enable: true,
+                  format: 'point.x : point.y/10',
+                ),
+                series: <CartesianSeries<_GradeChartPoint, String>>[
+                  ColumnSeries<_GradeChartPoint, String>(
+                    dataSource: chartData,
+                    xValueMapper: (_GradeChartPoint data, _) =>
+                        _compactGradeForChart(data.grade),
+                    yValueMapper: (_GradeChartPoint data, _) =>
+                        data.averageMark,
+                    pointColorMapper: (_GradeChartPoint data, _) =>
+                        _scoreColor(data.averageMark),
+                    dataLabelMapper: (_GradeChartPoint data, _) =>
+                        _formatChartValue(data.averageMark),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(6)),
+                    width: 0.55,
+                    dataLabelSettings: DataLabelSettings(
+                      isVisible: true,
+                      labelAlignment: ChartDataLabelAlignment.top,
+                      textStyle:
+                          NotoSansArabicCustomTextStyle.semibold.copyWith(
+                        fontSize: fontSizeProvider.fontSize - 1,
+                        color: _textLight,
+                      ),
+                    ),
+                  ),
+                ],
               ),
+            ),
+          );
+
+    final subjectsByGradeWidget = Container(
+      width: double.infinity,
+      height: 350,
+      decoration: BoxDecoration(
+        color: _panelDarkSoft,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2A2E3A), width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            LayoutBuilder(
+              builder: (context, rowConstraints) {
+                final isNarrow = rowConstraints.maxWidth < 700;
+                final titleText =
+                    "${"subjectsByGrade".tr} (${_selectedGradeForSubjects == null ? '-' : _shortGradeLabel(_selectedGradeForSubjects!)})";
+
+                if (isNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titleText,
+                        style: NotoSansArabicCustomTextStyle.semibold.copyWith(
+                          fontSize: fontSizeProvider.fontSize,
+                          color: _textLight,
+                        ),
+                      ),
+                      if (gradeOptions.isNotEmpty) const SizedBox(height: 8),
+                      if (gradeOptions.isNotEmpty)
+                        SizedBox(
+                          width: double.infinity,
+                          height: 40,
+                          child: DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            value: _selectedGradeForSubjects,
+                            dropdownColor: const Color(0xFF1F2330),
+                            style:
+                                NotoSansArabicCustomTextStyle.medium.copyWith(
+                              color: _textLight,
+                              fontSize: smallDropdownFont,
+                            ),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color(0xFF1A1E2B),
+                              border: const OutlineInputBorder(),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF384055),
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFDCC8FF),
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                            ),
+                            items: gradeOptions
+                                .map((g) => DropdownMenuItem<String>(
+                                      value: g,
+                                      child: Text(
+                                        _shortGradeLabel(g),
+                                        style: NotoSansArabicCustomTextStyle
+                                            .medium
+                                            .copyWith(
+                                          fontSize: smallDropdownFont,
+                                          color: _textLight,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ))
+                                .toList(),
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setState(() {
+                                _selectedGradeForSubjects = value;
+                              });
+                            },
+                          ),
+                        ),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        titleText,
+                        style: NotoSansArabicCustomTextStyle.semibold.copyWith(
+                          fontSize: fontSizeProvider.fontSize,
+                          color: _textLight,
+                        ),
+                      ),
+                    ),
+                    if (gradeOptions.isNotEmpty) const SizedBox(width: 12),
+                    if (gradeOptions.isNotEmpty)
+                      SizedBox(
+                        height: 40,
+                        width: 220,
+                        child: DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          value: _selectedGradeForSubjects,
+                          dropdownColor: const Color(0xFF1F2330),
+                          style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                            color: _textLight,
+                            fontSize: smallDropdownFont,
+                          ),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFF1A1E2B),
+                            border: const OutlineInputBorder(),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide:
+                                  const BorderSide(color: Color(0xFF384055)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide:
+                                  const BorderSide(color: Color(0xFFDCC8FF)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                          ),
+                          items: gradeOptions
+                              .map((g) => DropdownMenuItem<String>(
+                                    value: g,
+                                    child: Text(
+                                      _shortGradeLabel(g),
+                                      style: NotoSansArabicCustomTextStyle
+                                          .medium
+                                          .copyWith(
+                                        fontSize: smallDropdownFont,
+                                        color: _textLight,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() {
+                              _selectedGradeForSubjects = value;
+                            });
+                          },
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: subjectChartData.isEmpty
+                  ? Center(
+                      child: Text(
+                        "noSubjectMarksForSelectedGrade".tr,
+                        style: NotoSansArabicCustomTextStyle.medium
+                            .copyWith(color: _textMuted),
+                      ),
+                    )
+                  : SfCartesianChart(
+                      backgroundColor: Colors.transparent,
+                      plotAreaBorderWidth: 0,
+                      primaryXAxis: CategoryAxis(
+                        labelRotation: -30,
+                        labelIntersectAction: AxisLabelIntersectAction.wrap,
+                        edgeLabelPlacement: EdgeLabelPlacement.shift,
+                        maximumLabelWidth: 90,
+                        majorGridLines: const MajorGridLines(width: 0),
+                        axisLine: const AxisLine(width: 0),
+                        majorTickLines: const MajorTickLines(width: 0),
+                        labelStyle:
+                            NotoSansArabicCustomTextStyle.regular.copyWith(
+                          fontSize: fontSizeProvider.fontSize - 1,
+                          color: _textMuted,
+                        ),
+                      ),
+                      primaryYAxis: NumericAxis(
+                        minimum: 0,
+                        maximum: 10,
+                        interval: 1,
+                        axisLine: const AxisLine(width: 0),
+                        majorTickLines: const MajorTickLines(width: 0),
+                        title: AxisTitle(
+                          text: "marksOutOfTen".tr,
+                          textStyle:
+                              NotoSansArabicCustomTextStyle.regular.copyWith(
+                            fontSize: fontSizeProvider.fontSize - 1,
+                            color: _textMuted,
+                          ),
+                        ),
+                      ),
+                      tooltipBehavior: TooltipBehavior(
+                        enable: true,
+                        format: 'point.x : point.y/10',
+                      ),
+                      series: <CartesianSeries<_SubjectChartPoint, String>>[
+                        ColumnSeries<_SubjectChartPoint, String>(
+                          dataSource: subjectChartData,
+                          xValueMapper: (_SubjectChartPoint data, _) =>
+                              data.subject,
+                          yValueMapper: (_SubjectChartPoint data, _) =>
+                              data.averageMark,
+                          pointColorMapper: (_SubjectChartPoint data, _) =>
+                              _scoreColor(data.averageMark),
+                          dataLabelMapper: (_SubjectChartPoint data, _) =>
+                              _formatChartValue(data.averageMark),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6),
+                          ),
+                          width: 0.55,
+                          dataLabelSettings: DataLabelSettings(
+                            isVisible: true,
+                            labelAlignment: ChartDataLabelAlignment.top,
+                            textStyle:
+                                NotoSansArabicCustomTextStyle.semibold.copyWith(
+                              fontSize: fontSizeProvider.fontSize - 1,
+                              color: _textLight,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
           ],
         ),
       ),
+    );
+
+    final absenceByGradeWidget = Container(
+      width: double.infinity,
+      height: 320,
+      decoration: BoxDecoration(
+        color: _panelDarkSoft,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2A2E3A), width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            LayoutBuilder(
+              builder: (context, rowConstraints) {
+                final isNarrow = rowConstraints.maxWidth < 700;
+                final selectedMonthLabel = _selectedAbsenceMonthKey == null
+                    ? '-'
+                    : _formatMonthLabel(_selectedAbsenceMonthKey!);
+                final titleText =
+                    '${"absenceByGrade".tr} ($selectedMonthLabel)';
+
+                Widget monthDropdown() {
+                  return SizedBox(
+                    height: 40,
+                    width: isNarrow ? double.infinity : 220,
+                    child: DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      value: _selectedAbsenceMonthKey,
+                      dropdownColor: const Color(0xFF1F2330),
+                      style: NotoSansArabicCustomTextStyle.medium.copyWith(
+                        color: _textLight,
+                        fontSize: smallDropdownFont,
+                      ),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFF1A1E2B),
+                        border: const OutlineInputBorder(),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              const BorderSide(color: Color(0xFF384055)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide:
+                              const BorderSide(color: Color(0xFFDCC8FF)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                      ),
+                      items: absenceMonths
+                          .map((monthKey) => DropdownMenuItem<String>(
+                                value: monthKey,
+                                child: Text(
+                                  _formatMonthLabel(monthKey),
+                                  style: NotoSansArabicCustomTextStyle.medium
+                                      .copyWith(
+                                    fontSize: smallDropdownFont,
+                                    color: _textLight,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: absenceMonths.isEmpty
+                          ? null
+                          : (value) {
+                              if (value == null) return;
+                              setState(() {
+                                _selectedAbsenceMonthKey = value;
+                              });
+                            },
+                    ),
+                  );
+                }
+
+                if (isNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titleText,
+                        style: NotoSansArabicCustomTextStyle.semibold.copyWith(
+                          fontSize: fontSizeProvider.fontSize,
+                          color: _textLight,
+                        ),
+                      ),
+                      if (absenceMonths.isNotEmpty) const SizedBox(height: 8),
+                      if (absenceMonths.isNotEmpty) monthDropdown(),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        titleText,
+                        style: NotoSansArabicCustomTextStyle.semibold.copyWith(
+                          fontSize: fontSizeProvider.fontSize,
+                          color: _textLight,
+                        ),
+                      ),
+                    ),
+                    if (absenceMonths.isNotEmpty) const SizedBox(width: 12),
+                    if (absenceMonths.isNotEmpty) monthDropdown(),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: absenceChartData.isEmpty
+                  ? Center(
+                      child: Text(
+                        absenceMonths.isEmpty
+                            ? 'noAbsenceDataAvailable'.tr
+                            : 'noAbsenceDataForSelectedMonth'.tr,
+                        style: NotoSansArabicCustomTextStyle.medium
+                            .copyWith(color: _textMuted),
+                      ),
+                    )
+                  : SfCartesianChart(
+                      backgroundColor: Colors.transparent,
+                      plotAreaBorderWidth: 0,
+                      primaryXAxis: CategoryAxis(
+                        labelRotation: -35,
+                        labelIntersectAction:
+                            AxisLabelIntersectAction.multipleRows,
+                        edgeLabelPlacement: EdgeLabelPlacement.shift,
+                        majorGridLines: const MajorGridLines(width: 0),
+                        axisLine: const AxisLine(width: 0),
+                        majorTickLines: const MajorTickLines(width: 0),
+                        maximumLabelWidth: 90,
+                        labelStyle:
+                            NotoSansArabicCustomTextStyle.regular.copyWith(
+                          fontSize: fontSizeProvider.fontSize - 1,
+                          color: _textMuted,
+                        ),
+                      ),
+                      primaryYAxis: NumericAxis(
+                        minimum: 0,
+                        interval: 1,
+                        axisLine: const AxisLine(width: 0),
+                        majorTickLines: const MajorTickLines(width: 0),
+                        title: AxisTitle(
+                          text: 'absentStudentsCount'.tr,
+                          textStyle:
+                              NotoSansArabicCustomTextStyle.regular.copyWith(
+                            fontSize: fontSizeProvider.fontSize - 1,
+                            color: _textMuted,
+                          ),
+                        ),
+                      ),
+                      tooltipBehavior: TooltipBehavior(
+                        enable: true,
+                        format: 'point.x : point.y',
+                      ),
+                      series: <CartesianSeries<_AbsenceChartPoint, String>>[
+                        ColumnSeries<_AbsenceChartPoint, String>(
+                          dataSource: absenceChartData,
+                          xValueMapper: (_AbsenceChartPoint data, _) =>
+                              _compactGradeForChart(data.grade),
+                          yValueMapper: (_AbsenceChartPoint data, _) =>
+                              data.absenceCount,
+                          color: const Color(0xFFFF6B8A),
+                          dataLabelMapper: (_AbsenceChartPoint data, _) =>
+                              data.absenceCount.toString(),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6),
+                          ),
+                          width: 0.55,
+                          dataLabelSettings: DataLabelSettings(
+                            isVisible: true,
+                            labelAlignment: ChartDataLabelAlignment.top,
+                            textStyle:
+                                NotoSansArabicCustomTextStyle.semibold.copyWith(
+                              fontSize: fontSizeProvider.fontSize - 1,
+                              color: _textLight,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return Column(
+      children: [
+        buildSectionCard(
+          title: "schoolperfo".tr,
+          subtitle: Align(
+            alignment: Directionality.of(context) == TextDirection.rtl
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            child: Text(
+              "schoolPerformanceWindow30Days".tr,
+              style: NotoSansArabicCustomTextStyle.regular.copyWith(
+                fontSize: fontSizeProvider.fontSize - 1,
+                color: _textMuted,
+              ),
+            ),
+          ),
+          child: metricsWidget,
+        ),
+        const SizedBox(height: 12),
+        buildSectionCard(
+          title: "performanceByGrade".tr,
+          child: performanceByGradeWidget,
+        ),
+        const SizedBox(height: 12),
+        buildSectionCard(
+          title: "subjectsByGrade".tr,
+          child: subjectsByGradeWidget,
+        ),
+        const SizedBox(height: 12),
+        buildSectionCard(
+          title: "absenceByGrade".tr,
+          child: absenceByGradeWidget,
+        ),
+      ],
     );
   }
 
@@ -1732,5 +2186,17 @@ class _SubjectChartPoint {
   _SubjectChartPoint({
     required this.subject,
     required this.averageMark,
+  });
+}
+
+class _AbsenceChartPoint {
+  final String grade;
+  final int absenceCount;
+  final int order;
+
+  _AbsenceChartPoint({
+    required this.grade,
+    required this.absenceCount,
+    required this.order,
   });
 }
