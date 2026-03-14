@@ -380,8 +380,15 @@ class _MasterDashboardState extends State<MasterDashboard> {
   }
 
   bool _shouldExcludeMetricsSubject(String subjectName) {
-    final normalized = subjectName.trim().toLowerCase();
-    return normalized == 'e2e';
+    final normalized = subjectName
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    return normalized == 'e2e' ||
+        normalized == 'local_temp_subject_e2e' ||
+        normalized.endsWith('_e2e');
   }
 
   String _monthKey(DateTime date) {
